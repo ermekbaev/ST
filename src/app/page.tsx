@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
 
-// Интерфейс для товара
 interface Product {
   id?: string;
   article: string;
@@ -23,32 +22,20 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  // Предотвращаем рендеринг до монтирования
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Функция для получения данных из Google Sheets
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      console.log('Загружаем данные из Google Sheets...');
-      
       const response = await fetch('/api/products');
       const result = await response.json();
-      
-      console.log('Результат API:', result);
       
       if (result.success) {
         const productsData = Array.isArray(result.data) ? result.data : [];
         setProducts(productsData);
         console.log('Загружено товаров:', result.count);
-        console.log('Тип данных:', typeof result.data, Array.isArray(result.data));
-        console.log('Первые товары:', productsData.slice(0, 2));
-        
-        // Проверяем какие категории есть в данных
-        const categories = [...new Set(productsData.map(p => p.category))];
-        console.log('Найденные категории:', categories);
       } else {
         throw new Error(result.error || 'Ошибка загрузки данных');
       }
@@ -63,36 +50,22 @@ export default function Home() {
   useEffect(() => {
     if (mounted) {
       fetchProducts();
-      // Временно отключаем автообновление для стабильности
-      // const interval = setInterval(fetchProducts, 5 * 60 * 1000);
-      // return () => clearInterval(interval);
     }
   }, [mounted]);
 
-  // Группировка товаров по категориям и уникальным моделям
+  // Группировка товаров по категориям
   const groupedProducts = Array.isArray(products) ? products.reduce((acc: Record<string, Product[]>, product) => {
     const category = product.category || 'Прочее';
     if (!acc[category]) acc[category] = [];
     
-    // Проверяем, есть ли уже такая модель в категории
     const existingProduct = acc[category].find(p => p.name === product.name);
     if (!existingProduct) {
-      // Добавляем первую найденную модель
       acc[category].push(product);
     }
     
     return acc;
   }, {}) : {};
 
-  // Показываем статистику загруженных данных
-  const totalProducts = products.length;
-  const uniqueModels = Object.values(groupedProducts).flat().length;
-  
-  // Отладочная информация
-  console.log('Группированные товары:', groupedProducts);
-  console.log('Категории в групповых данных:', Object.keys(groupedProducts));
-
-  // Не рендерим ничего до монтирования компонента
   if (!mounted) {
     return (
       <div className="min-h-screen bg-white">
@@ -115,126 +88,185 @@ export default function Home() {
     );
   }
 
+  // Компонент секции товаров
+  const ProductSection = ({ title, categoryKey, linkText = "все модели" }: { 
+    title: string; 
+    categoryKey: string; 
+    linkText?: string;
+  }) => {
+    const categoryProducts = groupedProducts[categoryKey] || [];
+    const displayProducts = categoryProducts.slice(0, 4);
+
+    return (
+      <section className="mb-16">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-[50px] font-bold text-black uppercase tracking-wide">
+            {title}
+          </h2>
+          <a 
+            href="#" 
+            className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2"
+          >
+            {linkText}
+            <svg width="16" height="16" viewBox="0 0 16 16" className="fill-current">
+              <path d="M8.5 3l5 5-5 5M13 8H0"/>
+            </svg>
+          </a>
+        </div>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {displayProducts.length > 0 ? (
+            displayProducts.map((product, index) => (
+              <ProductCard key={product.id || index} product={product} />
+            ))
+          ) : (
+            // Показываем заглушки если нет товаров
+            Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="bg-white w-full">
+                <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center">
+                  <span className="text-gray-400 text-sm">Скоро товары</span>
+                </div>
+                <div className="w-full h-px bg-black"></div>
+                <div className="py-2">
+                  <div className="h-[31px] bg-gray-200 rounded w-3/4 mb-1"></div>
+                  <div className="h-[20px] bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Герой секция с баннером */}
+      {/* Герой секция */}
       <HeroSlider />
       
       {/* Основной контент */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="w-full px-5 py-12">
+        {/* px-5 = 20px отступы с каждой стороны */}
         
         {/* Ошибка загрузки */}
         {error && (
-          <div className="text-center text-red-600 p-8 mb-8">
-            <p>Ошибка загрузки товаров: {error}</p>
+          <div className="text-center text-red-600 p-8 mb-8 bg-red-50 rounded-lg">
+            <p className="mb-4">Ошибка загрузки товаров: {error}</p>
             <button 
               onClick={fetchProducts}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
             >
               Попробовать снова
             </button>
           </div>
         )}
 
-        {/* Секция "КРОССОВКИ И КЕДЫ" */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">КРОССОВКИ И КЕДЫ</h2>
-            <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors">
-              все товары →
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(groupedProducts['Кроссовки и кеды'] || []).slice(0, 4).map((product, index) => (
-              <ProductCard key={product.id || index} product={product} />
-            ))}
-          </div>
-        </section>
+        {/* Секция "ОБУВЬ" */}
+        <ProductSection 
+          title="ОБУВЬ" 
+          categoryKey="Кроссовки и кеды"
+        />
 
-        {/* Секция "ТОЛСТОВКИ И СВИТШОТЫ" */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">ТОЛСТОВКИ И СВИТШОТЫ</h2>
-            <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors">
-              все товары →
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(groupedProducts['Толстовки и свитшоты'] || []).slice(0, 4).map((product, index) => (
-              <ProductCard key={product.id || index} product={product} />
-            ))}
-          </div>
-        </section>
+        {/* Секция "ОДЕЖДА" */}
+        <ProductSection 
+          title="ОДЕЖДА" 
+          categoryKey="Толстовки и свитшоты"
+        />
 
-        {/* Секция "ШТАНЫ И БРЮКИ" */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">ШТАНЫ И БРЮКИ</h2>
-            <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors">
-              все товары →
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(groupedProducts['Штаны и брюки'] || []).slice(0, 4).map((product, index) => (
-              <ProductCard key={product.id || index} product={product} />
-            ))}
-          </div>
-        </section>
+        {/* Секция "АКСЕССУАРЫ" */}
+        <ProductSection 
+          title="АКСЕССУАРЫ" 
+          categoryKey="Аксессуары"
+        />
 
         {/* Секция "КОЛЛЕКЦИИ" */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">КОЛЛЕКЦИИ</h2>
+        <section className="mb-16">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-[50px] font-bold text-black uppercase tracking-wide">
+              КОЛЛЕКЦИИ
+            </h2>
             <a 
-              href="/collections"
-              className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+              href="#" 
+              className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2"
             >
-              все коллекции →
+              все модели
+              <svg width="16" height="16" viewBox="0 0 16 16" className="fill-current">
+                <path d="M8.5 3l5 5-5 5M13 8H0"/>
+              </svg>
             </a>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {[
-              { name: 'Коллекция Spring', image: '/collections/spring.jpg' },
-              { name: 'Коллекция Summer', image: '/collections/summer.jpg' },
-              { name: 'Коллекция Autumn', image: '/collections/autumn.jpg' },
-              { name: 'Коллекция Winter', image: '/collections/winter.jpg' }
+              { name: 'НАЗВАНИЕ' },
+              { name: 'НАЗВАНИЕ' },
+              { name: 'НАЗВАНИЕ' },
+              { name: 'НАЗВАНИЕ' }
             ].map((collection, index) => (
-              <div key={index} className="bg-gray-100 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="w-full h-32 bg-gray-200 rounded mb-4 flex items-center justify-center overflow-hidden">
-                  <img 
-                    src={collection.image}
-                    alt={collection.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling!.textContent = 'png?';
-                    }}
-                  />
-                  <span className="text-gray-600 hidden">png?</span>
+              <div key={index} className="cursor-pointer group bg-white w-full">
+                <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
+                  <span className="text-gray-400 text-sm">png?</span>
                 </div>
-                <h3 className="font-semibold text-gray-900">коллекция</h3>
-                <p className="text-sm text-gray-600">{collection.name}</p>
+                <div className="w-full h-px bg-black"></div>
+                <div className="py-2">
+                  <div className="text-black text-[25px] leading-[31px] font-normal">
+                    {collection.name}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Секция индивидуального заказа */}
-        <section className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg p-8 text-white text-center">
-          <h2 className="text-3xl font-bold mb-4">В КАТАЛОГЕ НЕТ ИНТЕРЕСУЮЩЕЙ МОДЕЛИ?</h2>
-          <p className="text-xl mb-2">ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ</p>
-          <p className="text-3xl font-bold mb-6">ИНДИВИДУАЛЬНЫЙ ЗАКАЗ</p>
-          <button 
-            onClick={() => {
-              // Пока заглушка, позже можно добавить модальное окно или переход на страницу
-              console.log('Открыть форму индивидуального заказа');
-            }}
-            className="bg-transparent border-2 border-white text-white px-8 py-3 rounded hover:bg-white hover:text-gray-900 transition-colors font-semibold"
-          >
-            ОФОРМИТЬ ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
-          </button>
-        </section>
       </div>
+
+      {/* Секция индивидуального заказа - ВЫНЕСЕНА ИЗ КОНТЕЙНЕРА */}
+      <section 
+        className="relative overflow-hidden mb-[120px]"
+        style={{ 
+          height: '830px',
+          background: 'radial-gradient(circle, #595047 0%, #D9CDBF 100%)'
+        }}
+      >
+        {/* Контент баннера */}
+        <div className="relative z-10 h-full flex flex-col justify-center pl-5">
+          {/* Заголовок - черная часть, выровнена по левому краю */}
+          <h2 className="text-[60px] lg:text-[80px] font-bold uppercase leading-tight text-black text-left">
+            В КАТАЛОГЕ НЕТ ИНТЕРЕСУЮЩЕЙ<br />
+            МОДЕЛИ?<br />
+            ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ
+          </h2>
+          
+          
+          {/* "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ" белым цветом */}
+          <p className="text-[60px] lg:text-[80px] font-bold uppercase leading-tight text-white drop-shadow-lg text-left mb-16 mt-6">
+            ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
+          </p>
+          
+          {/* Кнопка заказа - по центру */}
+          <div className="text-center">
+            <a
+              href="/custom-order"
+              className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-black transition-colors font-medium uppercase tracking-wide"
+              style={{ width: '732px' }}
+            >
+              ОФОРМИТЬ ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
+            </a>
+          </div>
+        </div>
+        
+        {/* Ссылка "Как это работает?" - в самом низу */}
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+          <button
+            onClick={() => {
+              console.log('Открыть модальное окно "Как это работает?"');
+            }}
+            className="text-gray-700 text-[16px] lg:text-[18px] underline hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none"
+          >
+            Как это работает?
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
