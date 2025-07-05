@@ -173,10 +173,7 @@ const Header = () => {
 
     return (
       <div 
-        className="absolute top-full left-0 w-full bg-[#E5E0D8] z-50 transition-all duration-300 ease-in-out"
-        style={{
-          animation: 'slideDown 0.3s ease-out'
-        }}
+        className="absolute top-full left-0 w-full bg-brand-beige z-50 animate-slide-down"
         onMouseEnter={() => setActiveMenu(activeMenu)}
         onMouseLeave={handleMenuLeave}
       >
@@ -189,18 +186,18 @@ const Header = () => {
             {/* Первая секция - основная категория */}
             <div className="mb-16">
               <div className="flex items-start">
-                <h3 className="text-4xl font-black text-black uppercase tracking-wider mr-8 italic min-w-[200px]">
+                <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
                   {menuData.title}
                 </h3>
                 <div className="flex-1">
                   {/* Горизонтальная линия после заголовка */}
-                  <div className="w-full h-px bg-black mb-8 mt-6"></div>
+                  <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
                   <div className="grid grid-cols-2 gap-x-16 gap-y-3">
                     {menuData.categories.map((category, index) => (
                       <a
                         key={index}
                         href="#"
-                        className="text-black hover:text-gray-600 transition-colors text-base font-normal tracking-wide"
+                        className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
                       >
                         {category}
                       </a>
@@ -213,18 +210,18 @@ const Header = () => {
             {/* Вторая секция - подкатегории */}
             <div>
               <div className="flex items-start">
-                <h3 className="text-4xl font-black text-black uppercase tracking-wider mr-8 italic min-w-[200px]">
+                <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
                   КАТЕГОРИЯ
                 </h3>
                 <div className="flex-1">
                   {/* Горизонтальная линия после заголовка */}
-                  <div className="w-full h-px bg-black mb-8 mt-6"></div>
+                  <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
                   <div className="grid grid-cols-2 gap-x-16 gap-y-3">
                     {menuData.subcategories.map((subcategory, index) => (
                       <a
                         key={index}
                         href="#"
-                        className="text-black hover:text-gray-600 transition-colors text-base font-normal tracking-wide"
+                        className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
                       >
                         {subcategory}
                       </a>
@@ -233,7 +230,7 @@ const Header = () => {
                       <a
                         key={`additional-${index}`}
                         href="#"
-                        className="text-black hover:text-gray-600 transition-colors text-base font-normal tracking-wide"
+                        className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
                       >
                         {item}
                       </a>
@@ -249,99 +246,85 @@ const Header = () => {
   };
 
   return (
-    <>
-      <style jsx>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-      
-      <header className="w-full bg-white border-b border-gray-200 relative">
-        <div className="w-full h-[120px] flex items-center justify-between px-[139px]">
-          {/* Логотип */}
-          <div className="flex-shrink-0">
-            <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[37px] h-[58px]" />
-          </div>
-
-          {/* Навигация - точно по центру */}
-          <nav 
-            className="flex-shrink-0 relative"
-            onMouseLeave={handleMenuLeave}
-          >
-            {/* Поисковая строка - только в области навигации */}
-            <div 
-              className={`absolute top-1/2 right-0 transform -translate-y-1/2 h-10 flex items-center transition-all duration-500 ease-in-out z-20 ${
-                isSearchOpen ? 'w-full' : 'w-0'
-              } overflow-hidden`}
-            >
-              <form onSubmit={handleSearchSubmit} className="w-full">
-                <input
-                  id="search-input"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  placeholder="введите название товара"
-                  className="w-full h-10 px-4 bg-[#E5E0D8] text-black placeholder-gray-500 focus:outline-none rounded-full text-sm border-0"
-                />
-              </form>
-            </div>
-
-            <ul className={`flex items-center gap-8 text-sm text-black h-[27px] transition-opacity duration-300 ${
-              isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            }`}>
-              {menuItems.map((item, index) => (
-                <li 
-                  key={index}
-                  onMouseEnter={() => handleMenuEnter(item)}
-                >
-                  <a 
-                    href="#" 
-                    className={`hover:text-gray-600 transition-colors duration-200 uppercase ${
-                      activeMenu === item ? 'text-gray-600' : ''
-                    }`}
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          {/* Иконки */}
-          <div className="flex items-center gap-6 flex-shrink-0 relative z-30">
-            <div 
-              className="cursor-pointer hover:opacity-70 transition-opacity duration-200"
-              onClick={handleSearchToggle}
-            >
-              <img src="/icons/search.svg" alt="Поиск" className="w-6 h-6" />
-            </div>
-            <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200 relative">
-              <img src="/icons/cart.svg" alt="Корзина" className="w-6 h-6" />
-              {/* Показываем счетчик только после монтирования */}
-              {mounted && totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                  {totalItems}
-                </span>
-              )}
-            </div>
-            <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200">
-              <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-6" />
-            </div>
-          </div>
+    <header className="w-full bg-white border-b border-gray-200 relative">
+      <div className="w-full h-[120px] flex items-center justify-between px-[139px]">
+        {/* Логотип */}
+        <div className="flex-shrink-0">
+          <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[37px] h-[58px]" />
         </div>
 
-        {/* Мега-меню */}
-        {!isSearchOpen && renderMegaMenu()}
-      </header>
-    </>
+        {/* Навигация - точно по центру */}
+        <nav 
+          className="flex-shrink-0 relative"
+          onMouseLeave={handleMenuLeave}
+        >
+          {/* Поисковая строка - анимация справа налево */}
+          <div 
+            className={`absolute top-1/2 right-0 transform -translate-y-1/2 h-10 flex items-center transition-all duration-500 ease-in-out z-20 ${
+              isSearchOpen ? 'w-full opacity-100' : 'w-0 opacity-0'
+            } overflow-hidden`}
+          >
+            <form onSubmit={handleSearchSubmit} className="w-full">
+              <input
+                id="search-input"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="введите название товара"
+                className="w-full h-10 px-4 bg-brand-beige text-brand-dark placeholder-brand-gray focus:outline-none rounded-full text-sm border-0 brand-text-small"
+                style={{ border: 'none', outline: 'none' }}
+              />
+            </form>
+          </div>
+
+          <ul className={`flex items-center gap-8 text-sm text-brand-dark h-[27px] transition-opacity duration-300 ${
+            isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}>
+            {menuItems.map((item, index) => (
+              <li 
+                key={index}
+                onMouseEnter={() => handleMenuEnter(item)}
+              >
+                <a 
+                  href="#" 
+                  className={`hover:text-brand-gray transition-colors duration-200 uppercase font-heading font-medium tracking-wide ${
+                    activeMenu === item ? 'text-brand-gray' : ''
+                  }`}
+                >
+                  {item}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Иконки */}
+        <div className="flex items-center gap-6 flex-shrink-0 relative z-30">
+          <div 
+            className="cursor-pointer hover:opacity-70 transition-opacity duration-200 hover-lift"
+            onClick={handleSearchToggle}
+          >
+            <img src="/icons/search.svg" alt="Поиск" className="w-6 h-6" />
+          </div>
+          <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200 relative hover-lift">
+            <img src="/icons/cart.svg" alt="Корзина" className="w-6 h-6" />
+            {/* Показываем счетчик только после монтирования */}
+            {mounted && totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold font-price">
+                {totalItems}
+              </span>
+            )}
+          </div>
+          <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200 hover-lift">
+            <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Мега-меню */}
+      {!isSearchOpen && renderMegaMenu()}
+    </header>
   );
 };
 

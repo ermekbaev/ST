@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id?: string;
@@ -21,7 +20,6 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [imageError, setImageError] = useState(false);
-  const { addToCart } = useCart();
 
   const handleCardClick = () => {
     console.log('Переход на страницу товара:', product.id || product.article);
@@ -32,7 +30,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <div 
-      className="bg-white group cursor-pointer w-full"
+      className="bg-white group cursor-pointer w-full hover-lift"
       onClick={handleCardClick}
     >
       {/* Изображение товара - без бордеров */}
@@ -48,24 +46,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         ) : (
           <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center">
             <div className="text-center text-gray-400">
-              <div className="text-xs mb-1">{product.brand}</div>
+              <div className="text-sm mb-1">{product.brand}</div>
               <div className="text-xs">Фото скоро</div>
             </div>
           </div>
         )}
+        
+
       </div>
       
       {/* Разделительная линия под фото */}
-      <div className="w-full h-px bg-black"></div>
+      <div className="w-full h-px bg-brand-dark"></div>
       
       {/* Информация о товаре */}
       <div className="py-2">
-        {/* Название товара */}
-        <h3 className="text-black text-[25px] leading-[31px] font-normal mb-1">
+        {/* Название товара - Random Grotesque Standard Book */}
+        <h3 className="product-name text-brand-dark text-[18px] leading-[22px] mb-1">
           {product.name}
         </h3>
-        {/* Цена */}
-        <div className="text-black text-[15px] leading-[20px] font-normal">
+        {/* Цена - Random Grotesque Spacious Book */}
+        <div className="product-price text-brand-dark text-[15px] leading-[20px]">
           {product.price ? `${product.price.toLocaleString()} ₽` : 'Цена по запросу'}
         </div>
       </div>

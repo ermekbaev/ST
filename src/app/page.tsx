@@ -100,17 +100,15 @@ export default function Home() {
     return (
       <section className="mb-16">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-[50px] font-bold text-black uppercase tracking-wide">
+          <h2 className="section-title text-[35px] text-black">
             {title}
           </h2>
           <a 
             href="#" 
-            className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2"
+            className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
           >
             {linkText}
-            <svg width="16" height="16" viewBox="0 0 16 16" className="fill-current">
-              <path d="M8.5 3l5 5-5 5M13 8H0"/>
-            </svg>
+            <img src="/utils/Vector3.svg" alt="" />
           </a>
         </div>
         
@@ -124,9 +122,9 @@ export default function Home() {
             Array.from({ length: 4 }, (_, index) => (
               <div key={index} className="bg-white w-full">
                 <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">Скоро товары</span>
+                  <span className="text-gray-400 text-sm font-product">Скоро товары</span>
                 </div>
-                <div className="w-full h-px bg-black"></div>
+                <div className="w-full h-px bg-brand-dark"></div>
                 <div className="py-2">
                   <div className="h-[31px] bg-gray-200 rounded w-3/4 mb-1"></div>
                   <div className="h-[20px] bg-gray-200 rounded w-1/2"></div>
@@ -151,10 +149,10 @@ export default function Home() {
         {/* Ошибка загрузки */}
         {error && (
           <div className="text-center text-red-600 p-8 mb-8 bg-red-50 rounded-lg">
-            <p className="mb-4">Ошибка загрузки товаров: {error}</p>
+            <p className="mb-4 font-product">Ошибка загрузки товаров: {error}</p>
             <button 
               onClick={fetchProducts}
-              className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-product"
             >
               Попробовать снова
             </button>
@@ -182,17 +180,15 @@ export default function Home() {
         {/* Секция "КОЛЛЕКЦИИ" */}
         <section className="mb-16">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-[50px] font-bold text-black uppercase tracking-wide">
+            <h2 className="section-title text-[35px] text-black">
               КОЛЛЕКЦИИ
             </h2>
             <a 
               href="#" 
-              className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2"
+              className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
             >
               все модели
-              <svg width="16" height="16" viewBox="0 0 16 16" className="fill-current">
-                <path d="M8.5 3l5 5-5 5M13 8H0"/>
-              </svg>
+              <img src="/utils/Vector3.svg" alt="" />
             </a>
           </div>
           
@@ -203,13 +199,13 @@ export default function Home() {
               { name: 'НАЗВАНИЕ' },
               { name: 'НАЗВАНИЕ' }
             ].map((collection, index) => (
-              <div key={index} className="cursor-pointer group bg-white w-full">
+              <div key={index} className="cursor-pointer group bg-white w-full hover-lift">
                 <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
-                  <span className="text-gray-400 text-sm">png?</span>
+                  <span className="text-gray-400 text-sm font-product">png?</span>
                 </div>
-                <div className="w-full h-px bg-black"></div>
+                <div className="w-full h-px bg-brand-dark"></div>
                 <div className="py-2">
-                  <div className="text-black text-[25px] leading-[31px] font-normal">
+                  <div className="product-name text-brand-dark text-[25px] leading-[31px]">
                     {collection.name}
                   </div>
                 </div>
@@ -222,7 +218,7 @@ export default function Home() {
 
       {/* Секция индивидуального заказа - ВЫНЕСЕНА ИЗ КОНТЕЙНЕРА */}
       <section 
-        className="relative overflow-hidden mb-[120px]"
+        className="relative overflow-hidden"
         style={{ 
           height: '830px',
           background: 'radial-gradient(circle, #595047 0%, #D9CDBF 100%)'
@@ -230,16 +226,16 @@ export default function Home() {
       >
         {/* Контент баннера */}
         <div className="relative z-10 h-full flex flex-col justify-center pl-5">
-          {/* Заголовок - черная часть, выровнена по левому краю */}
-          <h2 className="text-[60px] lg:text-[80px] font-bold uppercase leading-tight text-black text-left">
+          {/* Заголовок - черная часть, выровнена по левому краю - Druk Wide */}
+          <h2 className="banner-title text-[45px] lg:text-[55px] text-brand-dark text-left">
             В КАТАЛОГЕ НЕТ ИНТЕРЕСУЮЩЕЙ<br />
             МОДЕЛИ?<br />
             ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ
           </h2>
           
           
-          {/* "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ" белым цветом */}
-          <p className="text-[60px] lg:text-[80px] font-bold uppercase leading-tight text-white drop-shadow-lg text-left mb-16 mt-6">
+          {/* "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ" белым цветом - Druk Wide */}
+          <p className="banner-title text-[45px] lg:text-[55px] text-white drop-shadow-lg text-left mb-16 mt-6">
             ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
           </p>
           
@@ -247,7 +243,7 @@ export default function Home() {
           <div className="text-center">
             <a
               href="/custom-order"
-              className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-black transition-colors font-medium uppercase tracking-wide"
+              className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-brand-dark transition-colors font-product uppercase tracking-wide"
               style={{ width: '732px' }}
             >
               ОФОРМИТЬ ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
@@ -261,7 +257,7 @@ export default function Home() {
             onClick={() => {
               console.log('Открыть модальное окно "Как это работает?"');
             }}
-            className="text-gray-700 text-[16px] lg:text-[18px] underline hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none"
+            className="text-gray-700 text-[16px] lg:text-[18px] underline hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none font-product"
           >
             Как это работает?
           </button>

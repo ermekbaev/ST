@@ -1,15 +1,49 @@
 @import "tailwindcss";
 
+/* ЛОКАЛЬНЫЕ ОРИГИНАЛЬНЫЕ ШРИФТЫ */
+
+/* Random Grotesque Spacious Book */
+@font-face {
+  font-family: "Random Grotesque";
+  src: url("/fonts/RG-SpaciousBook.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Druk Wide Cyr Bold */
+@font-face {
+  font-family: "Druk Wide Cyr";
+  src: url("/fonts/drukwidecyr-bold.woff2") format("woff2"),
+    url("/fonts/drukwidecyr-bold.woff") format("woff"),
+    url("/fonts/drukwidecyr-bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Цвета бренда */
+  --brand-beige: #e5e0d8;
+  --brand-dark: #0b0b0d;
+  --brand-gray: #595047;
+  --brand-light-beige: #d9cdbf;
+
+  /* ОРИГИНАЛЬНЫЕ ШРИФТЫ */
+  --font-random-grotesque: "Random Grotesque", "Space Grotesk", sans-serif;
+  --font-druk-wide: "Druk Wide Cyr", "Bebas Neue", "Anton", sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-product: var(--font-random-grotesque);
+  --font-banner: var(--font-druk-wide);
+  --font-mono: var(--font-space-grotesk);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +53,190 @@
   }
 }
 
+/* Базовые стили */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Стили для заголовков */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-druk-wide);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.font-product {
+  font-family: var(--font-random-grotesque);
+}
+
+.font-banner {
+  font-family: var(--font-druk-wide);
+}
+
+.font-price {
+  font-family: var(--font-random-grotesque);
+}
+
+/* Специфические классы для товаров */
+.product-name {
+  font-family: var(--font-random-grotesque);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.product-price {
+  font-family: var(--font-random-grotesque);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Баннерные заголовки */
+.banner-title {
+  font-family: var(--font-druk-wide);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+}
+
+/* Крупные заголовки секций */
+.section-title {
+  font-family: var(--font-druk-wide);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Улучшенная типографика для брендовых элементов */
+.brand-text-large {
+  font-family: var(--font-oswald), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.brand-text-medium {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.brand-text-small {
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* Цены */
+.price-text {
+  font-family: var(--font-roboto), sans-serif;
+  font-weight: 500;
+}
+
+/* Кастомные цвета для Tailwind */
+.bg-brand-beige {
+  background-color: var(--brand-beige);
+}
+
+.bg-brand-dark {
+  background-color: var(--brand-dark);
+}
+
+.bg-brand-gray {
+  background-color: var(--brand-gray);
+}
+
+.bg-brand-light-beige {
+  background-color: var(--brand-light-beige);
+}
+
+.text-brand-dark {
+  color: var(--brand-dark);
+}
+
+.text-brand-gray {
+  color: var(--brand-gray);
+}
+
+/* Анимации */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Hover эффекты */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  .brand-text-large {
+    font-size: clamp(2rem, 8vw, 5rem);
+  }
+
+  .brand-text-medium {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+  }
+}
+
+/* Улучшенная читаемость на мобильных */
+@media (max-width: 640px) {
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+}
+
+/* Focus styles для доступности */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #0066cc;
+  outline-offset: 2px;
+}
+
+/* Скрытие outline для мыши */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+  outline: none;
 }
