@@ -1,6 +1,17 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useCart } from '../contexts/CartContext';
 
 const Header = () => {
+  const [mounted, setMounted] = useState(false);
+  const { totalItems } = useCart();
+  
+  // Предотвращаем рендеринг до монтирования
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
   const menuItems = [
     'sale',
     'обувь', 
@@ -41,8 +52,14 @@ const Header = () => {
           <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200">
             <img src="/icons/search.svg" alt="Поиск" className="w-6 h-6" />
           </div>
-          <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200">
+          <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200 relative">
             <img src="/icons/cart.svg" alt="Корзина" className="w-6 h-6" />
+            {/* Показываем счетчик только после монтирования */}
+            {mounted && totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                {totalItems}
+              </span>
+            )}
           </div>
           <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200">
             <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-6" />
