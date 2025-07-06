@@ -25,7 +25,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     console.log('Переход на страницу товара:', product.id || product.article);
   };
 
-  // Если нет фото или ошибка загрузки, показываем placeholder
   const showPlaceholder = !product.photo || imageError;
 
   return (
@@ -33,7 +32,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       className="bg-white group cursor-pointer w-full hover-lift"
       onClick={handleCardClick}
     >
-      {/* Изображение товара - без бордеров */}
       <div className="relative overflow-hidden w-full">
         {!showPlaceholder ? (
           <img
@@ -55,16 +53,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       </div>
       
-      {/* Разделительная линия под фото */}
       <div className="w-full h-px bg-brand-dark"></div>
       
-      {/* Информация о товаре */}
       <div className="py-2">
-        {/* Название товара - Random Grotesque Standard Book */}
         <h3 className="product-name text-brand-dark text-[18px] leading-[22px] mb-1">
           {product.name}
         </h3>
-        {/* Цена - Random Grotesque Spacious Book */}
         <div className="product-price text-brand-dark text-[15px] leading-[20px]">
           {product.price ? `${product.price.toLocaleString()} ₽` : 'Цена по запросу'}
         </div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
+import HowItWorksModal from '../components/HowItWorksModal';
 
 interface Product {
   id?: string;
@@ -21,7 +22,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
+  // Все useEffect должны быть в одном месте
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -53,7 +56,24 @@ export default function Home() {
     }
   }, [mounted]);
 
-  // Группировка товаров по категориям
+  // Функция для получения последних товаров из категории
+  const getLatestProductsFromCategory = (categoryFilter: string[], count: number = 4) => {
+    const filteredProducts = products.filter(product => 
+      categoryFilter.some(filter => 
+        product.category.toLowerCase().includes(filter.toLowerCase())
+      )
+    );
+    
+    // Убираем дубликаты по названию
+    const uniqueProducts = filteredProducts.filter((product, index, self) => 
+      index === self.findIndex(p => p.name === product.name)
+    );
+    
+    // Возвращаем последние добавленные (последние в массиве)
+    return uniqueProducts.slice(-count).reverse();
+  };
+
+  // Группировка товаров по категориям (оставляем для совместимости)
   const groupedProducts = Array.isArray(products) ? products.reduce((acc: Record<string, Product[]>, product) => {
     const category = product.category || 'Прочее';
     if (!acc[category]) acc[category] = [];
@@ -88,14 +108,23 @@ export default function Home() {
     );
   }
 
-  // Компонент секции товаров
-  const ProductSection = ({ title, categoryKey, linkText = "все модели" }: { 
+  // Компонент секции товаров с поддержкой последних товаров
+  const ProductSection = ({ title, categoryKey, categoryFilters, linkText = "все модели" }: { 
     title: string; 
-    categoryKey: string; 
+    categoryKey?: string;
+    categoryFilters?: string[];
     linkText?: string;
   }) => {
-    const categoryProducts = groupedProducts[categoryKey] || [];
-    const displayProducts = categoryProducts.slice(0, 4);
+    let displayProducts: Product[] = [];
+
+    if (categoryFilters) {
+      // Новая логика - берем последние товары из указанных категорий
+      displayProducts = getLatestProductsFromCategory(categoryFilters, 4);
+    } else if (categoryKey) {
+      // Старая логика - первые товары из конкретной категории
+      const categoryProducts = groupedProducts[categoryKey] || [];
+      displayProducts = categoryProducts.slice(0, 4);
+    }
 
     return (
       <section className="mb-16">
@@ -159,22 +188,22 @@ export default function Home() {
           </div>
         )}
 
-        {/* Секция "ОБУВЬ" */}
+        {/* Секция "ОБУВЬ" - показывает 4 последних товара из категорий обуви */}
         <ProductSection 
           title="ОБУВЬ" 
-          categoryKey="Кроссовки и кеды"
+          categoryFilters={["кроссовки", "кеды", "ботинки", "обувь", "угги", "слэды"]}
         />
 
-        {/* Секция "ОДЕЖДА" */}
+        {/* Секция "ОДЕЖДА" - показывает 4 последних товара из категорий одежды */}
         <ProductSection 
           title="ОДЕЖДА" 
-          categoryKey="Толстовки и свитшоты"
+          categoryFilters={["толстовки", "свитшоты", "футболки", "одежда", "куртки", "штаны", "шорты"]}
         />
 
-        {/* Секция "АКСЕССУАРЫ" */}
+        {/* Секция "АКСЕССУАРЫ" - показывает 4 последних товара из категорий аксессуаров */}
         <ProductSection 
           title="АКСЕССУАРЫ" 
-          categoryKey="Аксессуары"
+          categoryFilters={["аксессуары", "сумки", "рюкзаки", "головные", "очки", "кошельки", "белье"]}
         />
 
         {/* Секция "КОЛЛЕКЦИИ" */}
@@ -221,48 +250,85 @@ export default function Home() {
         className="relative overflow-hidden"
         style={{ 
           height: '830px',
-          background: 'radial-gradient(circle, #595047 0%, #D9CDBF 100%)'
+          background: 'radial-gradient(circle at center, #595047 0%, #D9CDBF 100%)'
         }}
       >
         {/* Контент баннера */}
         <div className="relative z-10 h-full flex flex-col justify-center pl-5">
           {/* Заголовок - черная часть, выровнена по левому краю - Druk Wide */}
-          <h2 className="banner-title text-[45px] lg:text-[55px] text-brand-dark text-left">
+          <h2 
+            className="text-[45px] lg:text-[55px] text-brand-dark leading-tight mb-8 text-left"
+            style={{ 
+              fontFamily: 'Druk Wide Cyr, sans-serif',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              lineHeight: '0.95'
+            }}
+          >
             В КАТАЛОГЕ НЕТ ИНТЕРЕСУЮЩЕЙ<br />
             МОДЕЛИ?<br />
             ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ
           </h2>
           
-          
           {/* "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ" белым цветом - Druk Wide */}
-          <p className="banner-title text-[45px] lg:text-[55px] text-white drop-shadow-lg text-left mb-16 mt-6">
+          <p 
+            className="text-[45px] lg:text-[55px] text-white mb-16 text-left"
+            style={{ 
+              fontFamily: 'Druk Wide Cyr, sans-serif',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              lineHeight: '0.95',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
             ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
           </p>
           
           {/* Кнопка заказа - по центру */}
-          <div className="text-center">
+          <div className="text-center mb-16">
             <a
               href="/custom-order"
-              className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-brand-dark transition-colors font-product uppercase tracking-wide"
-              style={{ width: '732px' }}
+              className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-brand-dark transition-colors uppercase tracking-wide"
+              style={{ 
+                fontFamily: 'Random Grotesque, sans-serif',
+                fontWeight: 400,
+                width: '732px',
+                maxWidth: '90vw' // Адаптивность для мобильных
+              }}
             >
               ОФОРМИТЬ ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
             </a>
           </div>
-        </div>
-        
-        {/* Ссылка "Как это работает?" - в самом низу */}
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
-          <button
-            onClick={() => {
-              console.log('Открыть модальное окно "Как это работает?"');
-            }}
-            className="text-gray-700 text-[16px] lg:text-[18px] underline hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none font-product"
-          >
-            Как это работает?
-          </button>
+          
+          {/* Ссылка "Как это работает?" - в самом низу */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+            <button
+              onClick={() => {
+                if (mounted) {
+                  setIsModalOpen(true);
+                }
+              }}
+              className="text-gray-700 text-[16px] lg:text-[18px] underline hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none"
+              style={{ 
+                fontFamily: 'Random Grotesque, sans-serif',
+                fontWeight: 400
+              }}
+            >
+              Как это работает?
+            </button>
+          </div>
         </div>
       </section>
+
+      {/* Модальное окно - рендерим только после монтирования */}
+      {mounted && (
+        <HowItWorksModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      )}
     </div>
   );
 }

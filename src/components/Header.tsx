@@ -1,22 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, JSX } from 'react';
 import { useCart } from '../contexts/CartContext';
 
-const Header = () => {
-  const [mounted, setMounted] = useState(false);
+interface MegaMenuData {
+  title: string;
+  categories: string[];
+  subcategories: string[];
+  additional?: string[];
+}
+
+type MenuKey = 'обувь' | 'одежда' | 'аксессуары' | 'коллекции';
+
+const Header: React.FC = () => {
+  const [mounted, setMounted] = useState<boolean>(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { totalItems } = useCart();
   
-  // Предотвращаем рендеринг до монтирования
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Данные для мега-меню
-  const megaMenuData = {
+  const megaMenuData: Record<MenuKey, MegaMenuData> = {
     'обувь': {
       title: 'ОБУВЬ',
       categories: [
@@ -95,7 +102,7 @@ const Header = () => {
     }
   };
   
-  const menuItems = [
+  const menuItems: string[] = [
     'sale',
     'обувь', 
     'одежда',
@@ -106,70 +113,64 @@ const Header = () => {
     'информация'
   ];
 
-  const handleMenuEnter = (item: string) => {
-    if (megaMenuData[item as keyof typeof megaMenuData] && !isSearchOpen) {
+  const handleMenuEnter = useCallback((item: string): void => {
+    if (megaMenuData[item as MenuKey] && !isSearchOpen) {
       setActiveMenu(item);
     }
-  };
+  }, [isSearchOpen]);
 
-  const handleMenuLeave = () => {
+  const handleMenuLeave = useCallback((): void => {
     if (!isSearchOpen) {
       setActiveMenu(null);
     }
-  };
+  }, [isSearchOpen]);
 
-  const handleSearchToggle = () => {
+  const handleSearchToggle = useCallback((): void => {
     setIsSearchOpen(!isSearchOpen);
-    setActiveMenu(null); // Закрываем мега-меню при открытии поиска
+    setActiveMenu(null); 
     if (!isSearchOpen) {
-      // Фокусируемся на инпуте после анимации
       setTimeout(() => {
-        const searchInput = document.getElementById('search-input');
+        const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
         if (searchInput) {
           searchInput.focus();
         }
       }, 300);
     } else {
-      setSearchQuery(''); // Очищаем поиск при закрытии
+      setSearchQuery(''); 
     }
-  };
+  }, [isSearchOpen]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     console.log('Поиск:', searchQuery);
     // Здесь будет логика поиска
-    // setIsSearchOpen(false); // Можно закрыть после поиска
-  };
+  }, [searchQuery]);
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Escape') {
       setIsSearchOpen(false);
       setSearchQuery('');
     }
-  };
+  }, []);
 
-  // Получаем позицию активного пункта меню
-  const getMenuPosition = () => {
+  const getMenuPosition = useCallback((): React.CSSProperties => {
     if (!activeMenu) return {};
     
-    // Находим позицию активного пункта меню относительно центра
-    const menuItems = ['sale', 'обувь', 'одежда', 'аксессуары', 'коллекции', 'другое', 'бренды', 'информация'];
     const activeIndex = menuItems.indexOf(activeMenu);
     
-    // Рассчитываем смещение от центра + дополнительное смещение вправо
     const centerOffset = (activeIndex - 3.5) * 120 + 200; // увеличили до +200px вправо
     
     return {
       transform: `translateX(${centerOffset}px)`
     };
-  };
+  }, [activeMenu, menuItems]);
 
-  const renderMegaMenu = () => {
-    if (!activeMenu || !megaMenuData[activeMenu as keyof typeof megaMenuData]) {
+  const renderMegaMenu = (): JSX.Element | null => {
+    if (!activeMenu || !megaMenuData[activeMenu as MenuKey]) {
       return null;
     }
 
-    const menuData = megaMenuData[activeMenu as keyof typeof megaMenuData];
+    const menuData = megaMenuData[activeMenu as MenuKey];
 
     return (
       <div 
@@ -178,22 +179,19 @@ const Header = () => {
         onMouseLeave={handleMenuLeave}
       >
         <div className="w-full py-12">
-          {/* Контейнер с центрированным контентом */}
           <div 
             className="w-[800px] mx-auto px-16"
             style={getMenuPosition()}
           >
-            {/* Первая секция - основная категория */}
             <div className="mb-16">
               <div className="flex items-start">
                 <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
                   {menuData.title}
                 </h3>
                 <div className="flex-1">
-                  {/* Горизонтальная линия после заголовка */}
                   <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
                   <div className="grid grid-cols-2 gap-x-16 gap-y-3">
-                    {menuData.categories.map((category, index) => (
+                    {menuData.categories.map((category: string, index: number) => (
                       <a
                         key={index}
                         href="#"
@@ -207,17 +205,15 @@ const Header = () => {
               </div>
             </div>
 
-            {/* Вторая секция - подкатегории */}
             <div>
               <div className="flex items-start">
                 <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
                   КАТЕГОРИЯ
                 </h3>
                 <div className="flex-1">
-                  {/* Горизонтальная линия после заголовка */}
                   <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
                   <div className="grid grid-cols-2 gap-x-16 gap-y-3">
-                    {menuData.subcategories.map((subcategory, index) => (
+                    {menuData.subcategories.map((subcategory: string, index: number) => (
                       <a
                         key={index}
                         href="#"
@@ -226,7 +222,7 @@ const Header = () => {
                         {subcategory}
                       </a>
                     ))}
-                    {menuData.additional && menuData.additional.map((item, index) => (
+                    {menuData.additional && menuData.additional.map((item: string, index: number) => (
                       <a
                         key={`additional-${index}`}
                         href="#"
@@ -269,7 +265,7 @@ const Header = () => {
                 id="search-input"
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="введите название товара"
                 className="w-full h-10 px-4 bg-brand-beige text-brand-dark placeholder-brand-gray focus:outline-none rounded-full text-sm border-0 brand-text-small"
@@ -281,7 +277,7 @@ const Header = () => {
           <ul className={`flex items-center gap-8 text-sm text-brand-dark h-[27px] transition-opacity duration-300 ${
             isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}>
-            {menuItems.map((item, index) => (
+            {menuItems.map((item: string, index: number) => (
               <li 
                 key={index}
                 onMouseEnter={() => handleMenuEnter(item)}

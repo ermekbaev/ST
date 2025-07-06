@@ -4,7 +4,6 @@ import React from 'react';
 const FooterContent = () => {
   return (
     <div className="flex flex-wrap lg:flex-nowrap">
-      {/* Разделы */}
       <div className="w-full lg:w-auto space-y-4">
         <h3 className="text-white font-medium text-xl uppercase tracking-wider">
           РАЗДЕЛЫ
@@ -43,10 +42,8 @@ const FooterContent = () => {
         </ul>
       </div>
 
-      {/* Отступ 204px между РАЗДЕЛЫ и ИНФОРМАЦИЯ */}
       <div className="hidden lg:block w-[204px]"></div>
 
-      {/* Информация */}
       <div className="w-full lg:w-auto space-y-4">
         <h3 className="text-white font-medium text-xl uppercase tracking-wider">
           ИНФОРМАЦИЯ
@@ -85,10 +82,8 @@ const FooterContent = () => {
         </ul>
       </div>
 
-      {/* Отступ 446px между ИНФОРМАЦИЯ и КОНТАКТЫ */}
       <div className="hidden lg:block w-[446px]"></div>
 
-      {/* Контакты */}
       <div className="w-full lg:w-auto space-y-4">
         <h3 className="text-white font-medium text-xl uppercase tracking-wider">
           КОНТАКТЫ
@@ -115,10 +110,8 @@ const FooterContent = () => {
         </div>
       </div>
 
-      {/* Социальные сети - справа */}
       <div className="w-full lg:w-auto lg:ml-auto space-y-4">
         <div className="flex justify-start lg:justify-end space-x-3">
-          {/* VK */}
           <a 
             href="#" 
             className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
@@ -131,7 +124,6 @@ const FooterContent = () => {
             />
           </a>
 
-          {/* Instagram */}
           <a 
             href="#" 
             className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
@@ -144,7 +136,6 @@ const FooterContent = () => {
             />
           </a>
 
-          {/* Telegram */}
           <a 
             href="#" 
             className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
@@ -157,7 +148,6 @@ const FooterContent = () => {
             />
           </a>
 
-          {/* WhatsApp */}
           <a 
             href="https://wa.me/79962814667" 
             className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"

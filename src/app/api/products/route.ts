@@ -1,33 +1,49 @@
 import { NextResponse } from 'next/server';
 
-// ID вашей Google Таблицы
 const SHEET_ID = '1naTkxDrQFfj_d7Q2U46GOj24hSqTAqrt_Yz1ImaKyVc';
 
-export async function GET() {
+interface Product {
+  id: string;
+  article: string;
+  brand: string;
+  name: string;
+  size: string;
+  category: string;
+  gender: string;
+  price: number;
+  photo: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  count: number;
+  data: Product[];
+  error?: string;
+}
+
+export async function GET(): Promise<NextResponse<ApiResponse>> {
   try {
-    // Используем публичный доступ к таблице через CSV экспорт
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
     
     const response = await fetch(csvUrl, {
-      cache: 'no-store' // Отключаем кэш для получения свежих данных
+      cache: 'no-store' 
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const csvText = await response.text();
+    const csvText: string = await response.text();
     
-    // Парсим CSV данные более надёжно
-    const lines = csvText.split('\n').filter(line => line.trim());
+    const lines: string[] = csvText.split('\n').filter((line: string) => line.trim());
     
     if (lines.length < 2) {
       throw new Error('Таблица пуста или содержит только заголовки');
     }
     
     // Функция для парсинга CSV строки с учётом кавычек
-    const parseCSVLine = (line) => {
-      const result = [];
+    const parseCSVLine = (line: string): string[] => {
+      const result: string[] = [];
       let current = '';
       let inQuotes = false;
       
@@ -43,25 +59,24 @@ export async function GET() {
           current += char;
         }
       }
-      result.push(current.trim()); // Добавляем последний элемент
+      result.push(current.trim()); 
       return result;
     };
     
-    const headers = parseCSVLine(lines[0]);
+    const headers: string[] = parseCSVLine(lines[0]);
     console.log('Заголовки таблицы:', headers);
     
-    const products = [];
+    const products: Product[] = [];
     
-    // Обрабатываем каждую строку данных (пропускаем заголовок)
     for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue; // Пропускаем пустые строки
+      const line: string = lines[i].trim();
+      if (!line) continue; 
       
       try {
-        const values = parseCSVLine(line);
+        const values: string[] = parseCSVLine(line);
         
-        if (values.length >= 8) { // Проверяем что есть все необходимые поля
-          const product = {
+        if (values.length >= 8) { 
+          const product: Product = {
             id: `product_${i}`,
             article: values[0] || `ART${i}`,
             brand: values[1] || 'Неизвестный бренд',
@@ -70,34 +85,35 @@ export async function GET() {
             category: values[4] || 'Прочее',
             gender: values[5] || 'Унисекс',
             price: parseFloat(values[6]) || 0,
-            photo: '' // Просто пустая строка, без всяких placeholder'ов
+            photo: values[7] || '' 
           };
           
-          // Добавляем только если есть название
           if (product.name && product.name !== 'Товар без названия') {
             products.push(product);
           }
         }
-      } catch (parseError) {
-        console.error(`Ошибка парсинга строки ${i}:`, parseError);
-        continue; // Пропускаем проблемную строку
+      } catch (parseError: unknown) {
+        const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parsing error';
+        console.error(`Ошибка парсинга строки ${i}:`, errorMessage);
+        continue; 
       }
     }
     
     console.log(`Загружено ${products.length} товаров`);
     console.log('Первые 2 товара:', products.slice(0, 2));
     
-    return NextResponse.json({
+    return NextResponse.json<ApiResponse>({
       success: true,
       count: products.length,
       data: products
     });
     
-  } catch (error) {
-    console.error('Ошибка при получении данных:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('Ошибка при получении данных:', errorMessage);
     
     // Возвращаем тестовые данные при ошибке
-    const mockData = [
+    const mockData: Product[] = [
       {
         id: 'test_1',
         article: 'TEST001',
@@ -122,9 +138,9 @@ export async function GET() {
       }
     ];
     
-    return NextResponse.json({
+    return NextResponse.json<ApiResponse>({
       success: false,
-      error: error.message,
+      error: errorMessage,
       count: mockData.length,
       data: mockData
     });

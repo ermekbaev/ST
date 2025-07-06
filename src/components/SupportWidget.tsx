@@ -1,4 +1,3 @@
-// src/components/SupportWidget.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,14 +8,12 @@ const SupportWidget = () => {
   const [showComment, setShowComment] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  // Предотвращаем гидрацию до монтирования
   useEffect(() => {
     setMounted(true);
     
-    // Запускаем таймер только после монтирования
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 30000); // 30 секунд
+    }, 30000); 
 
     return () => clearTimeout(timer);
   }, []);
@@ -44,13 +41,10 @@ const SupportWidget = () => {
     }
   };
 
-  // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: всегда рендерим один и тот же DOM на сервере и клиенте
-  // Просто скрываем контент через CSS до готовности
   return (
     <div className={`fixed bottom-8 right-8 z-50 flex items-end space-x-4 ${
       !mounted || !isVisible ? 'opacity-0 pointer-events-none' : ''
     }`}>
-      {/* Комментарий-подсказка */}
       <div 
         className={`bg-white rounded-xl relative transition-all duration-500 ease-in-out ${
           mounted && isVisible && !isExpanded && showComment ? 'opacity-100 transform translate-x-0' : 'opacity-0 transform translate-x-4 pointer-events-none'
@@ -63,7 +57,6 @@ const SupportWidget = () => {
           padding: '15px 30px 13px 20px'
         }}
       >
-        {/* Кнопка закрытия */}
         <button
           onClick={() => setShowComment(false)}
           className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-black hover:text-gray-600 transition-colors font-bold text-lg leading-none"
@@ -71,7 +64,6 @@ const SupportWidget = () => {
           ×
         </button>
         
-        {/* Содержимое комментария */}
         <div>
           <div className="text-base font-bold text-black" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'bold', marginBottom: '4px' }}>
             TIGR SHOP
@@ -84,11 +76,8 @@ const SupportWidget = () => {
         </div>
       </div>
 
-      {/* Основной виджет */}
       <div className="relative flex flex-col items-center">
-        {/* Все кнопки в абсолютном позиционировании - появляются на одном месте */}
         <div className="relative">
-          {/* Telegram - появляется сзади основной кнопки */}
           <button
             onClick={() => handleContactClick('telegram')}
             className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${
@@ -100,7 +89,6 @@ const SupportWidget = () => {
             <img src="/supportIcons/Telegram.svg" alt="Telegram" className="w-10 h-10" />
           </button>
 
-          {/* WhatsApp */}
           <button
             onClick={() => handleContactClick('whatsapp')}
             className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${
@@ -112,7 +100,6 @@ const SupportWidget = () => {
             <img src="/supportIcons/WhatsApp.svg" alt="WhatsApp" className="w-10 h-10" />
           </button>
 
-          {/* Email */}
           <button
             onClick={() => handleContactClick('email')}
             className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${
@@ -124,7 +111,6 @@ const SupportWidget = () => {
             <img src="/supportIcons/Email.svg" alt="Email" className="w-10 h-10" />
           </button>
 
-          {/* Основная кнопка - остается на своем месте */}
           <button
             onClick={toggleExpanded}
             className={`relative rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${

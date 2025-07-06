@@ -4,7 +4,6 @@ const TestImage = () => {
     <section className="w-full h-[500px] bg-gray-200 border-2 border-red-500">
       <h2 className="text-center py-4 text-xl">Тест изображения</h2>
       
-      {/* Простое изображение */}
       <div className="w-full h-[400px] relative bg-blue-200">
         <img
           src="/banners/Banner1-1.png"

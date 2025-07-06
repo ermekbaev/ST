@@ -2,7 +2,6 @@
 
 import ProductCard from './ProductCard';
 
-// Интерфейс для товара
 interface Product {
   id?: string;
   article: string;
@@ -22,12 +21,10 @@ interface CategorySectionProps {
 }
 
 const CategorySection: React.FC<CategorySectionProps> = ({ title, products, viewAllLink }) => {
-  // Показываем только первые 4 товара для главной страницы
   const displayProducts = products.slice(0, 4);
 
   const handleViewAllClick = () => {
     console.log('Переход к категории:', viewAllLink);
-    // window.location.href = viewAllLink;
   };
 
   return (
