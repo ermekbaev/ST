@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Header from './Header';
 import Footer from './Footer/Footer';
+import SupportWidget from './SupportWidget';
 import { CartProvider } from '../contexts/CartContext';
 
 export default function ClientLayout({
@@ -16,14 +17,6 @@ export default function ClientLayout({
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
     <CartProvider>
       <Header />
@@ -31,6 +24,7 @@ export default function ClientLayout({
         {children}
       </main>
       <Footer />
+      <SupportWidget />
     </CartProvider>
   );
 }

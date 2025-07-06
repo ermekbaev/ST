@@ -7,7 +7,7 @@ const FooterBottom = () => {
         2018-2025 © Tigr Shop
       </div>
       <div className="text-gray-400 text-sm mt-0">
-        Разработано: <span className="text-white">AGENTSTVO_404</span>
+        При поддержке: <span className="text-white">АГЕНТСТВО_404</span>
       </div>
     </div>
   );
