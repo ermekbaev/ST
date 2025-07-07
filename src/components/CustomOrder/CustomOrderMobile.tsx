@@ -66,7 +66,7 @@ const CustomOrderMobile: React.FC<CustomOrderMobileProps> = ({ onHowItWorksClick
       <div className="flex justify-center mb-8">
         <a
           href="https://t.me/TIGRSHOPsupport"
-          className="inline-block bg-transparent border border-white text-white px-6 py-3 text-[12px] hover:bg-white hover:text-brand-dark transition-colors uppercase text-center leading-tight"
+          className="inline-block bg-transparent border border-white text-white px-6 py-3 text-[12px] hover:bg-white hover:text-black transition-colors uppercase text-center leading-tight"
           style={{ 
             fontFamily: 'Random Grotesque, sans-serif',
             fontWeight: 400,

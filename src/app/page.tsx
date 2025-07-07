@@ -263,6 +263,13 @@ export default function Home() {
           }
         }}
       />
+
+        {mounted && (
+        <HowItWorksModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      )}
     </div>
   );
 }

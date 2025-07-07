@@ -177,6 +177,10 @@ const Header: React.FC = () => {
         className="absolute top-full left-0 w-full bg-brand-beige z-50 animate-slide-down"
         onMouseEnter={() => setActiveMenu(activeMenu)}
         onMouseLeave={handleMenuLeave}
+        style={{
+          // Добавляем небольшой отрицательный margin-top чтобы убрать промежуток
+          marginTop: '-1px'
+        }}
       >
         <div className="w-full py-12">
           <div 
@@ -250,10 +254,8 @@ const Header: React.FC = () => {
         </div>
 
         {/* Навигация - точно по центру */}
-        <nav 
-          className="flex-shrink-0 relative"
-          onMouseLeave={handleMenuLeave}
-        >
+        {/* ВАЖНО: Убираем onMouseLeave с nav - теперь только на самом мега-меню */}
+        <nav className="flex-shrink-0 relative">
           {/* Поисковая строка - анимация справа налево */}
           <div 
             className={`absolute top-1/2 right-0 transform -translate-y-1/2 h-10 flex items-center transition-all duration-500 ease-in-out z-20 ${
@@ -281,6 +283,7 @@ const Header: React.FC = () => {
               <li 
                 key={index}
                 onMouseEnter={() => handleMenuEnter(item)}
+                // Убираем onMouseLeave с отдельных пунктов меню
               >
                 <a 
                   href="#" 

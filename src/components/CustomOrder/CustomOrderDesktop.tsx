@@ -11,7 +11,7 @@ const CustomOrderDesktop: React.FC<CustomOrderDesktopProps> = ({ onHowItWorksCli
     <>
       {/* Заголовок - черная часть, выровнена по левому краю */}
       <h2 
-        className="text-[45px] lg:text-[55px] text-brand-dark leading-tight my-10 text-left"
+        className="text-[45px] lg:text-[55px] text-brand-dark leading-tight my-8 text-left"
         style={{ 
           fontFamily: 'Druk Wide Cyr, sans-serif',
           fontWeight: 700,
