@@ -65,6 +65,11 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
     
     const headers: string[] = parseCSVLine(lines[0]);
     console.log('Заголовки таблицы:', headers);
+    console.log('Количество колонок:', headers.length);
+    
+    // Определяем индексы колонок
+    const photoIndex = headers.findIndex(h => h.toLowerCase().includes('фото') || h.toLowerCase().includes('photo') || h.toLowerCase().includes('изображ'));
+    console.log('Индекс колонки с фото:', photoIndex, '- колонка:', headers[photoIndex]);
     
     const products: Product[] = [];
     
@@ -75,17 +80,17 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
       try {
         const values: string[] = parseCSVLine(line);
         
-        if (values.length >= 8) { 
+        if (values.length >= 7) { // Изменили с 8 на 7, так как колонка H может быть пустой
           const product: Product = {
             id: `product_${i}`,
-            article: values[0] || `ART${i}`,
-            brand: values[1] || 'Неизвестный бренд',
-            name: values[2] || 'Товар без названия',
-            size: values[3] || 'Universal',
-            category: values[4] || 'Прочее',
-            gender: values[5] || 'Унисекс',
-            price: parseFloat(values[6]) || 0,
-            photo: values[7] || '' 
+            article: values[0] || `ART${i}`,        // Колонка A
+            brand: values[1] || 'Неизвестный бренд', // Колонка B  
+            name: values[2] || 'Товар без названия', // Колонка C
+            size: values[3] || 'Universal',         // Колонка D
+            category: values[4] || 'Прочее',        // Колонка E
+            gender: values[5] || 'Унисекс',         // Колонка F
+            price: parseFloat(values[6]) || 0,      // Колонка G
+            photo: values[7] || ''                  // Колонка H (может быть пустой)
           };
           
           if (product.name && product.name !== 'Товар без названия') {
@@ -100,7 +105,21 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
     }
     
     console.log(`Загружено ${products.length} товаров`);
-    console.log('Первые 2 товара:', products.slice(0, 2));
+    
+    // Краткая статистика по изображениям
+    const withImages = products.filter(p => p.photo && p.photo.trim() !== '').length;
+    console.log(`Товаров с изображениями: ${withImages}/${products.length}`);
+    
+    // Показываем первые 3 товара для проверки
+    if (products.length > 0) {
+      console.log('=== ПЕРВЫЕ 3 ТОВАРА ===');
+      products.slice(0, 3).forEach((product, index) => {
+        console.log(`${index + 1}. ${product.name}`);
+        console.log(`   Фото: "${product.photo}"`);
+        console.log(`   Есть фото: ${Boolean(product.photo && product.photo.trim())}`);
+      });
+      console.log('=== КОНЕЦ СПИСКА ===');
+    }
     
     return NextResponse.json<ApiResponse>({
       success: true,

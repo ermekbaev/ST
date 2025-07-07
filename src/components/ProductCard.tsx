@@ -25,7 +25,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     console.log('Переход на страницу товара:', product.id || product.article);
   };
 
-  const showPlaceholder = !product.photo || imageError;
+//   console.log(product);
+  
+
+  const handleImageError = () => {
+    console.error('❌ ОШИБКА ИЗОБРАЖЕНИЯ:', product.name);
+    console.error('   URL:', `"${product.photo}"`);
+    console.error('   Длина URL:', product.photo?.length || 0);
+    console.error('   Начинается с http:', product.photo?.startsWith('http'));
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    console.log('✅ Изображение загружено:', product.name);
+  };
+
+  const showPlaceholder = !product.photo || imageError || product.photo.trim() === '';
 
   return (
     <div 
@@ -39,8 +54,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             src={product.photo}
             alt={product.name}
             className="w-full h-[150px] lg:h-[200px] object-cover"
-            onError={() => setImageError(true)}
-            onLoad={() => console.log('Изображение загружено:', product.photo)}
+            onError={handleImageError}
+            onLoad={handleImageLoad}
           />
         ) : (
           <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">
