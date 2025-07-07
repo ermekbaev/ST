@@ -53,6 +53,12 @@
   }
 }
 
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* Базовые стили */
 body {
   background: var(--background);

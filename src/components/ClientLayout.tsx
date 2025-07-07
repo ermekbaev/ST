@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Header from './Header';
 import Footer from './Footer/Footer';
 import SupportWidget from './SupportWidget';
+import BottomNavigation from './BottomNavigation';
 import { CartProvider } from '../contexts/CartContext';
 
 export default function ClientLayout({
@@ -12,19 +13,50 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [supportForceVisible, setSupportForceVisible] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const handleSupportToggle = () => {
+    if (supportForceVisible) {
+      // Если виджет уже показан, скрываем его
+      setSupportForceVisible(false);
+    } else {
+      // Если виджет скрыт, показываем его
+      setSupportForceVisible(true);
+    }
+  };
+
+  const handleSupportWidgetToggle = (isExpanded: boolean) => {
+    // Если виджет закрыт пользователем в принудительном режиме, убираем принудительную видимость
+    if (!isExpanded && supportForceVisible) {
+      // Добавляем задержку для плавного скрытия основной кнопки
+      setTimeout(() => {
+        setSupportForceVisible(false);
+      }, 600); // Увеличена задержка для плавности
+    }
+  };
+
   return (
     <CartProvider>
       <Header />
-      <main className="min-h-screen">
-        {children}
+      <main className="min-h-screen pb-[70px] lg:pb-0 overflow-x-hidden">
+        <div className="max-w-[100vw] mx-auto">
+          {children}
+        </div>
       </main>
       <Footer />
-      <SupportWidget />
+      
+      {/* SupportWidget - показывается на десктопе всегда, на мобильном по требованию */}
+      <SupportWidget 
+        forceVisible={supportForceVisible}
+        onToggle={handleSupportWidgetToggle}
+      />
+      
+      {/* BottomNavigation - только на мобильном */}
+      <BottomNavigation onSupportClick={handleSupportToggle} />
     </CartProvider>
   );
 }

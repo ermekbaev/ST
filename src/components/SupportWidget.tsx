@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 
-const SupportWidget = () => {
+interface SupportWidgetProps {
+  forceVisible?: boolean;
+  onToggle?: (isExpanded: boolean) => void;
+}
+
+const SupportWidget: React.FC<SupportWidgetProps> = ({ forceVisible = false, onToggle }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showComment, setShowComment] = useState(true);
@@ -11,15 +16,50 @@ const SupportWidget = () => {
   useEffect(() => {
     setMounted(true);
     
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 30000); 
+    // Таймер срабатывает только если не форсирована видимость
+    if (!forceVisible) {
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 30000); 
 
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    }
+  }, [forceVisible]);
+
+  // Обновляем видимость при изменении forceVisible
+  useEffect(() => {
+    if (forceVisible) {
+      setIsVisible(true);
+      // Добавляем задержку для появления основной кнопки (как будто выезжает снизу)
+      setTimeout(() => {
+        setIsExpanded(true);
+      }, 400);
+      setShowComment(false); // Скрываем комментарий при форсированном показе
+    } else {
+      // При закрытии форсированного режима сворачиваем виджет
+      setIsExpanded(false);
+      // Добавляем задержку перед полным скрытием
+      setTimeout(() => {
+        if (!forceVisible) {
+          setIsVisible(false);
+        }
+      }, 500);
+    }
+  }, [forceVisible]);
 
   const toggleExpanded = () => {
-    setIsExpanded(!isExpanded);
+    const newExpandedState = !isExpanded;
+    setIsExpanded(newExpandedState);
+    
+    // Уведомляем родительский компонент об изменении состояния
+    if (onToggle) {
+      onToggle(newExpandedState);
+    }
+    
+    // Если виджет закрыт в принудительном режиме, убираем принудительную видимость
+    if (!newExpandedState && forceVisible) {
+      // Можно добавить дополнительную логику если нужно
+    }
   };
 
   const handleContactClick = (type: string) => {
@@ -41,90 +81,129 @@ const SupportWidget = () => {
     }
   };
 
+  // Скрываем на мобильных устройствах если не форсирована видимость
+  const shouldShow = mounted && (isVisible || forceVisible);
+
   return (
-    <div className={`fixed bottom-8 right-8 z-50 flex items-end space-x-4 ${
-      !mounted || !isVisible ? 'opacity-0 pointer-events-none' : ''
-    }`}>
-      <div 
-        className={`bg-white rounded-xl relative transition-all duration-500 ease-in-out ${
-          mounted && isVisible && !isExpanded && showComment ? 'opacity-100 transform translate-x-0' : 'opacity-0 transform translate-x-4 pointer-events-none'
-        }`} 
-        style={{ 
-          fontFamily: 'Arial, sans-serif',
-          border: '4px solid #595047',
-          width: '310px',
-          height: '115px',
-          padding: '15px 30px 13px 20px'
-        }}
-      >
-        <button
-          onClick={() => setShowComment(false)}
-          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-black hover:text-gray-600 transition-colors font-bold text-lg leading-none"
+    <div className={`fixed ${forceVisible ? 'bottom-[90px]' : 'bottom-8'} right-4 lg:bottom-8 lg:right-8 z-50 flex items-end space-x-4 ${
+      !shouldShow ? 'opacity-0 pointer-events-none' : ''
+    } ${forceVisible ? 'lg:hidden' : 'hidden lg:flex'}`}>
+      {/* Комментарий показываем только если не форсирована видимость */}
+      {!forceVisible && (
+        <div 
+          className={`bg-white rounded-xl relative transition-all duration-500 ease-in-out ${
+            mounted && isVisible && !isExpanded && showComment ? 'opacity-100 transform translate-x-0' : 'opacity-0 transform translate-x-4 pointer-events-none'
+          }`} 
+          style={{ 
+            fontFamily: 'Arial, sans-serif',
+            border: '4px solid #595047',
+            width: '310px',
+            height: '115px',
+            padding: '15px 30px 13px 20px'
+          }}
         >
-          ×
-        </button>
-        
-        <div>
-          <div className="text-base font-bold text-black" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'bold', marginBottom: '4px' }}>
-            TIGR SHOP
-          </div>
-          <div className="text-sm text-gray-700" style={{ fontFamily: 'Arial, sans-serif', lineHeight: '1.3' }}>
-            Это <span className="font-bold text-black">TIGR SHOP</span>!<br/>
-            Если у вас возникли вопросы,<br/>
-            обратитесь в чат.
+          <button
+            onClick={() => setShowComment(false)}
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-black hover:text-gray-600 transition-colors font-bold text-lg leading-none"
+          >
+            ×
+          </button>
+          
+          <div>
+            <div className="text-base font-bold text-black" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'bold', marginBottom: '4px' }}>
+              TIGR SHOP
+            </div>
+            <div className="text-sm text-gray-700" style={{ fontFamily: 'Arial, sans-serif', lineHeight: '1.3' }}>
+              Это <span className="font-bold text-black">TIGR SHOP</span>!<br/>
+              Если у вас возникли вопросы,<br/>
+              обратитесь в чат.
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="relative flex flex-col items-center">
         <div className="relative">
           <button
             onClick={() => handleContactClick('telegram')}
-            className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${
+            className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 ${
               isExpanded ? 'w-12 h-12 opacity-100 transform translate-y-[-156px]' : 'w-12 h-12 opacity-0 pointer-events-none transform translate-y-0'
             }`}
             title="Telegram"
-            style={{ transitionDelay: isExpanded ? '100ms' : '0ms' }}
+            style={{ 
+              transitionDelay: isExpanded ? '200ms' : '0ms',
+              transitionDuration: '300ms',
+              transitionTimingFunction: 'ease-out',
+              transitionProperty: 'all'
+            }}
           >
             <img src="/supportIcons/Telegram.svg" alt="Telegram" className="w-10 h-10" />
           </button>
 
           <button
             onClick={() => handleContactClick('whatsapp')}
-            className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${
+            className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 ${
               isExpanded ? 'w-12 h-12 opacity-100 transform translate-y-[-104px]' : 'w-12 h-12 opacity-0 pointer-events-none transform translate-y-0'
             }`}
             title="WhatsApp"
-            style={{ transitionDelay: isExpanded ? '200ms' : '0ms' }}
+            style={{ 
+              transitionDelay: isExpanded ? '300ms' : '0ms',
+              transitionDuration: '300ms',
+              transitionTimingFunction: 'ease-out',
+              transitionProperty: 'all'
+            }}
           >
             <img src="/supportIcons/WhatsApp.svg" alt="WhatsApp" className="w-10 h-10" />
           </button>
 
           <button
             onClick={() => handleContactClick('email')}
-            className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${
+            className={`absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 ${
               isExpanded ? 'w-12 h-12 opacity-100 transform translate-y-[-52px]' : 'w-12 h-12 opacity-0 pointer-events-none transform translate-y-0'
             }`}
             title="Email"
-            style={{ transitionDelay: isExpanded ? '300ms' : '0ms' }}
+            style={{ 
+              transitionDelay: isExpanded ? '400ms' : '0ms',
+              transitionDuration: '300ms',
+              transitionTimingFunction: 'ease-out',
+              transitionProperty: 'all'
+            }}
           >
             <img src="/supportIcons/Email.svg" alt="Email" className="w-10 h-10" />
           </button>
 
           <button
             onClick={toggleExpanded}
-            className={`relative rounded-full flex items-center justify-center hover:opacity-80 transition-all duration-300 hover:scale-105 ${
-              isExpanded ? 'w-12 h-12' : 'w-16 h-16'
+            className={`relative rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 ${
+              // На мобильном (forceVisible) кнопка всегда маленькая, на десктопе - меняет размер
+              forceVisible ? 'w-12 h-12' : (isExpanded ? 'w-12 h-12' : 'w-16 h-16')
+            } ${
+              forceVisible && shouldShow ? 
+                'opacity-100 transform translate-y-0' : 
+                shouldShow ? 'opacity-100 transform translate-y-0' : 
+                'opacity-0 transform translate-y-[100px] pointer-events-none'
             }`}
             title="Связаться с нами"
+            style={{ 
+              transitionDelay: forceVisible ? '100ms' : '0ms',
+              transitionDuration: '500ms',
+              transitionTimingFunction: 'ease-out',
+              transitionProperty: 'all'
+            }}
           >
             <img 
               src="/supportIcons/Support.svg" 
               alt="Support" 
-              className={`transition-all duration-300 ${
-                isExpanded ? 'w-10 h-10' : 'w-14 h-14'
-              }`} 
-            />
+              className={`${
+                // На мобильном (forceVisible) иконка всегда маленькая, на десктопе - меняет размер
+                forceVisible ? 'w-10 h-10' : (isExpanded ? 'w-10 h-10' : 'w-14 h-14')
+              }`}
+              style={{
+                transitionDuration: '300ms',
+                transitionTimingFunction: 'ease-out',
+                transitionProperty: 'all'
+              }}
+            /> 
           </button>
         </div>
       </div>

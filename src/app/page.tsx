@@ -128,16 +128,21 @@ export default function Home() {
 
     return (
       <section className="mb-16">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="section-title text-[35px] text-black">
+        <div className="flex justify-between items-center mb-6 lg:mb-8">
+          <h2 className="section-title text-[22px] lg:text-[35px] text-black">
             {title}
           </h2>
           <a 
             href="#" 
-            className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
+            className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
           >
-            {linkText}
-            <img src="/utils/Vector3.svg" alt="" />
+            {/* Десктопная версия */}
+            <span className="hidden lg:inline">
+              {linkText}
+            </span>
+            <img src="/utils/Vector3.svg" alt="" className="hidden lg:block w-3 h-3 lg:w-4 lg:h-4" />
+            {/* Мобильная версия - своя иконка стрелки */}
+            <img src="/utils/arrow_right.svg" alt="" className="lg:hidden w-4 h-4" />
           </a>
         </div>
         
@@ -208,16 +213,21 @@ export default function Home() {
 
         {/* Секция "КОЛЛЕКЦИИ" */}
         <section className="mb-16">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="section-title text-[35px] text-black">
+          <div className="flex justify-between items-center mb-6 lg:mb-8">
+            <h2 className="section-title text-[22px] lg:text-[35px] text-black">
               КОЛЛЕКЦИИ
             </h2>
             <a 
               href="#" 
-              className="text-black text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
+              className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
             >
-              все модели
-              <img src="/utils/Vector3.svg" alt="" />
+              {/* Десктопная версия */}
+              <span className="hidden lg:inline">
+                все модели
+              </span>
+              <img src="/utils/Vector3.svg" alt="" className="hidden lg:block w-3 h-3 lg:w-4 lg:h-4" />
+              {/* Мобильная версия - своя иконка стрелки */}
+              <img src="/utils/arrow_right.svg" alt="" className="lg:hidden w-4 h-4" />
             </a>
           </div>
           

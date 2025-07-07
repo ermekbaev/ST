@@ -76,44 +76,52 @@ const HeroSlider = () => {
   return (
     <section 
       id="hero-slider"
-      className="relative w-full h-[500px] overflow-hidden"
+      className="relative w-full overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       <div 
-        className="flex transition-transform duration-500 ease-in-out h-full"
+        className="flex transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className="w-full h-full flex-shrink-0 relative cursor-pointer"
+            className="w-full flex-shrink-0 relative cursor-pointer"
             onClick={() => handleBannerClick(slide.link)}
           >
-            <div className="w-full h-full relative">
+            <div className="w-full relative">
               {/* Десктопное изображение (показываются на экранах >= 768px) */}
               <img
                 src={slide.imageDesktop}
                 alt={slide.alt}
-                className="hidden md:block w-full h-full object-cover"
+                className="hidden md:block w-full h-auto object-cover object-center"
                 onLoad={() => console.log('Загружено десктоп:', slide.imageDesktop)}
+                onError={(e) => {
+                  console.error('Ошибка загрузки десктоп:', slide.imageDesktop);
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
               />
               
               {/* Мобильное изображение (показываются на экранах < 768px) */}
               <img
                 src={slide.imageMobile}
                 alt={slide.alt}
-                className="block md:hidden w-full h-full object-cover"
+                className="block md:hidden w-full h-auto object-contain object-center"
                 onLoad={() => console.log('Загружено мобильное:', slide.imageMobile)}
+                onError={(e) => {
+                  console.error('Ошибка загрузки мобильное:', slide.imageMobile);
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
               />
             </div>
           </div>
         ))}
       </div>
 
-      {/* Невидимые области для ручного переключения */}
+      {/* Невидимые области для ручного переключения - только на десктопе */}
       <div 
-        className="absolute left-0 top-0 w-20 h-full z-10 cursor-pointer"
+        className="hidden md:block absolute left-0 top-0 w-20 h-full z-10 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           prevSlide();
@@ -121,13 +129,35 @@ const HeroSlider = () => {
         title="Предыдущий слайд"
       ></div>
       <div 
-        className="absolute right-0 top-0 w-20 h-full z-10 cursor-pointer"
+        className="hidden md:block absolute right-0 top-0 w-20 h-full z-10 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           nextSlide();
         }}
         title="Следующий слайд"
       ></div>
+
+      {/* Стрелки навигации - только на десктопе при ховере */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          prevSlide();
+        }}
+        className="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20"
+        aria-label="Предыдущий слайд"
+      >
+        ←
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          nextSlide();
+        }}
+        className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20"
+        aria-label="Следующий слайд"
+      >
+        →
+      </button>
     </section>
   );
 };

@@ -33,18 +33,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       onClick={handleCardClick}
     >
       <div className="relative overflow-hidden w-full">
+
         {!showPlaceholder ? (
           <img
             src={product.photo}
             alt={product.name}
-            className="w-full h-[200px] object-cover"
+            className="w-full h-[150px] lg:h-[200px] object-cover"
             onError={() => setImageError(true)}
             onLoad={() => console.log('Изображение загружено:', product.photo)}
           />
         ) : (
-          <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center">
+          <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">
             <div className="text-center text-gray-400">
-              <div className="text-sm mb-1">{product.brand}</div>
+              <div className="text-xs lg:text-sm mb-1">{product.brand}</div>
               <div className="text-xs">Фото скоро</div>
             </div>
           </div>
