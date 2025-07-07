@@ -10,7 +10,7 @@ const HeroSlider = () => {
     {
       id: 1,
       title: "ШИРОКИЙ АССОРТИМЕНТ ОРИГИНАЛЬНЫХ БРЕНДОВ",
-      imageDesktop: "/banners/banner1-1.png", 
+      imageDesktop: "/banners/Banner1-1.png", 
       imageMobile: "/banners/Banner1-2.png",  
       link: "/catalog", 
       alt: "Широкий ассортимент оригинальных брендов"
