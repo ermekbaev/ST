@@ -41,22 +41,28 @@ export default function ClientLayout({
 
   return (
     <CartProvider>
-      <Header />
-      <main className="min-h-screen pb-[70px] lg:pb-0 overflow-x-hidden">
-        <div className="max-w-[100vw] mx-auto">
-          {children}
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 overflow-x-hidden">
+          <div className="max-w-[100vw] mx-auto">
+            {children}
+          </div>
+        </main>
+        
+        {/* Footer с отступом снизу на мобильных */}
+        <div className="pb-[70px] lg:pb-0">
+          <Footer />
         </div>
-      </main>
-      <Footer />
-      
-      {/* SupportWidget - показывается на десктопе всегда, на мобильном по требованию */}
-      <SupportWidget 
-        forceVisible={supportForceVisible}
-        onToggle={handleSupportWidgetToggle}
-      />
-      
-      {/* BottomNavigation - только на мобильном */}
-      <BottomNavigation onSupportClick={handleSupportToggle} />
+        
+        {/* SupportWidget - показывается на десктопе всегда, на мобильном по требованию */}
+        <SupportWidget 
+          forceVisible={supportForceVisible}
+          onToggle={handleSupportWidgetToggle}
+        />
+        
+        {/* BottomNavigation - только на мобильном */}
+        <BottomNavigation onSupportClick={handleSupportToggle} />
+      </div>
     </CartProvider>
   );
 }

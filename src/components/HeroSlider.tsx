@@ -28,7 +28,7 @@ const HeroSlider = () => {
       title: "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ",
       imageDesktop: "/banners/Banner3-1.webp", 
       imageMobile: "/banners/Banner3-2.webp",  
-      link: "/custom-order", 
+      link: "https://t.me/TIGRSHOPsupport", 
       alt: "Индивидуальный заказ"
     }
   ];

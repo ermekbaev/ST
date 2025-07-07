@@ -35,66 +35,41 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
       <div className="flex items-center justify-around h-[70px] px-4">
-        {/* Профиль */}
+{/* Профиль */}
         <button
           onClick={handleProfileClick}
-          className="flex flex-col items-center justify-center gap-1 p-2 hover:opacity-70 transition-opacity"
+          className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity"
         >
-          <div className="w-6 h-6 flex items-center justify-center">
-            <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-6" />
+          <img src="/icons/profile.svg" alt="Профиль" className="w-8 h-8" />
+        </button>
+
+                {/* Корзина */}
+        <button
+          onClick={handleCartClick}
+          className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity relative"
+        >
+          <div className="relative">
+            <img src="/icons/cart.svg" alt="Корзина" className="w-8 h-8" />
+            {/* Счетчик товаров */}
+            {mounted && totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px]">
+                {totalItems > 99 ? '99+' : totalItems}
+              </span>
+            )}
           </div>
-          <span 
-            className="text-xs text-gray-600"
-            style={{ fontFamily: 'Random Grotesque, Arial, sans-serif' }}
-          >
-            Профиль
-          </span>
         </button>
 
         {/* Поддержка */}
         <button
           onClick={handleSupportClick}
-          className="flex flex-col items-center justify-center gap-1 p-2 hover:opacity-70 transition-opacity"
+          className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity"
         >
-          <div className="w-6 h-6 flex items-center justify-center">
-            {/* Используем ту же иконку что и в SupportWidget, но меньшего размера */}
-            <svg width="24" height="24" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="30" cy="30" r="29.5" fill="white" stroke="#666" strokeWidth="2"/>
-              <path d="M20.9277 22.3704H40.8644" stroke="#666" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M20.9277 30.6034H32.5507" stroke="#666" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M20.9277 26.4869H36.3802" stroke="#666" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M29.2052 43.2308C28.4608 41.6613 28.6492 39.8497 29.6895 38.63C30.7926 37.3386 32.3711 37.2399 32.676 37.222C34.38 37.1413 36.084 37.0695 37.788 36.9888C42.5771 36.1368 46.0747 31.9396 46.0568 27.1595C46.0389 22.2089 42.2542 17.9489 37.2409 17.3301H24.6852C19.1965 16.9804 14.5599 20.765 13.9231 25.4465C13.4209 29.0966 15.4029 32.8992 18.9095 34.9619" stroke="#666" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span 
-            className="text-xs text-gray-600"
-            style={{ fontFamily: 'Random Grotesque, Arial, sans-serif' }}
-          >
-            Поддержка
-          </span>
+          {/* Используем ту же иконку что и в SupportWidget, но меньшего размера */}
+          <img src="/supportIcons/Support2.svg" alt="Профиль" className="w-8 h-8" />
+
         </button>
 
-        {/* Корзина */}
-        <button
-          onClick={handleCartClick}
-          className="flex flex-col items-center justify-center gap-1 p-2 hover:opacity-70 transition-opacity relative"
-        >
-          <div className="w-6 h-6 flex items-center justify-center relative">
-            <img src="/icons/cart.svg" alt="Корзина" className="w-6 h-6" />
-            {/* Счетчик товаров */}
-            {mounted && totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px]">
-                {totalItems > 99 ? '99+' : totalItems}
-              </span>
-            )}
-          </div>
-          <span 
-            className="text-xs text-gray-600"
-            style={{ fontFamily: 'Random Grotesque, Arial, sans-serif' }}
-          >
-            Корзина
-          </span>
-        </button>
+
       </div>
     </div>
   );

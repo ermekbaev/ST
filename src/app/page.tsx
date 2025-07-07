@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
 import HowItWorksModal from '../components/HowItWorksModal';
+import CustomOrderSection from '@/components/CustomOrder/CustomOrderSection';
 
 interface Product {
   id?: string;
@@ -254,91 +255,14 @@ export default function Home() {
         </section>
 
       </div>
-
-      {/* Секция индивидуального заказа - ВЫНЕСЕНА ИЗ КОНТЕЙНЕРА */}
-      <section 
-        className="relative overflow-hidden"
-        style={{ 
-          height: '830px',
-          background: 'radial-gradient(circle at center, #595047 0%, #D9CDBF 100%)'
+{/* Секция индивидуального заказа */}
+      <CustomOrderSection 
+        onHowItWorksClick={() => {
+          if (mounted) {
+            setIsModalOpen(true);
+          }
         }}
-      >
-        {/* Контент баннера */}
-        <div className="relative z-10 h-full flex flex-col justify-center pl-5">
-          {/* Заголовок - черная часть, выровнена по левому краю - Druk Wide */}
-          <h2 
-            className="text-[45px] lg:text-[55px] text-brand-dark leading-tight mb-8 text-left"
-            style={{ 
-              fontFamily: 'Druk Wide Cyr, sans-serif',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.02em',
-              lineHeight: '0.95'
-            }}
-          >
-            В КАТАЛОГЕ НЕТ ИНТЕРЕСУЮЩЕЙ<br />
-            МОДЕЛИ?<br />
-            ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ
-          </h2>
-          
-          {/* "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ" белым цветом - Druk Wide */}
-          <p 
-            className="text-[45px] lg:text-[55px] text-white mb-16 text-left"
-            style={{ 
-              fontFamily: 'Druk Wide Cyr, sans-serif',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.02em',
-              lineHeight: '0.95',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-            }}
-          >
-            ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
-          </p>
-          
-          {/* Кнопка заказа - по центру */}
-          <div className="text-center mb-16">
-            <a
-              href="/custom-order"
-              className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-brand-dark transition-colors uppercase tracking-wide"
-              style={{ 
-                fontFamily: 'Random Grotesque, sans-serif',
-                fontWeight: 400,
-                width: '732px',
-                maxWidth: '90vw' // Адаптивность для мобильных
-              }}
-            >
-              ОФОРМИТЬ ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
-            </a>
-          </div>
-          
-          {/* Ссылка "Как это работает?" - в самом низу */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-            <button
-              onClick={() => {
-                if (mounted) {
-                  setIsModalOpen(true);
-                }
-              }}
-              className="text-gray-700 text-[16px] lg:text-[18px] underline hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none"
-              style={{ 
-                fontFamily: 'Random Grotesque, sans-serif',
-                fontWeight: 400
-              }}
-            >
-              Как это работает?
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Модальное окно - рендерим только после монтирования */}
-      {mounted && (
-        <HowItWorksModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-        />
-      )}
+      />
     </div>
   );
 }
