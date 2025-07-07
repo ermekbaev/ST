@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, JSX } from 'react';
-import { useCart } from '../contexts/CartContext';
+import { useCart } from '../../../contexts/CartContext';
 
 interface MegaMenuData {
   title: string;
@@ -12,7 +12,7 @@ interface MegaMenuData {
 
 type MenuKey = 'обувь' | 'одежда' | 'аксессуары' | 'коллекции';
 
-const Header: React.FC = () => {
+const DesktopHeader: React.FC = () => {
   const [mounted, setMounted] = useState<boolean>(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -327,4 +327,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header;
+export default DesktopHeader;

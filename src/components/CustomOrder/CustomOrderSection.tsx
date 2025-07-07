@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import CustomOrderMobile from './CustomOrderMobile';
 import CustomOrderDesktop from './CustomOrderDesktop';
-import HowItWorksModal from '../HowItWorksModal';
+import HowItWorksModal from '../UI/Modal/HowItWorksModal';
 
 interface CustomOrderSectionProps {
   onHowItWorksClick?: () => void;

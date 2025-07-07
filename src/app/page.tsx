@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import HeroSlider from '../components/HeroSlider';
-import ProductCard from '../components/ProductCard';
-import HowItWorksModal from '../components/HowItWorksModal';
+import HeroSlider from '../components/Hero/HeroSlider';
+import ProductCard from '../components/Product/ProductCard';
+import HowItWorksModal from '../components/UI/Modal/HowItWorksModal';
 import CustomOrderSection from '@/components/CustomOrder/CustomOrderSection';
 
 interface Product {

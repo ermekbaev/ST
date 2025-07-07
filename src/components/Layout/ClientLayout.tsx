@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Header from './Header';
+import Header from './Header/Header';
 import Footer from './Footer/Footer';
-import SupportWidget from './SupportWidget';
-import BottomNavigation from './BottomNavigation';
-import { CartProvider } from '../contexts/CartContext';
+import SupportWidget from '../UI/Support/SupportWidget';
+import BottomNavigation from './Navigation/BottomNavigation';
+import { CartProvider } from '../../contexts/CartContext';
 
 export default function ClientLayout({
   children,
