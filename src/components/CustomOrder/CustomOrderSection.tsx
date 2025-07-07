@@ -11,7 +11,7 @@ interface CustomOrderSectionProps {
 const CustomOrderSection: React.FC<CustomOrderSectionProps> = ({ onHowItWorksClick }) => {
   return (
     <section 
-      className="relative overflow-hidden h-[400px] md:h-[830px]"
+      className="relative overflow-hidden h-[400px] md:h-[670px]"
       style={{ 
         background: 'radial-gradient(circle at center, #595047 0%, #D9CDBF 100%)'
       }}

@@ -11,7 +11,7 @@ const CustomOrderDesktop: React.FC<CustomOrderDesktopProps> = ({ onHowItWorksCli
     <>
       {/* Заголовок - черная часть, выровнена по левому краю */}
       <h2 
-        className="text-[45px] lg:text-[55px] text-brand-dark leading-tight mb-8 text-left"
+        className="text-[45px] lg:text-[55px] text-brand-dark leading-tight my-10 text-left"
         style={{ 
           fontFamily: 'Druk Wide Cyr, sans-serif',
           fontWeight: 700,
@@ -41,7 +41,7 @@ const CustomOrderDesktop: React.FC<CustomOrderDesktopProps> = ({ onHowItWorksCli
       </p>
       
       {/* Кнопка заказа - десктопная */}
-      <div className="text-center mb-16">
+      <div className="text-center my-16">
         <a
           href="https://t.me/TIGRSHOPsupport"
           className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-black transition-colors uppercase tracking-wide"
@@ -57,10 +57,10 @@ const CustomOrderDesktop: React.FC<CustomOrderDesktopProps> = ({ onHowItWorksCli
       </div>
 
       {/* Ссылка "Как это работает?" - десктопная версия */}
-      <div className="text-center">
+      <div className="text-center ">
         <button
           onClick={onHowItWorksClick}
-          className="text-gray-600 text-[16px] lg:text-[18px] underline hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none"
+          className="text-gray-600 text-[16px] lg:text-[18px] underline hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none pt-10"
           style={{ 
             fontFamily: 'Random Grotesque, sans-serif',
             fontWeight: 400
