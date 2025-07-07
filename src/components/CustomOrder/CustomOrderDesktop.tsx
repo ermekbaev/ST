@@ -44,7 +44,7 @@ const CustomOrderDesktop: React.FC<CustomOrderDesktopProps> = ({ onHowItWorksCli
       <div className="text-center mb-16">
         <a
           href="https://t.me/TIGRSHOPsupport"
-          className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-brand-dark transition-colors uppercase tracking-wide"
+          className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-black transition-colors uppercase tracking-wide"
           style={{ 
             fontFamily: 'Random Grotesque, sans-serif',
             fontWeight: 400,
