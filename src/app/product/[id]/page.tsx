@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useCart } from '../../../contexts/CartContext';
 import Breadcrumbs from '../../../components/UI/Breadcrumbs/Breadcrumbs';
 import ProductGallery, { GalleryImage } from '../../../components/Product/Gallery/ProductGallery';
@@ -11,9 +11,9 @@ import DeliveryPaymentSection from '@/components/Product/Sections/DeliveryPaymen
 import ProductActions from '@/components/Product/Sections/ProductActions';
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Моковые данные для fallback
@@ -41,6 +41,9 @@ const mockImages: GalleryImage[] = [
 ];
 
 export default function ProductPage({ params }: ProductPageProps) {
+  // Используем React.use() для разворачивания Promise params
+  const resolvedParams = use(params);
+  
   const [mounted, setMounted] = useState(false);
   const [product, setProduct] = useState<ProductInfoType | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -60,8 +63,8 @@ export default function ProductPage({ params }: ProductPageProps) {
         try {
           setLoading(true);
           
-          // Реальный API запрос
-          const response = await fetch(`/api/products/${params.id}`);
+          // Реальный API запрос с использованием развернутого ID
+          const response = await fetch(`/api/products/${resolvedParams.id}`);
           const result = await response.json();
           
           if (result.success && result.data) {
@@ -122,7 +125,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
       loadProduct();
     }
-  }, [mounted, params.id]);
+  }, [mounted, resolvedParams.id]); // Используем развернутый ID
 
   const handleSizeSelect = (size: string) => {
     setSelectedSize(size);
@@ -226,7 +229,7 @@ export default function ProductPage({ params }: ProductPageProps) {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Товар не найден</h1>
-          <p className="text-gray-600 mb-8">Товар с ID {params.id} не существует</p>
+          <p className="text-gray-600 mb-8">Товар с ID {resolvedParams.id} не существует</p>
           <button 
             onClick={handleBackToStore}
             className="bg-black text-white px-6 py-3 hover:bg-gray-800 transition-colors"
