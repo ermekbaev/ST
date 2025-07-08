@@ -39,12 +39,14 @@ interface ApiResponse {
   error?: string;
 }
 
+// Изменяем сигнатуру функции для Next.js 15
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse>> {
   try {
-    const productId = params.id;
+    // Ждем params в Next.js 15
+    const { id: productId } = await context.params;
     
     // Получаем все товары из Google Sheets
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -86,6 +88,14 @@ export async function GET(
       return result;
     };
     
+    const headers: string[] = parseCSVLine(lines[0]);
+    console.log('Заголовки таблицы:', headers);
+    console.log('Количество колонок:', headers.length);
+    
+    // Определяем индексы колонок
+    const photoIndex = headers.findIndex(h => h.toLowerCase().includes('фото') || h.toLowerCase().includes('photo') || h.toLowerCase().includes('изображ'));
+    console.log('Индекс колонки с фото:', photoIndex, '- колонка:', headers[photoIndex]);
+    
     const products: Product[] = [];
     
     // Парсим все товары
@@ -96,17 +106,17 @@ export async function GET(
       try {
         const values: string[] = parseCSVLine(line);
         
-        if (values.length >= 7) {
+        if (values.length >= 7) { // Изменили с 8 на 7, так как колонка H может быть пустой
           const product: Product = {
             id: `product_${i}`,
-            article: values[0] || `ART${i}`,
-            brand: values[1] || 'Неизвестный бренд',
-            name: values[2] || 'Товар без названия',
-            size: values[3] || 'Universal',
-            category: values[4] || 'Прочее',
-            gender: values[5] || 'Унисекс',
-            price: parseFloat(values[6]) || 0,
-            photo: values[7] || ''
+            article: values[0] || `ART${i}`,        // Колонка A
+            brand: values[1] || 'Неизвестный бренд', // Колонка B  
+            name: values[2] || 'Товар без названия', // Колонка C
+            size: values[3] || 'Universal',         // Колонка D
+            category: values[4] || 'Прочее',        // Колонка E
+            gender: values[5] || 'Унисекс',         // Колонка F
+            price: parseFloat(values[6]) || 0,      // Колонка G
+            photo: values[7] || ''                  // Колонка H (может быть пустой)
           };
           
           if (product.name && product.name !== 'Товар без названия') {
@@ -114,6 +124,8 @@ export async function GET(
           }
         }
       } catch (parseError: unknown) {
+        const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parsing error';
+        console.error(`Ошибка парсинга строки ${i}:`, errorMessage);
         continue; 
       }
     }
