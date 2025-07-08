@@ -1,6 +1,8 @@
+// src/components/Product/ProductCard.tsx
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Product {
   id?: string;
@@ -20,13 +22,16 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [imageError, setImageError] = useState(false);
+  const router = useRouter();
 
   const handleCardClick = () => {
-    console.log('Переход на страницу товара:', product.id || product.article);
+    // Используем ID товара или article как fallback
+    const productId = product.id || product.article;
+    console.log('Переход на страницу товара:', productId);
+    
+    // Переход на страницу товара
+    router.push(`/product/${productId}`);
   };
-
-//   console.log(product);
-  
 
   const handleImageError = () => {
     console.error('❌ ОШИБКА ИЗОБРАЖЕНИЯ:', product.name);
@@ -65,8 +70,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           </div>
         )}
-        
-
       </div>
       
       <div className="w-full h-px bg-brand-dark"></div>
