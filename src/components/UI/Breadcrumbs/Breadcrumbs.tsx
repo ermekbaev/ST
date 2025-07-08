@@ -30,7 +30,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
         fontFamily: 'Random Grotesque, Arial, sans-serif'
       }}
     >
-      {/* Desktop версия */}
+      {/* Desktop версия - БЕЗ отступов, так как они применяются на уровне страницы */}
       <div className="hidden lg:block">
         <div className="flex items-center gap-8 mb-8">
           {/* Хлебные крошки */}
@@ -68,23 +68,19 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
             ))}
           </div>
           
-          {/* Разделительная линия - рядом с хлебными крошками */}
-          <div 
-            className="h-0.5 bg-black flex-1 mt-3 w-full"
-          ></div>
+          {/* Разделительная линия - расширяется на всю оставшуюся ширину */}
+          <div className="h-0.5 bg-black flex-1 mt-3"></div>
         </div>
       </div>
 
-      {/* Mobile версия */}
+      {/* Mobile версия - без разделительной линии */}
       <div className="block lg:hidden">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="mb-6">
           {/* Хлебные крошки */}
           <div 
-            className="text-[#8C8072] text-[15px] leading-[35px] flex items-center h-[10px]"
+            className="text-[#8C8072] text-[12px] leading-[20px] flex items-center h-[20px]"
             style={{
-              fontWeight: 400,
-              width: '200px',
-              maxWidth: 'calc(100vw - 100px)'
+              fontWeight: 400
             }}
           >
             {items.map((item, index) => (
@@ -92,7 +88,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
                 {item.href && !item.isLast ? (
                   <button
                     onClick={() => handleLinkClick(item.href)}
-                    className="hover:text-[#595047] transition-colors cursor-pointer bg-transparent border-none p-0 text-[15px] leading-[35px]"
+                    className="hover:text-[#595047] transition-colors cursor-pointer bg-transparent border-none p-0 text-[12px] leading-[20px] whitespace-nowrap"
                     style={{
                       fontFamily: 'Random Grotesque, Arial, sans-serif',
                       fontWeight: 400,
@@ -102,20 +98,23 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
                     {item.label}
                   </button>
                 ) : (
-                  <span className={item.isLast ? 'text-[#8C8072]' : ''}>
+                  <span 
+                    className={`truncate inline-block ${item.isLast ? 'text-[#8C8072]' : ''}`}
+                    style={{
+                      maxWidth: '120px' // Ограничиваем ширину последнего элемента
+                    }}
+                    title={item.label} // Показываем полный текст при наведении
+                  >
                     {item.label}
                   </span>
                 )}
                 
                 {index < items.length - 1 && (
-                  <span className="mx-1 text-[#8C8072] text-[15px]">/</span>
+                  <span className="mx-1 text-[#8C8072] text-[12px]">/</span>
                 )}
               </React.Fragment>
             ))}
           </div>
-          
-          {/* Разделительная линия рядом */}
-          <div className="h-0.5 bg-black flex-1"></div>
         </div>
       </div>
     </nav>

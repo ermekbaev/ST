@@ -58,7 +58,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <img
             src={product.photo}
             alt={product.name}
-            className="w-full h-[150px] lg:h-[200px] object-cover"
+            className="w-full h-[150px] lg:h-[200px] object-contain"
             onError={handleImageError}
             onLoad={handleImageLoad}
           />

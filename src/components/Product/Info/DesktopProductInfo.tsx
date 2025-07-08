@@ -63,7 +63,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
   });
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 w-full">
       {/* Название товара */}
       <h1 
         className="text-black text-2xl leading-tight"
@@ -110,7 +110,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
         <button
           onClick={onAddToCart}
           disabled={!selectedSize || isAddingToCart || !product.inStock}
-          className={`w-full max-w-2xl h-20 flex items-center justify-between px-6 transition-all ${
+          className={`w-full h-20 flex items-center justify-between px-6 transition-all ${
             !selectedSize || !product.inStock
               ? 'bg-gray-400 cursor-not-allowed' 
               : isAddingToCart
@@ -172,7 +172,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
         <div className="relative">
           <button
             onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
-            className="w-full max-w-2xl h-20 border border-[#0B0B0D] bg-white flex items-center justify-between px-6 hover:bg-gray-50 transition-colors"
+            className="w-full h-20 border border-[#0B0B0D] bg-white flex items-center justify-between px-6 hover:bg-gray-50 transition-colors"
           >
             <span 
               className="text-black"
@@ -200,7 +200,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
 
           {/* Список размеров */}
           {isSizeDropdownOpen && (
-            <div className="absolute top-full left-0 w-full max-w-2xl bg-white border border-[#0B0B0D] border-t-0 shadow-lg z-10 max-h-80 overflow-y-auto">
+            <div className="absolute top-full left-0 w-full bg-white border border-[#0B0B0D] border-t-0 shadow-lg z-10 max-h-80 overflow-y-auto">
               {sortedSizes.map((size, index) => (
                 <button
                   key={size.size}
@@ -243,13 +243,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
         <div className="flex-shrink-0 mt-1">
           <div className="w-10 h-10 flex items-center justify-center">
             {/* SVG иконка грузовика */}
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 15h20v10H5V15z" stroke="black" strokeWidth="1" fill="none"/>
-              <path d="M25 20h5l3 3v7h-3" stroke="black" strokeWidth="1" fill="none"/>
-              <circle cx="10" cy="30" r="2" stroke="black" strokeWidth="1" fill="none"/>
-              <circle cx="25" cy="30" r="2" stroke="black" strokeWidth="1" fill="none"/>
-              <path d="M10 28v-3M25 28v-3" stroke="black" strokeWidth="1"/>
-            </svg>
+            <img src="../icons/delivery.svg" alt="" />
           </div>
         </div>
         
@@ -270,7 +264,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
 
       {/* Блок качества */}
       <div 
-        className="w-full max-w-2xl h-10 flex items-center px-6"
+        className="w-full h-10 flex items-center px-6"
         style={{ backgroundColor: '#C8EBB9' }}
       >
         <span 
@@ -278,7 +272,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
           style={{
             fontFamily: 'Random Grotesque, Arial, sans-serif',
             fontWeight: 400,
-            fontSize: '20px',
+            fontSize: '15px',
             lineHeight: '27px'
           }}
         >
@@ -300,7 +294,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
           >
             Бренд
           </span>
-          
+          <div className='flex justify-between items-center gap gap-2'>
           <span 
             className="text-[#8C8072]"
             style={{
@@ -314,7 +308,8 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
           </span>
           
           {/* Стрелка */}
-          <div className="w-3 h-3 border-r-2 border-b-2 border-[#8C8072] transform rotate-45"></div>
+          <img src="../utils/arrow_right.svg" alt="" width={10}/>
+          </div>
         </div>
       </div>
     </div>

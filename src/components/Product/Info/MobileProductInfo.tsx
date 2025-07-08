@@ -242,12 +242,8 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
         <div className="flex-shrink-0 mt-0.5">
           <div className="w-4 h-4 flex items-center justify-center">
             {/* Упрощенная SVG иконка для мобильного */}
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 6h8v4H2V6z" stroke="black" strokeWidth="1" fill="none"/>
-              <path d="M10 8h2l1.5 1.5v3h-1.5" stroke="black" strokeWidth="1" fill="none"/>
-              <circle cx="4" cy="12" r="1" stroke="black" strokeWidth="1" fill="none"/>
-              <circle cx="10" cy="12" r="1" stroke="black" strokeWidth="1" fill="none"/>
-            </svg>
+            <img src="../icons/delivery.svg" alt="" />
+
           </div>
         </div>
         
@@ -276,7 +272,7 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
           style={{
             fontFamily: 'Random Grotesque, Arial, sans-serif',
             fontWeight: 400,
-            fontSize: '9px',
+            fontSize: '11px',
             lineHeight: '12px'
           }}
         >
@@ -298,9 +294,10 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
           >
             Бренд
           </span>
-          
+          <div className='flex justify-between items-center'>
+
           <span 
-            className="text-[#8C8072]"
+            className="text-[#8C8072] mr-2"
             style={{
               fontFamily: 'Random Grotesque, Arial, sans-serif',
               fontWeight: 400,
@@ -312,8 +309,10 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
           </span>
           
           {/* Стрелка */}
-          <div className="w-1.5 h-1.5 border-r-2 border-b-2 border-[#8C8072] transform rotate-45"></div>
+          <img src="../utils/arrow_right.svg" alt="" width={10}/>
         </div>
+        </div>
+
       </div>
     </div>
   );

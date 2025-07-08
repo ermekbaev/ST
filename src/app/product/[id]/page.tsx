@@ -1,8 +1,3 @@
-// Этот файл нужно создать по пути: src/app/product/[id]/page.tsx
-
-// Содержимое файла точно такое же как в ProductPage компоненте
-// Просто скопируйте весь код из ProductPage в этот файл
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -13,6 +8,7 @@ import ProductInfo, { ProductInfo as ProductInfoType, ProductSize } from '../../
 import CustomOrderSection from '../../../components/CustomOrder/CustomOrderSection';
 import HowItWorksModal from '../../../components/UI/Modal/HowItWorksModal';
 import DeliveryPaymentSection from '@/components/Product/Sections/DeliveryPaymentSection';
+import ProductActions from '@/components/Product/Sections/ProductActions';
 
 interface ProductPageProps {
   params: {
@@ -187,29 +183,36 @@ export default function ProductPage({ params }: ProductPageProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-8">
-            {/* Хлебные крошки */}
-            <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-            
-            {/* Основной контент */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Галерея */}
-              <div className="space-y-4">
-                <div className="w-full aspect-[16/10] bg-gray-200 rounded"></div>
-                <div className="grid grid-cols-4 gap-2">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="aspect-[16/10] bg-gray-200 rounded"></div>
-                  ))}
-                </div>
-              </div>
+        {/* Обертка со отступами для загрузки */}
+        <div className="px-5 lg:px-0 lg:pl-[139px] lg:pr-[20px]">
+          <div className="py-8">
+            <div className="animate-pulse space-y-8">
+              {/* Хлебные крошки */}
+              <div className="h-6 bg-gray-200 rounded w-1/2"></div>
               
-              {/* Информация */}
-              <div className="space-y-6">
-                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-10 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-16 bg-gray-200 rounded w-full"></div>
-                <div className="h-12 bg-gray-200 rounded w-full"></div>
+              {/* Основной контент */}
+              <div className="flex flex-col lg:flex-row lg:gap-12">
+                {/* Галерея */}
+                <div className="w-full lg:flex-1 lg:max-w-[60%]">
+                  <div className="space-y-4">
+                    <div className="w-full aspect-[16/10] bg-gray-200 rounded"></div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="aspect-[16/10] bg-gray-200 rounded"></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Информация */}
+                <div className="w-full lg:w-auto lg:flex-shrink-0 mt-8 lg:mt-0">
+                  <div className="space-y-6 lg:w-[500px]">
+                    <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-10 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-16 bg-gray-200 rounded w-full"></div>
+                    <div className="h-12 bg-gray-200 rounded w-full"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -237,39 +240,53 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Хлебные крошки */}
-      <div className="container mx-auto px-4 py-6 lg:py-8">
-        <Breadcrumbs items={breadcrumbItems} />
-      </div>
+      {/* Обертка со отступами для всей страницы продукта */}
+      <div className="px-5 lg:px-0 lg:pl-[139px] lg:pr-[20px]">
+        
+        {/* Хлебные крошки */}
+        <div className="py-6 lg:py-8">
+          <Breadcrumbs items={breadcrumbItems} />
+        </div>
 
-      {/* Основной контент товара - исправленные пропорции */}
-      <div className="px-4 lg:px-0">
-        <div className="flex flex-col lg:flex-row">
-          
-          {/* ГАЛЕРЕЯ - точные размеры из макета */}
-          <div className="w-full lg:w-[1049px] lg:ml-[139px]">
-            <ProductGallery 
-              images={images} 
-              productName={product.name}
-            />
-          </div>
-          
-          {/* ИНФОРМАЦИЯ О ТОВАРЕ - точные размеры из макета */}
-          <div className="w-full lg:w-[692px] lg:ml-auto lg:mr-[139px] mt-8 lg:mt-0">
-            <ProductInfo
-              product={product}
-              selectedSize={selectedSize}
-              onSizeSelect={handleSizeSelect}
-              onAddToCart={handleAddToCart}
-            />
+        {/* Основной контент товара */}
+        <div className="w-full">
+          <div className="flex flex-col lg:flex-row lg:gap-12">
+            
+            {/* ГАЛЕРЕЯ - занимает ~60% ширины, flex растет */}
+            <div className="w-full lg:flex-1 lg:max-w-[60%]">
+              <ProductGallery 
+                images={images} 
+                productName={product.name}
+              />
+            </div>
+            
+            {/* ИНФОРМАЦИЯ О ТОВАРЕ - оптимальная ширина ~500px */}
+            <div className="w-full lg:w-auto lg:flex-shrink-0 mt-8 lg:mt-0">
+              <div className="lg:w-[500px]">
+                <ProductInfo
+                  product={product}
+                  selectedSize={selectedSize}
+                  onSizeSelect={handleSizeSelect}
+                  onAddToCart={handleAddToCart}
+                />
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Секция доставки и оплаты */}
+        <DeliveryPaymentSection className="mt-16" />
+
+        {/* Секция действий - продолжить покупки */}
+        <ProductActions 
+          onContinueShopping={handleContinueShopping}
+          onBackToStore={handleBackToStore}
+          className="mt-16"
+        />
+        
       </div>
 
-      {/* Секция доставки и оплаты */}
-      <DeliveryPaymentSection className="mt-16" />
-
-      {/* Секция индивидуального заказа */}
+      {/* Секция индивидуального заказа - БЕЗ отступов, на всю ширину */}
       <CustomOrderSection 
         onHowItWorksClick={() => setIsModalOpen(true)}
       />

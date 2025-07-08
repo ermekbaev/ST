@@ -26,7 +26,6 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
 
   const handleImageError = (imageId: string) => {
     setImageLoadError(prev => ({ ...prev, [imageId]: true }));
-    console.error('Ошибка загрузки изображения:', imageId);
   };
 
   const handleImageLoad = (imageId: string) => {
@@ -37,7 +36,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
   const hasError = imageLoadError[currentImage?.id];
 
   return (
-    <div className="relative w-full max-w-4xl">
+    <div className="relative w-full">
       {/* Главное изображение */}
       <div 
         className="relative group cursor-pointer overflow-hidden aspect-[5/3] rounded-lg"
@@ -51,6 +50,9 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
             className="w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-105"
             onError={() => handleImageError(currentImage.id)}
             onLoad={() => handleImageLoad(currentImage.id)}
+            style={{
+              backgroundColor: 'transparent'
+            }}
           />
         ) : (
           <div 
@@ -133,60 +135,71 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
 
       {/* Миниатюры под главным изображением */}
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2 mt-4">
-          {images.slice(0, 4).map((image, index) => {
-            const isActive = index === currentImageIndex;
-            const thumbHasError = imageLoadError[image.id];
-            
-            return (
-              <button
-                key={image.id}
-                onClick={() => onSelectImage(index)}
-                className={`relative overflow-hidden transition-all duration-200 hover:scale-105 aspect-[16/10] rounded ${
-                  isActive ? 'ring-2 ring-black ring-offset-2' : ''
-                }`}
-                aria-label={`Показать изображение ${index + 1}`}
+        <>
+          <div className="grid grid-cols-4 gap-3 mt-4">
+            {images.slice(0, 4).map((image, index) => {
+              const isActive = index === currentImageIndex;
+              const thumbHasError = imageLoadError[image.id];
+              
+              return (
+                <button
+                  key={image.id}
+                  onClick={() => onSelectImage(index)}
+                  className={`relative overflow-hidden transition-all duration-200 hover:scale-105 aspect-[16/10] rounded ${
+                    isActive ? 'ring-2 ring-black ring-offset-2' : ''
+                  }`}
+                  aria-label={`Показать изображение ${index + 1}`}
+                >
+                  {!thumbHasError ? (
+                    <img
+                      src={image.url}
+                      alt={image.alt || `${productName} - фото ${index + 1}`}
+                      className="w-full h-full object-contain object-center"
+                      onError={() => handleImageError(image.id)}
+                      onLoad={() => handleImageLoad(image.id)}
+                      style={{
+                        backgroundColor: 'transparent'
+                      }}
+                    />
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center relative"
+                      style={{
+                        background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
+                      }}
+                    >
+                      <span className="text-gray-500 text-sm relative z-10">Фото {index + 1}</span>
+                    </div>
+                  )}
+
+                  {/* Оверлей для неактивных миниатюр */}
+                  {!isActive && (
+                    <div className="absolute inset-0  bg-opacity-40 hover:bg-opacity-20 transition-all"></div>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Заглушки для недостающих миниатюр */}
+            {images.length < 4 && [...Array(4 - images.length)].map((_, index) => (
+              <div
+                key={`placeholder-${index}`}
+                className="flex items-center justify-center aspect-[16/10] rounded relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
+                }}
               >
-                {!thumbHasError ? (
-                  <img
-                    src={image.url}
-                    alt={image.alt || `${productName} - фото ${index + 1}`}
-                    className="w-full h-full object-contain object-center"
-                    onError={() => handleImageError(image.id)}
-                    onLoad={() => handleImageLoad(image.id)}
-                  />
-                ) : (
-                  <div 
-                    className="w-full h-full flex items-center justify-center"
-                    style={{
-                      background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
-                    }}
-                  >
-                    <span className="text-gray-500 text-sm">Фото {index + 1}</span>
-                  </div>
-                )}
+                <span className="text-gray-500 text-sm">Фото {images.length + index + 1}</span>
+                
+                {/* Оверлей для недоступных миниатюр */}
+                <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+              </div>
+            ))}
+          </div>
 
-                {/* Оверлей для неактивных миниатюр */}
-                {!isActive && (
-                  <div className="absolute inset-0 bg-black bg-opacity-20 hover:bg-opacity-10 transition-all"></div>
-                )}
-              </button>
-            );
-          })}
-
-          {/* Заглушки для недостающих миниатюр */}
-          {images.length < 4 && [...Array(4 - images.length)].map((_, index) => (
-            <div
-              key={`placeholder-${index}`}
-              className="flex items-center justify-center aspect-[16/10] rounded"
-              style={{
-                background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
-              }}
-            >
-              <span className="text-gray-500 text-sm">Фото {images.length + index + 1}</span>
-            </div>
-          ))}
-        </div>
+          {/* Разделительная линия под миниатюрами - точно по их ширине */}
+          <div className="w-full h-0.5 bg-black mt-8"></div>
+        </>
       )}
     </div>
   );

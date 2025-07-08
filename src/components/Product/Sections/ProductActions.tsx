@@ -1,4 +1,4 @@
-// src/components/Sections/ProductActions.tsx
+// src/components/Product/Sections/ProductActions.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -43,17 +43,10 @@ const ProductActions: React.FC<ProductActionsProps> = ({
   if (!mounted) {
     return (
       <div className={`w-full ${className}`}>
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="hidden lg:block space-y-4">
-            <div className="w-96 h-20 bg-gray-200 rounded"></div>
-            <div className="w-96 h-6 bg-gray-200 rounded"></div>
-            <div className="w-96 h-20 bg-gray-200 rounded"></div>
-          </div>
-          <div className="block lg:hidden space-y-3">
-            <div className="w-80 h-9 bg-gray-200 rounded"></div>
-            <div className="w-80 h-6 bg-gray-200 rounded"></div>
-            <div className="w-80 h-9 bg-gray-200 rounded"></div>
-          </div>
+        <div className="animate-pulse flex flex-col items-center gap-4 py-12">
+          <div className="w-[692px] h-20 bg-gray-200 rounded max-w-[90vw]"></div>
+          <div className="w-[692px] h-6 bg-gray-200 rounded max-w-[90vw]"></div>
+          <div className="w-[692px] h-20 bg-gray-200 rounded max-w-[90vw]"></div>
         </div>
       </div>
     );
@@ -88,12 +81,14 @@ const ProductActions: React.FC<ProductActionsProps> = ({
 
           {/* Описательный текст */}
           <p 
-            className="text-black text-center max-w-2xl"
+            className="text-black text-center"
             style={{
               fontFamily: 'Random Grotesque, Arial, sans-serif',
               fontWeight: 400,
               fontSize: '20px',
-              lineHeight: '27px'
+              lineHeight: '27px',
+              width: '692px',
+              maxWidth: '90vw'
             }}
           >
             Найдите то, что вы хотите, в один клик. Всего один клик, не стесняйтесь продолжить
@@ -131,15 +126,15 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             onClick={handleContinueShopping}
             className="w-full max-w-sm bg-[#0B0B0D] hover:bg-gray-800 text-white transition-colors flex items-center justify-center"
             style={{
-              height: '35px'
+              height: '50px'
             }}
           >
             <span 
               style={{
                 fontFamily: 'Random Grotesque, Arial, sans-serif',
                 fontWeight: 400,
-                fontSize: '15px',
-                lineHeight: '20px'
+                fontSize: '16px',
+                lineHeight: '22px'
               }}
             >
               ПРОДОЛЖИТЬ ПОКУПКИ
@@ -152,8 +147,8 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             style={{
               fontFamily: 'Random Grotesque, Arial, sans-serif',
               fontWeight: 400,
-              fontSize: '10px',
-              lineHeight: '14px'
+              fontSize: '14px',
+              lineHeight: '18px'
             }}
           >
             Найдите то, что вы хотите, в один клик. Всего один клик, не стесняйтесь продолжить
@@ -164,15 +159,15 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             onClick={handleBackToStore}
             className="w-full max-w-sm bg-[#D9CDBF] hover:bg-[#BFB3A3] text-[#0B0B0D] transition-colors flex items-center justify-center"
             style={{
-              height: '35px'
+              height: '50px'
             }}
           >
             <span 
               style={{
                 fontFamily: 'Random Grotesque, Arial, sans-serif',
                 fontWeight: 400,
-                fontSize: '15px',
-                lineHeight: '20px'
+                fontSize: '16px',
+                lineHeight: '22px'
               }}
             >
               ВЕРНУТЬСЯ В МАГАЗИН

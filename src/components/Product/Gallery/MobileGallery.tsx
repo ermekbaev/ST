@@ -28,7 +28,6 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
 
   const handleImageError = (imageId: string) => {
     setImageLoadError(prev => ({ ...prev, [imageId]: true }));
-    console.error('Ошибка загрузки изображения:', imageId);
   };
 
   const handleImageLoad = (imageId: string) => {
@@ -83,7 +82,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
           <img
             src={currentImage.url}
             alt={currentImage.alt || productName}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-contain object-center"
             onError={() => handleImageError(currentImage.id)}
             onLoad={() => handleImageLoad(currentImage.id)}
             draggable={false}
@@ -152,7 +151,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
                   <img
                     src={image.url}
                     alt={image.alt || `${productName} - фото ${index + 1}`}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-contain object-center"
                     onError={() => handleImageError(image.id)}
                     onLoad={() => handleImageLoad(image.id)}
                     draggable={false}
@@ -170,7 +169,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
 
                 {/* Оверлей для неактивных миниатюр */}
                 {!isActive && (
-                  <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+                  <div className="absolute inset-0 bg-opacity-30"></div>
                 )}
               </button>
             );
@@ -194,14 +193,6 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
         </div>
       )}
 
-      {/* Инструкция по свайпу (показывается кратковременно) */}
-      {images && images.length > 1 && (
-        <div className="mt-1 text-center">
-          <span className="text-gray-400 text-xs">
-            Листайте свайпом или нажмите на фото
-          </span>
-        </div>
-      )}
     </div>
   )
 };
