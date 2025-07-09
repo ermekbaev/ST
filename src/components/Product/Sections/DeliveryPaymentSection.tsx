@@ -1,4 +1,4 @@
-// src/components/Sections/DeliveryPaymentSection.tsx
+// src/components/Product/Sections/DeliveryPaymentSection.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +11,7 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
   className = '' 
 }) => {
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<'delivery' | 'payment'>('delivery');
 
   useEffect(() => {
     setMounted(true);
@@ -19,7 +20,6 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
   if (!mounted) {
     return (
       <div className={`w-full ${className}`}>
-        {/* НЕ применяем отступы в loading состоянии - они уже есть на уровне страницы */}
         <div className="animate-pulse">
           <div className="hidden lg:block space-y-8">
             <div className="h-8 bg-gray-200 rounded w-48"></div>
@@ -41,16 +41,248 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
     );
   }
 
+  // Контент для доставки
+  const deliveryContent = (
+    <div 
+      className="text-black"
+      style={{
+        fontFamily: 'Random Grotesque, Arial, sans-serif',
+        fontWeight: 900,
+        fontStyle: 'italic'
+      }}
+    >
+      <p 
+        className="mb-8"
+        style={{
+          fontSize: '30px',
+          lineHeight: '35px'
+        }}
+      >
+        Мы бережем ваше время, и работаем надёжно, учитывая все ваши пожелания.
+      </p>
+      
+      <div className="space-y-8">
+        <div>
+          <h3 
+            className="font-bold mb-4"
+            style={{
+              fontSize: '30px',
+              lineHeight: '35px'
+            }}
+          >
+            Самовывоз
+          </h3>
+          <p
+            style={{
+              fontSize: '20px',
+              lineHeight: '27px',
+              fontWeight: 400,
+              fontStyle: 'normal'
+            }}
+          >
+            Для Владивостока – доступен самовывоз или доставка по городу. 
+            <br/>При поступлении товара на склад, в личном кабинете будет обозначено, что товар готов к выдаче. 
+            <br/>Поступление занимает от 4 до 14 рабочих дней. 
+            <br/>Уточнить актуальную информацию можно у поддержки интернет-магазина.
+          </p>
+        </div>
+        
+        <div>
+          <h3 
+            className="font-bold mb-4"
+            style={{
+              fontSize: '30px',
+              lineHeight: '35px'
+            }}
+          >
+            Доставка по всей России и СНГ
+          </h3>
+          
+          <div className="space-y-4">
+            <p
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              <strong>СДЭК</strong> — доставка до пункта выдачи или курьером. 
+              <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор СДЭК.
+            </p>
+            
+            <p
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              <strong>Почта России</strong> — доставка до пункта выдачи или курьером. 
+              <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор Почта России.
+            </p>
+            
+            <p
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              <strong>BoxBerry</strong> — доставка до пункта выдачи или курьером. 
+              <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор СДЭК.
+            </p>
+            
+            <p
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              <strong>КАРГО</strong> — доставка в страны СНГ обговаривается и рассчитывается индивидуально с менеджером.
+            </p>
+          </div>
+        </div>
+        
+        <div>
+          <p
+            style={{
+              fontSize: '20px',
+              lineHeight: '27px',
+              fontWeight: 400,
+              fontStyle: 'normal'
+            }}
+          >
+            Сроки и стоимость курьерской доставки рассчитываются индивидуально. Сервис может быть изменен при недоступности доставки по указанному адресу.
+          </p>
+          
+          <ul className="mt-4 space-y-2 list-disc list-inside">
+            <li
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              Срок доставки: 7-14 рабочих дней.
+            </li>
+            <li
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              После оформления заявки на индивидуальный заказ, персональный менеджер свяжется с Вами и подберет для Вас подходящий размер.
+            </li>
+            <li
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              Курьер уведомляет получателя о доставке за 30 минут до своего приезда.
+            </li>
+            <li
+              style={{
+                fontSize: '20px',
+                lineHeight: '27px',
+                fontWeight: 400,
+                fontStyle: 'normal'
+              }}
+            >
+              Электронный чек, подтверждающий покупку, Вы получите по электронной почте, указанной при оформлении заказа.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Контент для оплаты
+  const paymentContent = (
+    <div 
+      className="text-black"
+      style={{
+        fontFamily: 'Random Grotesque, Arial, sans-serif',
+        fontWeight: 900,
+        fontStyle: 'italic'
+      }}
+    >
+      <div className="space-y-8">
+        <div>
+          <h3 
+            className="font-bold mb-4"
+            style={{
+              fontSize: '30px',
+              lineHeight: '35px'
+            }}
+          >
+            Какие способы оплаты возможны?
+          </h3>
+          <div
+            style={{
+              fontSize: '20px',
+              lineHeight: '27px',
+              fontWeight: 400,
+              fontStyle: 'normal'
+            }}
+          >
+            <p className="mb-4">
+              Мы принимаем оплату банковскими картами:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li>Visa, Mastercard, МИР.</li>
+              <li>СБП и др.</li>
+            </ul>
+            <p className="mt-4">
+              Кроме того, в городе Владивосток мы также принимаем платежи наличными, а также можем создать электронную ссылку для оплаты товаров под заказ.
+            </p>
+          </div>
+        </div>
+        
+        <div>
+          <h3 
+            className="font-bold mb-4"
+            style={{
+              fontSize: '30px',
+              lineHeight: '35px'
+            }}
+          >
+            Нужно ли дополнительно оплачивать налоги и таможенные сборы?
+          </h3>
+          <p
+            style={{
+              fontSize: '20px',
+              lineHeight: '27px',
+              fontWeight: 400,
+              fontStyle: 'normal'
+            }}
+          >
+            Нет, не нужно, все налоги и таможенные сборы уже включены в итоговую стоимость товаров в нашем магазине.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className={`w-full ${className}`}>
-      {/* НЕ применяем отступы здесь, так как они уже есть на уровне страницы продукта */}
-      
       {/* Desktop версия */}
       <div className="hidden lg:block">
         <div className="py-12">
-          {/* Заголовки секций */}
-          <div className="flex items-center gap-16 mb-8">
-            <h2 
+          {/* Заголовки секций с кликабельностью */}
+          <div className="flex items-center gap-16 mb-4">
+            <button
+              onClick={() => setActiveTab('delivery')}
               className="text-black"
               style={{
                 fontFamily: 'Random Grotesque, Arial, sans-serif',
@@ -61,9 +293,10 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
               }}
             >
               ДОСТАВКА
-            </h2>
+            </button>
             
-            <h2 
+            <button
+              onClick={() => setActiveTab('payment')}
               className="text-black"
               style={{
                 fontFamily: 'Random Grotesque, Arial, sans-serif',
@@ -74,179 +307,21 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
               }}
             >
               ОПЛАТА
-            </h2>
+            </button>
           </div>
 
-          {/* Подчеркивания заголовков */}
-          <div className="flex gap-16 mb-12">
-            <div className="w-44 h-0.5 bg-black"></div>
-            <div className="w-32 h-0.5 bg-[#BFB3A3]"></div>
+          {/* Подчеркивания заголовков - ближе к тексту */}
+          <div className="flex gap-16 mb-8">
+            <div className={`w-44 h-0.5 transition-colors ${
+              activeTab === 'delivery' ? 'bg-black' : 'bg-[#BFB3A3]'
+            }`}></div>
+            <div className={`w-32 h-0.5 transition-colors ${
+              activeTab === 'payment' ? 'bg-black' : 'bg-[#BFB3A3]'
+            }`}></div>
           </div>
 
-          {/* Основной текст */}
-          <div 
-            className="text-black"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 900,
-              fontStyle: 'italic'
-            }}
-          >
-            <p 
-              className="mb-8"
-              style={{
-                fontSize: '30px',
-                lineHeight: '35px'
-              }}
-            >
-              Мы бережем ваше время, и работаем надёжно, учитывая все ваши пожелания.
-            </p>
-            
-            <div className="space-y-8">
-              <div>
-                <h3 
-                  className="font-bold mb-4"
-                  style={{
-                    fontSize: '30px',
-                    lineHeight: '35px'
-                  }}
-                >
-                  Самовывоз
-                </h3>
-                <p
-                  style={{
-                    fontSize: '20px',
-                    lineHeight: '27px',
-                    fontWeight: 400,
-                    fontStyle: 'normal'
-                  }}
-                >
-                  Для Владивостока – доступен самовывоз или доставка по городу. 
-                  <br/>При поступлении товара на склад, в личном кабинете будет обозначено, что товар готов к выдаче. 
-                  <br/>Поступление занимает от 4 до 14 рабочих дней. 
-                  <br/>Уточнить актуальную информацию можно у поддержки интернет-магазина.
-                </p>
-              </div>
-              
-              <div>
-                <h3 
-                  className="font-bold mb-4"
-                  style={{
-                    fontSize: '30px',
-                    lineHeight: '35px'
-                  }}
-                >
-                  Доставка по всей России и СНГ
-                </h3>
-                
-                <div className="space-y-4">
-                  <p
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    <strong>СДЭК</strong> — доставка до пункта выдачи или курьером. 
-                    <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор СДЭК.
-                  </p>
-                  
-                  <p
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    <strong>Почта России</strong> — доставка до пункта выдачи или курьером. 
-                    <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор Почта России.
-                  </p>
-                  
-                  <p
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    <strong>BoxBerry</strong> — доставка до пункта выдачи или курьером. 
-                    <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор СДЭК.
-                  </p>
-                  
-                  <p
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    <strong>КАРГО</strong> — доставка в страны СНГ обговаривается и рассчитывается индивидуально с менеджером.
-                  </p>
-                </div>
-              </div>
-              
-              <div>
-                <p
-                  style={{
-                    fontSize: '20px',
-                    lineHeight: '27px',
-                    fontWeight: 400,
-                    fontStyle: 'normal'
-                  }}
-                >
-                  Сроки и стоимость курьерской доставки рассчитываются индивидуально. Сервис может быть изменен при недоступности доставки по указанному адресу.
-                </p>
-                
-                {/* Маркированный список */}
-                <ul className="mt-4 space-y-2 list-disc list-inside">
-                  <li
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    Срок доставки: 7-14 рабочих дней.
-                  </li>
-                  <li
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    После оформления заявки на индивидуальный заказ, персональный менеджер свяжется с Вами и подберет для Вас подходящий размер.
-                  </li>
-                  <li
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    Курьер уведомляет получателя о доставке за 30 минут до своего приезда.
-                  </li>
-                  <li
-                    style={{
-                      fontSize: '20px',
-                      lineHeight: '27px',
-                      fontWeight: 400,
-                      fontStyle: 'normal'
-                    }}
-                  >
-                    Электронный чек, подтверждающий покупку, Вы получите по электронной почте, указанной при оформлении заказа.
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          {/* Контент в зависимости от активной вкладки */}
+          {activeTab === 'delivery' ? deliveryContent : paymentContent}
         </div>
       </div>
 
@@ -254,8 +329,9 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
       <div className="block lg:hidden">
         <div className="py-8">
           {/* Заголовки секций */}
-          <div className="flex items-center gap-8 mb-6">
-            <h2 
+          <div className="flex items-center gap-8 mb-3">
+            <button
+              onClick={() => setActiveTab('delivery')}
               className="text-black"
               style={{
                 fontFamily: 'Random Grotesque, Arial, sans-serif',
@@ -266,9 +342,10 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
               }}
             >
               ДОСТАВКА
-            </h2>
+            </button>
             
-            <h2 
+            <button
+              onClick={() => setActiveTab('payment')}
               className="text-black"
               style={{
                 fontFamily: 'Random Grotesque, Arial, sans-serif',
@@ -279,16 +356,20 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
               }}
             >
               ОПЛАТА
-            </h2>
+            </button>
           </div>
 
           {/* Подчеркивания заголовков */}
-          <div className="flex gap-8 mb-8">
-            <div className="w-32 h-0.5 bg-black"></div>
-            <div className="w-24 h-0.5 bg-[#BFB3A3]"></div>
+          <div className="flex gap-8 mb-6">
+            <div className={`w-32 h-0.5 transition-colors ${
+              activeTab === 'delivery' ? 'bg-black' : 'bg-[#BFB3A3]'
+            }`}></div>
+            <div className={`w-24 h-0.5 transition-colors ${
+              activeTab === 'payment' ? 'bg-black' : 'bg-[#BFB3A3]'
+            }`}></div>
           </div>
 
-          {/* Основной текст */}
+          {/* Мобильный контент */}
           <div 
             className="text-black leading-tight"
             style={{
@@ -299,48 +380,64 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
               lineHeight: '20px'
             }}
           >
-            <p className="mb-4">
-              Мы бережем ваше время, и работаем надёжно, учитывая все ваши пожелания.
-            </p>
-            
-            <div className="space-y-4">
+            {activeTab === 'delivery' ? (
               <div>
-                <h3 className="font-bold mb-2">Самовывоз</h3>
-                <p className="text-sm leading-snug">
-                  Для Владивостока - доступен самовывоз или доставка по городу. При поступлении товара на склад, в личном кабинете будет обозначено, что товар готов к выдаче. Поступление занимает от 4 до 14 рабочих дней.
+                <p className="mb-4">
+                  Мы бережем ваше время, и работаем надёжно, учитывая все ваши пожелания.
                 </p>
-              </div>
-              
-              <div>
-                <h3 className="font-bold mb-2">Доставка по России и СНГ</h3>
                 
-                <div className="space-y-3 text-sm leading-snug">
-                  <p>
-                    <strong>СДЭК</strong> — доставка до пункта выдачи или курьером.
-                  </p>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-bold mb-2">Самовывоз</h3>
+                    <p className="text-sm leading-snug">
+                      Для Владивостока - доступен самовывоз или доставка по городу. При поступлении товара на склад, в личном кабинете будет обозначено, что товар готов к выдаче. Поступление занимает от 4 до 14 рабочих дней.
+                    </p>
+                  </div>
                   
-                  <p>
-                    <strong>Почта России</strong> — доставка до пункта выдачи или курьером.
-                  </p>
-                  
-                  <p>
-                    <strong>BoxBerry</strong> — доставка до пункта выдачи или курьером.
-                  </p>
-                  
-                  <p>
-                    <strong>КАРГО</strong> — доставка в страны СНГ обговаривается индивидуально.
-                  </p>
-                  
-                  <p>
-                    Срок доставки: 7-14 рабочих дней. Курьер уведомляет получателя за 30 минут до приезда.
-                  </p>
+                  <div>
+                    <h3 className="font-bold mb-2">Доставка по России и СНГ</h3>
+                    
+                    <div className="space-y-3 text-sm leading-snug">
+                      <p><strong>СДЭК</strong> — доставка до пункта выдачи или курьером.</p>
+                      <p><strong>Почта России</strong> — доставка до пункта выдачи или курьером.</p>
+                      <p><strong>BoxBerry</strong> — доставка до пункта выдачи или курьером.</p>
+                      <p><strong>КАРГО</strong> — доставка в страны СНГ обговаривается индивидуально.</p>
+                      <p>Срок доставки: 7-14 рабочих дней. Курьер уведомляет получателя за 30 минут до приезда.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-bold mb-2">Какие способы оплаты возможны?</h3>
+                    <div className="text-sm leading-snug">
+                      <p className="mb-2">Мы принимаем оплату банковскими картами:</p>
+                      <ul className="list-disc list-inside space-y-1 ml-2 mb-2">
+                        <li>Visa, Mastercard, МИР.</li>
+                        <li>СБП и др.</li>
+                      </ul>
+                      <p>
+                        Кроме того, в городе Владивосток мы также принимаем платежи наличными, а также можем создать электронную ссылку для оплаты товаров под заказ.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-bold mb-2">Нужно ли дополнительно оплачивать налоги и таможенные сборы?</h3>
+                    <p className="text-sm leading-snug">
+                      Нет, не нужно, все налоги и таможенные сборы уже включены в итоговую стоимость товаров в нашем магазине.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
-  );}
+  );
+};
 
 export default DeliveryPaymentSection;

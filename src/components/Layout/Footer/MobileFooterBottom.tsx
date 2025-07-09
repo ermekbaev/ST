@@ -19,7 +19,9 @@ const MobileFooterBottom = () => {
           fontWeight: 400
         }}
       >
-        При поддержке: <span className="text-white">АГЕНТСТВО_404</span>
+        <a href="https://agency404.ru">
+          При поддержке: <span className="text-white">АГЕНТСТВО_404</span>
+        </a>
       </div>
     </div>
   );

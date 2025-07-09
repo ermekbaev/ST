@@ -3,8 +3,9 @@ import React from 'react';
 
 const FooterContent = () => {
   return (
-    <div className="flex flex-wrap lg:flex-nowrap">
-      <div className="w-full lg:w-auto space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-0">
+      {/* РАЗДЕЛЫ - занимает 2 колонки */}
+      <div className="lg:col-span-2 space-y-4">
         <h3 className="text-white font-medium text-xl uppercase tracking-wider">
           РАЗДЕЛЫ
         </h3>
@@ -42,9 +43,8 @@ const FooterContent = () => {
         </ul>
       </div>
 
-      <div className="hidden lg:block w-[204px]"></div>
-
-      <div className="w-full lg:w-auto space-y-4">
+      {/* ИНФОРМАЦИЯ - занимает 2 колонки, начинается с 4-й (сблизили с РАЗДЕЛЫ) */}
+      <div className="lg:col-span-2 lg:col-start-4 space-y-4">
         <h3 className="text-white font-medium text-xl uppercase tracking-wider">
           ИНФОРМАЦИЯ
         </h3>
@@ -82,9 +82,8 @@ const FooterContent = () => {
         </ul>
       </div>
 
-      <div className="hidden lg:block w-[446px]"></div>
-
-      <div className="w-full lg:w-auto space-y-4">
+      {/* КОНТАКТЫ - занимает 2 колонки, начинается с 8-й (равные отступы) */}
+      <div className="lg:col-span-2 lg:col-start-8 space-y-4">
         <h3 className="text-white font-medium text-xl uppercase tracking-wider">
           КОНТАКТЫ
         </h3>
@@ -95,12 +94,14 @@ const FooterContent = () => {
             </a>
           </div>
           <div className="text-gray-300 text-sm">
-            <a href="mailto:tigran200615@gmail.com" className="hover:text-white transition-colors">
-              em: tigran200615@gmail.com
+            <a href="mailto:contact@tigrshop.ru" className="hover:text-white transition-colors">
+              em: contact@tigrshop.ru
             </a>
           </div>
           <div className="text-gray-300 text-sm">
-            tg: @PadvdH
+            <a href="https://t.me/TIGRSHOPsupport" className="hover:text-white transition-colors">
+            tg: @TIGRSHOPsupport
+            </a>
           </div>
           <div className="text-gray-300 text-sm">
             <a href="https://wa.me/79962814667" className="hover:text-white transition-colors">
@@ -110,7 +111,8 @@ const FooterContent = () => {
         </div>
       </div>
 
-      <div className="w-full lg:w-auto lg:ml-auto space-y-4">
+      {/* СОЦИАЛЬНЫЕ ИКОНКИ - занимают 2 колонки, последние */}
+      <div className="lg:col-span-2 lg:col-start-11 space-y-4">
         <div className="flex justify-start lg:justify-end space-x-3">
           <a 
             href="#" 
@@ -137,7 +139,7 @@ const FooterContent = () => {
           </a>
 
           <a 
-            href="#" 
+            href="https://t.me/TIGRSHOPsupport" 
             className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
             aria-label="Telegram"
           >

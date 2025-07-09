@@ -250,7 +250,9 @@ const DesktopHeader: React.FC = () => {
       <div className="w-full h-[120px] flex items-center justify-between px-[139px]">
         {/* Логотип */}
         <div className="flex-shrink-0">
+          <a href="/">
           <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[37px] h-[58px]" />
+          </a>
         </div>
 
         {/* Навигация - точно по центру */}

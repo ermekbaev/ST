@@ -21,6 +21,20 @@ interface ApiResponse {
   error?: string;
 }
 
+// Функция для парсинга фото
+const parsePhotoField = (photoField: string): string => {
+  if (!photoField || !photoField.trim()) return '';
+  
+  // Ищем первый HTTP URL в строке
+  const urlRegex = /https?:\/\/[^\s,;"'\n\r\t]+/;
+  const match = photoField.match(urlRegex);
+  if (match) {
+    return match[0];
+  }
+  
+  return '';
+};
+
 export async function GET(): Promise<NextResponse<ApiResponse>> {
   try {
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -90,7 +104,7 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
             category: values[4] || 'Прочее',        // Колонка E
             gender: values[5] || 'Унисекс',         // Колонка F
             price: parseFloat(values[6]) || 0,      // Колонка G
-            photo: values[7] || ''                  // Колонка H (может быть пустой)
+            photo: parsePhotoField(values[7] || '') // Парсим фото
           };
           
           if (product.name && product.name !== 'Товар без названия') {

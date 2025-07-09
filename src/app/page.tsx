@@ -24,6 +24,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Все useEffect должны быть в одном месте
   useEffect(() => {
@@ -33,6 +34,8 @@ export default function Home() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      setError(null); // Сбрасываем ошибку при новой попытке
+      
       const response = await fetch('/api/products');
       const result = await response.json();
       
@@ -55,7 +58,7 @@ export default function Home() {
     if (mounted) {
       fetchProducts();
     }
-  }, [mounted]);
+  }, [mounted, retryCount]);
 
   // Функция для получения последних товаров из категории
   const getLatestProductsFromCategory = (categoryFilter: string[], count: number = 4) => {
@@ -97,13 +100,87 @@ export default function Home() {
     );
   }
 
+  // Компонент скелетона загрузки
+  const LoadingSkeleton = () => (
+    <>
+      {/* Скелетон для секции ОБУВЬ */}
+      <section className="mb-16">
+        <div className="flex justify-between items-center mb-6 lg:mb-8">
+          <div className="h-8 lg:h-12 bg-gray-200 rounded w-32 lg:w-40 animate-pulse"></div>
+          <div className="h-6 lg:h-8 bg-gray-200 rounded w-20 lg:w-24 animate-pulse"></div>
+        </div>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="bg-white w-full">
+              <div className="w-full h-[150px] lg:h-[200px] bg-gray-200 animate-pulse rounded"></div>
+              <div className="w-full h-px bg-gray-200 animate-pulse"></div>
+              <div className="py-2 space-y-2">
+                <div className="h-5 lg:h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                <div className="h-4 lg:h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Скелетон для секции ОДЕЖДА */}
+      <section className="mb-16">
+        <div className="flex justify-between items-center mb-6 lg:mb-8">
+          <div className="h-8 lg:h-12 bg-gray-200 rounded w-32 lg:w-40 animate-pulse"></div>
+          <div className="h-6 lg:h-8 bg-gray-200 rounded w-20 lg:w-24 animate-pulse"></div>
+        </div>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="bg-white w-full">
+              <div className="w-full h-[150px] lg:h-[200px] bg-gray-200 animate-pulse rounded"></div>
+              <div className="w-full h-px bg-gray-200 animate-pulse"></div>
+              <div className="py-2 space-y-2">
+                <div className="h-5 lg:h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                <div className="h-4 lg:h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Скелетон для секции АКСЕССУАРЫ */}
+      <section className="mb-16">
+        <div className="flex justify-between items-center mb-6 lg:mb-8">
+          <div className="h-8 lg:h-12 bg-gray-200 rounded w-36 lg:w-44 animate-pulse"></div>
+          <div className="h-6 lg:h-8 bg-gray-200 rounded w-20 lg:w-24 animate-pulse"></div>
+        </div>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="bg-white w-full">
+              <div className="w-full h-[150px] lg:h-[200px] bg-gray-200 animate-pulse rounded"></div>
+              <div className="w-full h-px bg-gray-200 animate-pulse"></div>
+              <div className="py-2 space-y-2">
+                <div className="h-5 lg:h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                <div className="h-4 lg:h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Центральный индикатор загрузки - минималистичный */}
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-300"></div>
+      </div>
+    </>
+  );
+
+    // Красивое состояние загрузки с Hero слайдером
   if (loading) {
-    return (
+    return (  
       <div className="min-h-screen bg-white">
         <HeroSlider />
-        <div className="flex flex-col justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <span className="text-gray-600">Загружаем данные из Google Таблиц...</span>
+        <div className="w-full px-5 py-12">
+          {/* Анимированная загрузка товаров без текста */}
+          <LoadingSkeleton />
         </div>
       </div>
     );
@@ -153,15 +230,15 @@ export default function Home() {
               <ProductCard key={product.id || index} product={product} />
             ))
           ) : (
-            // Показываем заглушки если нет товаров
-            Array.from({ length: 4 }, (_, index) => (
+            // Показываем заглушки если нет товаров - но только если НЕ ошибка
+            !error && Array.from({ length: 4 }, (_, index) => (
               <div key={index} className="bg-white w-full">
-                <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center">
+                <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">
                   <span className="text-gray-400 text-sm font-product">Скоро товары</span>
                 </div>
                 <div className="w-full h-px bg-brand-dark"></div>
                 <div className="py-2">
-                  <div className="h-[31px] bg-gray-200 rounded w-3/4 mb-1"></div>
+                  <div className="h-[22px] bg-gray-200 rounded w-3/4 mb-1"></div>
                   <div className="h-[20px] bg-gray-200 rounded w-1/2"></div>
                 </div>
               </div>
@@ -181,15 +258,46 @@ export default function Home() {
       <div className="w-full px-5 py-12">
         {/* px-5 = 20px отступы с каждой стороны */}
         
-        {/* Ошибка загрузки */}
-        {error && (
-          <div className="text-center text-red-600 p-8 mb-8 bg-red-50 rounded-lg">
-            <p className="mb-4 font-product">Ошибка загрузки товаров: {error}</p>
+        {/* Ошибка загрузки - показываем только если была реальная ошибка И есть данные для показа */}
+        {error && products.length === 0 && (
+          <div className="text-center p-8 mb-8 bg-red-50 rounded-lg border-2 border-red-200">
+            <div className="max-w-md mx-auto">
+              <h3 className="text-lg font-bold text-red-800 mb-2 font-product">
+                Не удалось загрузить каталог
+              </h3>
+              <p className="text-red-600 mb-4 font-product text-sm">
+                Возможно, проблема с подключением к интернету или наш сервер временно недоступен.
+              </p>
+              <button 
+                onClick={() => {
+                  setRetryCount(prev => prev + 1);
+                }}
+                className="px-6 py-3 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-product text-sm"
+                disabled={loading}
+              >
+                {loading ? 'Загружаем...' : 'Попробовать снова'}
+              </button>
+              <p className="text-red-500 text-xs mt-2 font-product">
+                Попытка {retryCount + 1}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Если есть ошибка, но есть данные - показываем предупреждение сверху */}
+        {error && products.length > 0 && (
+          <div className="text-center p-4 mb-8 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-yellow-800 font-product text-sm">
+              ⚠️ Каталог может быть не полным. Показываем сохраненные данные.
+            </p>
             <button 
-              onClick={fetchProducts}
-              className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-product"
+              onClick={() => {
+                setRetryCount(prev => prev + 1);
+              }}
+              className="text-yellow-600 hover:text-yellow-800 underline font-product text-sm ml-2"
+              disabled={loading}
             >
-              Попробовать снова
+              {loading ? 'Обновляем...' : 'Обновить каталог'}
             </button>
           </div>
         )}
@@ -240,12 +348,12 @@ export default function Home() {
               { name: 'НАЗВАНИЕ' }
             ].map((collection, index) => (
               <div key={index} className="cursor-pointer group bg-white w-full hover-lift">
-                <div className="w-full h-[200px] bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
+                <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
                   <span className="text-gray-400 text-sm font-product">png?</span>
                 </div>
                 <div className="w-full h-px bg-brand-dark"></div>
                 <div className="py-2">
-                  <div className="product-name text-brand-dark text-[25px] leading-[31px]">
+                  <div className="product-name text-brand-dark text-[18px] lg:text-[25px] leading-[22px] lg:leading-[31px]">
                     {collection.name}
                   </div>
                 </div>
@@ -255,7 +363,8 @@ export default function Home() {
         </section>
 
       </div>
-{/* Секция индивидуального заказа */}
+
+      {/* Секция индивидуального заказа */}
       <CustomOrderSection 
         onHowItWorksClick={() => {
           if (mounted) {
@@ -264,7 +373,7 @@ export default function Home() {
         }}
       />
 
-        {mounted && (
+      {mounted && (
         <HowItWorksModal 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 

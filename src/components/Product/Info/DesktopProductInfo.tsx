@@ -62,6 +62,13 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
     return aNum - bNum;
   });
 
+  // ЛОГИКА ТЕКСТА КНОПКИ
+  const getButtonText = () => {
+    if (isAddingToCart) return 'ДОБАВЛЯЕМ...';
+    if (!selectedSize) return 'НЕ ВЫБРАНО';
+    return 'ДОБАВИТЬ В КОРЗИНУ';
+  };
+
   return (
     <div className="space-y-6 w-full">
       {/* Название товара */}
@@ -121,21 +128,21 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
             fontFamily: 'Random Grotesque, Arial, sans-serif'
           }}
         >
-          {/* Левая часть - размер */}
-          <div className="flex items-center">
+          {/* Левая часть - "Размер" или конкретный размер (увеличил ширину) */}
+          <div className="flex items-center justify-center w-32">
             <span 
               className="text-white"
               style={{
                 fontWeight: 400,
-                fontSize: '30px',
-                lineHeight: '41px'
+                fontSize: '24px',
+                lineHeight: '32px'
               }}
             >
               {selectedSize || 'Размер'}
             </span>
           </div>
 
-          {/* Разделитель */}
+          {/* Разделитель - показываем всегда */}
           <div className="w-px h-12 bg-white"></div>
 
           {/* Правая часть - текст кнопки */}
@@ -144,11 +151,11 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
               className="text-white"
               style={{
                 fontWeight: 400,
-                fontSize: '30px',
+                fontSize: '26px',
                 lineHeight: '41px'
               }}
             >
-              {isAddingToCart ? 'ДОБАВЛЯЕМ...' : 'ДОБАВИТЬ В КОРЗИНУ'}
+              {getButtonText()}
             </span>
           </div>
         </button>

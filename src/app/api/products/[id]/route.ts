@@ -23,7 +23,7 @@ interface ProductWithSizes {
   category: string;
   gender: string;
   description: string;
-  photo: string;
+  photos: string[]; // Массив изображений
   sizes: Array<{
     size: string;
     price: number;
@@ -39,14 +39,69 @@ interface ApiResponse {
   error?: string;
 }
 
-// Изменяем сигнатуру функции для Next.js 15
+// Функция для обработки множественных изображений
+const parsePhotos = (photoString: string): string[] => {
+  if (!photoString || photoString.trim() === '') {
+    return [];
+  }
+  
+  console.log('=== ОТЛАДКА ПАРСИНГА ФОТОГРАФИЙ ===');
+  console.log('Исходная строка:', JSON.stringify(photoString));
+  console.log('Длина строки:', photoString.length);
+  console.log('Первые 200 символов:', photoString.substring(0, 200));
+  
+  // ПРИОРИТЕТ: Сначала пробуем точку с запятой как разделитель
+  let photos: string[] = [];
+  
+  if (photoString.includes(';')) {
+    photos = photoString.split(';');
+    console.log('Разделение по ";" найдено:', photos.length, 'частей');
+  }
+  // Затем пробуем переносы строк
+  else if (photoString.includes('\n') || photoString.includes('\r')) {
+    photos = photoString.split(/[\r\n]+/);
+    console.log('Разделение по переносам строк:', photos.length, 'частей');
+  }
+  // Потом запятые
+  else if (photoString.includes(',')) {
+    photos = photoString.split(',');
+    console.log('Разделение по запятым:', photos.length, 'частей');
+  }
+  // Пробуем regex для поиска всех HTTP ссылок
+  else {
+    const urlRegex = /https?:\/\/[^\s,;"'\n\r\t]+/g;
+    const foundUrls = photoString.match(urlRegex) || [];
+    if (foundUrls.length > 0) {
+      photos = foundUrls;
+      console.log('Найдено через regex:', photos.length, 'URL');
+    } else {
+      // Возвращаем всю строку как один URL
+      photos = [photoString];
+      console.log('Используем всю строку как один URL');
+    }
+  }
+  
+  console.log('Сырые части:', photos);
+  
+  // Очищаем результат
+  const cleanPhotos = photos
+    .map(url => url.trim().replace(/^["']+|["']+$/g, '')) // Убираем кавычки и пробелы
+    .filter(url => url.length > 0) // Убираем пустые строки
+    .filter(url => url.startsWith('http') || url.includes('cdn') || url.includes('imgur') || url.includes('image')); // Только URL
+  
+  console.log('Очищенные URL:', cleanPhotos);
+  console.log('Финальное количество изображений:', cleanPhotos.length);
+  console.log('=== КОНЕЦ ОТЛАДКИ ===');
+  
+  return cleanPhotos;
+};
+
 export async function GET(
   request: Request,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<ApiResponse>> {
   try {
-    // Ждем params в Next.js 15
-    const { id: productId } = await context.params;
+    const productId = params.id;
     
     // Получаем все товары из Google Sheets
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -66,7 +121,7 @@ export async function GET(
       throw new Error('Таблица пуста или содержит только заголовки');
     }
     
-    // Функция для парсинга CSV строки
+    // Функция для парсинга CSV строки с учётом кавычек и переносов
     const parseCSVLine = (line: string): string[] => {
       const result: string[] = [];
       let current = '';
@@ -88,14 +143,6 @@ export async function GET(
       return result;
     };
     
-    const headers: string[] = parseCSVLine(lines[0]);
-    console.log('Заголовки таблицы:', headers);
-    console.log('Количество колонок:', headers.length);
-    
-    // Определяем индексы колонок
-    const photoIndex = headers.findIndex(h => h.toLowerCase().includes('фото') || h.toLowerCase().includes('photo') || h.toLowerCase().includes('изображ'));
-    console.log('Индекс колонки с фото:', photoIndex, '- колонка:', headers[photoIndex]);
-    
     const products: Product[] = [];
     
     // Парсим все товары
@@ -106,17 +153,17 @@ export async function GET(
       try {
         const values: string[] = parseCSVLine(line);
         
-        if (values.length >= 7) { // Изменили с 8 на 7, так как колонка H может быть пустой
+        if (values.length >= 7) {
           const product: Product = {
             id: `product_${i}`,
-            article: values[0] || `ART${i}`,        // Колонка A
-            brand: values[1] || 'Неизвестный бренд', // Колонка B  
-            name: values[2] || 'Товар без названия', // Колонка C
-            size: values[3] || 'Universal',         // Колонка D
-            category: values[4] || 'Прочее',        // Колонка E
-            gender: values[5] || 'Унисекс',         // Колонка F
-            price: parseFloat(values[6]) || 0,      // Колонка G
-            photo: values[7] || ''                  // Колонка H (может быть пустой)
+            article: values[0] || `ART${i}`,
+            brand: values[1] || 'Неизвестный бренд',
+            name: values[2] || 'Товар без названия',
+            size: values[3] || 'Universal',
+            category: values[4] || 'Прочее',
+            gender: values[5] || 'Унисекс',
+            price: parseFloat(values[6]) || 0,
+            photo: values[7] || '' // Это может содержать несколько URL через \n
           };
           
           if (product.name && product.name !== 'Товар без названия') {
@@ -124,8 +171,6 @@ export async function GET(
           }
         }
       } catch (parseError: unknown) {
-        const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parsing error';
-        console.error(`Ошибка парсинга строки ${i}:`, errorMessage);
         continue; 
       }
     }
@@ -163,7 +208,7 @@ export async function GET(
       .map(p => ({
         size: p.size,
         price: p.price,
-        available: true // В реальности здесь будет проверка наличия
+        available: true
       }));
     
     // Убираем дубликаты размеров и сортируем
@@ -177,6 +222,9 @@ export async function GET(
         return aNum - bNum;
       });
     
+    // Обрабатываем множественные изображения
+    const photos = parsePhotos(baseProduct.photo);
+    
     // Формируем итоговый объект товара
     const productWithSizes: ProductWithSizes = {
       id: baseProduct.id,
@@ -186,13 +234,13 @@ export async function GET(
       category: baseProduct.category,
       gender: baseProduct.gender,
       description: `${baseProduct.brand} ${baseProduct.name}. Высокое качество и стиль в одном товаре.`,
-      photo: baseProduct.photo,
+      photos: photos, // Массив изображений
       sizes: uniqueSizes,
       inStock: uniqueSizes.some(s => s.available),
       deliveryInfo: 'Среднее время стандартной доставки: 15-20 рабочих дней.'
     };
     
-    console.log(`Найден товар: ${baseProduct.name} с ${uniqueSizes.length} размерами`);
+    console.log(`Найден товар: ${baseProduct.name} с ${uniqueSizes.length} размерами и ${photos.length} изображениями`);
     
     return NextResponse.json<ApiResponse>({
       success: true,

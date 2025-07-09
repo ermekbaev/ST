@@ -139,7 +139,7 @@ const MobileFooterContent = () => {
         </a>
 
         <a 
-          href="#" 
+          href="https://t.me/TIGRSHOPsupport" 
           className="w-12 h-12 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
           aria-label="Telegram"
         >

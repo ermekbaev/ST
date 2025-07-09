@@ -88,13 +88,13 @@ const SupportWidget: React.FC<SupportWidgetProps> = ({ forceVisible = false, onT
     
     switch(type) {
       case 'telegram':
-        window.open('https://t.me/PadvdH', '_blank');
+        window.open('https://t.me/TIGRSHOPsupport', '_blank');
         break;
       case 'whatsapp':
         window.open('https://wa.me/79962814667', '_blank');
         break;
       case 'email':
-        window.location.href = 'mailto:tigran200615@gmail.com';
+        window.location.href = 'mailto:contact@tigrshop.ru';
         break;
       case 'chat':
         console.log('Открыть чат');

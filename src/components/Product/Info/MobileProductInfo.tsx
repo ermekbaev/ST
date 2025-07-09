@@ -62,6 +62,13 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
     return aNum - bNum;
   });
 
+  // ЛОГИКА ТЕКСТА КНОПКИ
+  const getButtonText = () => {
+    if (isAddingToCart) return 'ДОБАВЛЯЕМ...';
+    if (!selectedSize) return 'НЕ ВЫБРАНО';
+    return 'ДОБАВИТЬ В КОРЗИНУ';
+  };
+
   return (
     <div className="space-y-4 w-full max-w-sm">
       {/* Название товара */}
@@ -120,21 +127,21 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
             fontFamily: 'Random Grotesque, Arial, sans-serif'
           }}
         >
-          {/* Левая часть - размер */}
-          <div className="flex items-center">
+          {/* Левая часть - "Размер" или конкретный размер (увеличил ширину) */}
+          <div className="flex items-center justify-center w-20">
             <span 
-              className="text-white"
+              className="text-white text-center"
               style={{
                 fontWeight: 400,
-                fontSize: '20px',
-                lineHeight: '27px'
+                fontSize: '14px',
+                lineHeight: '18px'
               }}
             >
-              {selectedSize || '?'}
+              {selectedSize || 'Размер'}
             </span>
           </div>
 
-          {/* Разделитель */}
+          {/* Разделитель - показываем всегда */}
           <div className="w-px h-5 bg-white"></div>
 
           {/* Правая часть - текст кнопки */}
@@ -143,11 +150,11 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
               className="text-white"
               style={{
                 fontWeight: 400,
-                fontSize: '15px',
-                lineHeight: '20px'
+                fontSize: '12px',
+                lineHeight: '16px'
               }}
             >
-              {isAddingToCart ? 'ДОБАВЛЯЕМ...' : 'ДОБАВИТЬ В КОРЗИНУ'}
+              {getButtonText()}
             </span>
           </div>
         </button>
@@ -243,7 +250,6 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
           <div className="w-4 h-4 flex items-center justify-center">
             {/* Упрощенная SVG иконка для мобильного */}
             <img src="../icons/delivery.svg" alt="" />
-
           </div>
         </div>
         

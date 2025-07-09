@@ -70,7 +70,9 @@ const MobileHeader: React.FC = () => {
         <div className="flex w-full h-[80px] items-center justify-between px-4 relative">
           {/* Логотип */}
           <div className="flex-shrink-0 z-50">
-            <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[24px] h-[37px]" />
+            <a href="/">
+              <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[24px] h-[37px]" />
+            </a>
           </div>
 
           {/* Поисковая строка - расширяется от иконки поиска на всю ширину */}
@@ -159,7 +161,9 @@ const MobileHeader: React.FC = () => {
           <div className="flex w-full h-[80px] items-center justify-between px-4 border-b border-gray-200">
             {/* Логотип */}
             <div className="flex-shrink-0">
-              <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[24px] h-[37px]" />
+              <a href="/">
+                <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[24px] h-[37px]" />
+              </a>
             </div>
 
             {/* Кнопка закрытия - крестик */}

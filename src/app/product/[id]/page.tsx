@@ -41,9 +41,6 @@ const mockImages: GalleryImage[] = [
 ];
 
 export default function ProductPage({ params }: ProductPageProps) {
-  // Используем React.use() для разворачивания Promise params
-  const resolvedParams = use(params);
-  
   const [mounted, setMounted] = useState(false);
   const [product, setProduct] = useState<ProductInfoType | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -51,6 +48,9 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addToCart } = useCart();
+
+  // Используем React.use() для разворачивания Promise params
+  const resolvedParams = use(params);
 
   useEffect(() => {
     setMounted(true);
@@ -63,7 +63,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         try {
           setLoading(true);
           
-          // Реальный API запрос с использованием развернутого ID
+          // Реальный API запрос
           const response = await fetch(`/api/products/${resolvedParams.id}`);
           const result = await response.json();
           
@@ -84,31 +84,32 @@ export default function ProductPage({ params }: ProductPageProps) {
             
             setProduct(productData);
             
-            // Создаем изображения
-            const productImages: GalleryImage[] = result.data.photo ? [
-              {
-                id: '1',
-                url: result.data.photo,
-                alt: `${result.data.name} - основное фото`
-              },
-              {
-                id: '2',
-                url: 'https://via.placeholder.com/800x600/E5DDD4/8C8072?text=' + encodeURIComponent(result.data.brand + ' 2'),
-                alt: `${result.data.name} - вид сбоку`
-              },
-              {
-                id: '3',
-                url: 'https://via.placeholder.com/800x600/E5DDD4/8C8072?text=' + encodeURIComponent(result.data.brand + ' 3'),
-                alt: `${result.data.name} - вид сзади`
-              },
-              {
-                id: '4',
-                url: 'https://via.placeholder.com/800x600/E5DDD4/8C8072?text=' + encodeURIComponent(result.data.brand + ' 4'),
-                alt: `${result.data.name} - подошва`
-              }
-            ] : mockImages;
+            // Создаем изображения из массива photos
+            const productImages: GalleryImage[] = [];
+            
+            if (result.data.photos && result.data.photos.length > 0) {
+              // Используем ТОЛЬКО реальные изображения из таблицы
+              result.data.photos.forEach((photoUrl: string, index: number) => {
+                productImages.push({
+                  id: `photo_${index + 1}`,
+                  url: photoUrl,
+                  alt: `${result.data.name} - фото ${index + 1}`
+                });
+              });
+            }
+            
+            // Если нет изображений вообще, используем fallback
+            if (productImages.length === 0) {
+              productImages.push({
+                id: 'fallback_1',
+                url: '',
+                alt: `${result.data.name} - изображение скоро появится`
+              });
+            }
             
             setImages(productImages);
+            
+            console.log(`Загружено ${result.data.photos?.length || 0} реальных изображений для товара ${result.data.name}`);
             
           } else {
             console.error('Товар не найден:', result.error);
@@ -125,7 +126,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
       loadProduct();
     }
-  }, [mounted, resolvedParams.id]); // Используем развернутый ID
+  }, [mounted, resolvedParams.id]);
 
   const handleSizeSelect = (size: string) => {
     setSelectedSize(size);
