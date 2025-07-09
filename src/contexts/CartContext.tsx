@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Интерфейс для товара
 interface Product {
@@ -29,6 +29,10 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
 }
 
 // Создаем контекст с дефолтным значением
@@ -40,11 +44,48 @@ const CartContext = createContext<CartContextType>({
   clearCart: () => {},
   totalItems: 0,
   totalPrice: 0,
+  isCartOpen: false,
+  openCart: () => {},
+  closeCart: () => {},
+  toggleCart: () => {},
 });
+
+// Ключ для localStorage
+const CART_STORAGE_KEY = 'tigr_shop_cart';
 
 // Провайдер корзины
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Загрузка корзины из localStorage при инициализации
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        if (Array.isArray(parsedCart)) {
+          setItems(parsedCart);
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки корзины из localStorage:', error);
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
+
+  // Сохранение корзины в localStorage при изменении
+  useEffect(() => {
+    if (isHydrated) {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      } catch (error) {
+        console.error('Ошибка сохранения корзины в localStorage:', error);
+      }
+    }
+  }, [items, isHydrated]);
 
   // Добавить товар в корзину
   const addToCart = (product: Product) => {
@@ -94,20 +135,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
   };
 
-  // Подсчет общего количества товаров
-  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+  // Управление состоянием корзины
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+  const toggleCart = () => setIsCartOpen(!isCartOpen);
 
-  // Подсчет общей стоимости
-  const totalPrice = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  // Подсчет общего количества товаров (только после гидратации)
+  const totalItems = isHydrated ? items.reduce((total, item) => total + item.quantity, 0) : 0;
+
+  // Подсчет общей стоимости (только после гидратации)
+  const totalPrice = isHydrated ? items.reduce((total, item) => total + (item.price * item.quantity), 0) : 0;
 
   const value: CartContextType = {
-    items,
+    items: isHydrated ? items : [], // Показываем товары только после гидратации
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
     totalItems,
-    totalPrice
+    totalPrice,
+    isCartOpen,
+    openCart,
+    closeCart,
+    toggleCart
   };
 
   return (

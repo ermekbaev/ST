@@ -9,7 +9,7 @@ interface BottomNavigationProps {
 
 const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) => {
   const [mounted, setMounted] = useState(false);
-  const { totalItems } = useCart();
+  const { totalItems, toggleCart } = useCart();
 
   useEffect(() => {
     setMounted(true);
@@ -21,8 +21,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
   };
 
   const handleCartClick = () => {
-    console.log('Переход в корзину');
-    // Здесь будет логика перехода в корзину
+    console.log('Открытие корзины');
+    toggleCart();
   };
 
   const handleSupportClick = () => {
@@ -35,7 +35,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
       <div className="flex items-center justify-around h-[70px] px-4">
-{/* Профиль */}
+        {/* Профиль */}
         <button
           onClick={handleProfileClick}
           className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity"
@@ -43,7 +43,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
           <img src="/icons/profile.svg" alt="Профиль" className="w-8 h-8" />
         </button>
 
-                {/* Корзина */}
+        {/* Корзина */}
         <button
           onClick={handleCartClick}
           className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity relative"
@@ -65,11 +65,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
           className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity"
         >
           {/* Используем ту же иконку что и в SupportWidget, но меньшего размера */}
-          <img src="/supportIcons/Support2.svg" alt="Профиль" className="w-8 h-8" />
-
+          <img src="/supportIcons/Support2.svg" alt="Поддержка" className="w-8 h-8" />
         </button>
-
-
       </div>
     </div>
   );

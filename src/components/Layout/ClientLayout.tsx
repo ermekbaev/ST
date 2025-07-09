@@ -5,6 +5,7 @@ import Header from './Header/Header';
 import Footer from './Footer/Footer';
 import SupportWidget from '../UI/Support/SupportWidget';
 import BottomNavigation from './Navigation/BottomNavigation';
+import CartSidebar from '../Cart/CartSidebar';
 import { CartProvider } from '../../contexts/CartContext';
 
 export default function ClientLayout({
@@ -62,6 +63,9 @@ export default function ClientLayout({
         
         {/* BottomNavigation - только на мобильном */}
         <BottomNavigation onSupportClick={handleSupportToggle} />
+        
+        {/* CartSidebar - корзина */}
+        <CartSidebar />
       </div>
     </CartProvider>
   );

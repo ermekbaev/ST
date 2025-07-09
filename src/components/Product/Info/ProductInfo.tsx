@@ -63,27 +63,29 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     setMounted(true);
   }, []);
 
-  // Функция добавления в корзину с загрузкой
+  // Функция добавления в корзину без alert
   const handleAddToCart = async () => {
     if (!selectedSize) {
-      alert('Пожалуйста, выберите размер');
+      // Можно добавить визуальную подсветку поля размера
+      console.log('Размер не выбран');
       return;
     }
 
     setIsAddingToCart(true);
     
     try {
-      // Имитируем загрузку
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Имитируем загрузку (можно убрать если не нужно)
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Добавляем в корзину
       onAddToCart(selectedSize);
       
-      // Показываем успешное добавление
-      // Здесь можно добавить toast уведомление
+      // Логируем успешное добавление (только в консоль)
       console.log(`Товар добавлен в корзину: ${product.name}, размер: ${selectedSize}`);
       
     } catch (error) {
       console.error('Ошибка добавления в корзину:', error);
-      alert('Произошла ошибка. Попробуйте еще раз.');
+      // Можно добавить toast уведомление вместо alert
     } finally {
       setIsAddingToCart(false);
     }

@@ -7,6 +7,7 @@ import ProductGallery, { GalleryImage } from '../../../components/Product/Galler
 import ProductInfo, { ProductInfo as ProductInfoType, ProductSize } from '../../../components/Product/Info/ProductInfo';
 import CustomOrderSection from '../../../components/CustomOrder/CustomOrderSection';
 import HowItWorksModal from '../../../components/UI/Modal/HowItWorksModal';
+import CartNotification from '../../../components/UI/Notifications/CartNotification';
 import DeliveryPaymentSection from '@/components/Product/Sections/DeliveryPaymentSection';
 import ProductActions from '@/components/Product/Sections/ProductActions';
 
@@ -47,7 +48,9 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { addToCart } = useCart();
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationProduct, setNotificationProduct] = useState('');
+  const { addToCart, openCart } = useCart();
 
   // Используем React.use() для разворачивания Promise params
   const resolvedParams = use(params);
@@ -151,10 +154,18 @@ export default function ProductPage({ params }: ProductPageProps) {
       photo: images[0]?.url || ''
     };
     
+    // Добавляем в корзину без alert
     addToCart(cartItem);
     
     // Показываем уведомление
-    alert(`Товар добавлен в корзину!\n${product.name}\nРазмер: ${size}\nЦена: ${price.toLocaleString()} ₽`);
+    setNotificationProduct(`${product.name} (размер ${size})`);
+    setShowNotification(true);
+    
+    // Логируем в консоль
+    console.log(`Товар добавлен в корзину: ${product.name}, размер: ${size}, цена: ${price.toLocaleString()} ₽`);
+    
+    // Опционально: можно открыть корзину автоматически
+    // openCart();
   };
 
   const handleContinueShopping = () => {
@@ -299,6 +310,13 @@ export default function ProductPage({ params }: ProductPageProps) {
       <HowItWorksModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
+      />
+
+      {/* Уведомление о добавлении в корзину */}
+      <CartNotification
+        isVisible={showNotification}
+        productName={notificationProduct}
+        onHide={() => setShowNotification(false)}
       />
     </div>
   );

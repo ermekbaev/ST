@@ -17,7 +17,7 @@ const DesktopHeader: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const { totalItems } = useCart();
+  const { totalItems, toggleCart } = useCart();
   
   useEffect(() => {
     setMounted(true);
@@ -152,6 +152,10 @@ const DesktopHeader: React.FC = () => {
       setSearchQuery('');
     }
   }, []);
+
+  const handleCartClick = useCallback((): void => {
+    toggleCart();
+  }, [toggleCart]);
 
   const getMenuPosition = useCallback((): React.CSSProperties => {
     if (!activeMenu) return {};
@@ -308,12 +312,15 @@ const DesktopHeader: React.FC = () => {
           >
             <img src="/icons/search.svg" alt="Поиск" className="w-6 h-6" />
           </div>
-          <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200 relative hover-lift">
+          <div 
+            className="cursor-pointer hover:opacity-70 transition-opacity duration-200 relative hover-lift"
+            onClick={handleCartClick}
+          >
             <img src="/icons/cart.svg" alt="Корзина" className="w-6 h-6" />
             {/* Показываем счетчик только после монтирования */}
             {mounted && totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold font-price">
-                {totalItems}
+                {totalItems > 99 ? '99+' : totalItems}
               </span>
             )}
           </div>
