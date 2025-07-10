@@ -8,9 +8,10 @@ interface MegaMenuData {
   categories: string[];
   subcategories: string[];
   additional?: string[];
+  links?: Record<string, string>; 
 }
 
-type MenuKey = 'обувь' | 'одежда' | 'аксессуары' | 'коллекции';
+type MenuKey = 'обувь' | 'одежда' | 'аксессуары' | 'коллекции' | 'информация';
 
 const DesktopHeader: React.FC = () => {
   const [mounted, setMounted] = useState<boolean>(false);
@@ -99,6 +100,26 @@ const DesktopHeader: React.FC = () => {
         'хиты продаж',
         'коллаборации'
       ]
+    },
+    'информация': {
+      title: 'ИНФОРМАЦИЯ',
+      categories: [
+        'контакты',
+        'доставка', 
+        'возврат',
+        'оплата',
+        'FAQ',
+        'о нас'
+      ],
+      links: {  
+        'контакты': '/contacts',
+        'доставка': '/delivery',
+        'возврат': '/returns', 
+        'оплата': '/payment',
+        'FAQ': '/faq',
+        'о нас': '/about'
+      },
+      subcategories: [] 
     }
   };
   
@@ -202,7 +223,7 @@ const DesktopHeader: React.FC = () => {
                     {menuData.categories.map((category: string, index: number) => (
                       <a
                         key={index}
-                        href="#"
+                        href={menuData.links?.[category] || '#'}
                         className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
                       >
                         {category}
@@ -213,36 +234,39 @@ const DesktopHeader: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <div className="flex items-start">
-                <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
-                  КАТЕГОРИЯ
-                </h3>
-                <div className="flex-1">
-                  <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
-                  <div className="grid grid-cols-2 gap-x-16 gap-y-3">
-                    {menuData.subcategories.map((subcategory: string, index: number) => (
-                      <a
-                        key={index}
-                        href="#"
-                        className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
-                      >
-                        {subcategory}
-                      </a>
-                    ))}
-                    {menuData.additional && menuData.additional.map((item: string, index: number) => (
-                      <a
-                        key={`additional-${index}`}
-                        href="#"
-                        className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
-                      >
-                        {item}
-                      </a>
-                    ))}
+            {/* Показываем секцию КАТЕГОРИЯ только если это НЕ информация */}
+            {activeMenu !== 'информация' && (
+              <div>
+                <div className="flex items-start">
+                  <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
+                    КАТЕГОРИЯ
+                  </h3>
+                  <div className="flex-1">
+                    <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
+                    <div className="grid grid-cols-2 gap-x-16 gap-y-3">
+                      {menuData.subcategories.map((subcategory: string, index: number) => (
+                        <a
+                          key={index}
+                          href="#"
+                          className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
+                        >
+                          {subcategory}
+                        </a>
+                      ))}
+                      {menuData.additional && menuData.additional.map((item: string, index: number) => (
+                        <a
+                          key={`additional-${index}`}
+                          href="#"
+                          className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
+                        >
+                          {item}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -292,7 +316,7 @@ const DesktopHeader: React.FC = () => {
                 // Убираем onMouseLeave с отдельных пунктов меню
               >
                 <a 
-                  href="#" 
+                  href="#"
                   className={`hover:text-brand-gray transition-colors duration-200 uppercase font-heading font-medium tracking-wide ${
                     activeMenu === item ? 'text-brand-gray' : ''
                   }`}
@@ -325,7 +349,7 @@ const DesktopHeader: React.FC = () => {
             )}
           </div>
           <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200 hover-lift">
-            <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-6" />
+            <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-8" />
           </div>
         </div>
       </div>
