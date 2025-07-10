@@ -183,7 +183,13 @@ const DesktopHeader: React.FC = () => {
     
     const activeIndex = menuItems.indexOf(activeMenu);
     
-    const centerOffset = (activeIndex - 3.5) * 120 + 200; // увеличили до +200px вправо
+    // Уменьшаем сдвиг для "информация" (последний пункт)
+    let centerOffset;
+    if (activeIndex === menuItems.length - 1) { // информация
+      centerOffset = (activeIndex - 3.5) * 120 + 50; // уменьшили сдвиг до +50px
+    } else {
+      centerOffset = (activeIndex - 3.5) * 120 + 200; // обычный сдвиг для остальных
+    }
     
     return {
       transform: `translateX(${centerOffset}px)`
