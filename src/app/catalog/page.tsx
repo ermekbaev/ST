@@ -1,24 +1,15 @@
+// src/app/catalog/page.tsx
 'use client'
 
 import React, { useState, useEffect } from 'react';
 import DesktopFilters from '../../components/Catalog/DesktopFilters';
-// import MobileFilters from '../../components/Catalog/MobileFilters';
+import MobileFilters from '../../components/Catalog/MobileFilters';
+import MobileFilterButton from '../../components/Catalog/MobileFilterButton';
 import CatalogSearch from '../../components/Catalog/CatalogSearch';
 import CatalogSort from '../../components/Catalog/CatalogSort';
 import ProductGrid from '../../components/Catalog/ProductGrid';
 import CatalogPagination from '../../components/Catalog/CatalogPagination';
-// import ActiveFilters from '../../components/Catalog/ActiveFilters';
-
-// export const metadata = {
-//   title: 'Каталог товаров - Tigr Shop',
-//   description: 'Большой выбор оригинальной обуви, одежды и аксессуаров. Фильтры по брендам, размерам, ценам. Быстрая доставка по всей России.',
-//   keywords: 'каталог обуви, интернет магазин обуви, кроссовки, ботинки, одежда, аксессуары, оригинальные бренды',
-//   openGraph: {
-//     title: 'Каталог товаров - Tigr Shop',
-//     description: 'Большой выбор оригинальной обуви, одежды и аксессуаров',
-//     type: 'website',
-//   },
-// };
+import ActiveFilters from '../../components/Catalog/ActiveFilters';
 
 interface Product {
   id?: string;
@@ -51,6 +42,7 @@ const CatalogPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popularity');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const itemsPerPage = 20;
 
   // Состояние фильтров
@@ -62,7 +54,7 @@ const CatalogPage: React.FC = () => {
     priceRange: { min: '', max: '' }
   });
 
-  // Доступные опции для фильтров (будут заполняться из данных)
+  // Доступные опции для фильтров
   const [filterOptions, setFilterOptions] = useState({
     brands: [] as string[],
     genders: [] as string[],
@@ -222,6 +214,17 @@ const CatalogPage: React.FC = () => {
     setSearchQuery('');
   };
 
+  // Проверка наличия активных фильтров
+  const hasActiveFilters = () => {
+    return filters.brands.length > 0 ||
+           filters.genders.length > 0 ||
+           filters.categories.length > 0 ||
+           filters.sizes.length > 0 ||
+           filters.priceRange.min !== '' ||
+           filters.priceRange.max !== '' ||
+           searchQuery.trim() !== '';
+  };
+
   // Пагинация
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const currentProducts = filteredProducts.slice(
@@ -247,13 +250,17 @@ const CatalogPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white pb-20 lg:pb-0">
       {/* Мобильные фильтры */}
-      {/* <MobileFilters
+      <MobileFilters
         filters={filters}
         filterOptions={filterOptions}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}
         totalResults={filteredProducts.length}
-      /> */}
+        isOpen={isMobileFiltersOpen}
+        onClose={() => setIsMobileFiltersOpen(false)}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
 
       {/* Основной контент */}
       <div className="flex flex-col lg:flex-row">
@@ -271,7 +278,15 @@ const CatalogPage: React.FC = () => {
         {/* Правая часть с товарами */}
         <div className="flex-1 catalog-content">
           <div className="p-5">
-            {/* Мобильный поиск */}
+            {/* Мобильная кнопка фильтра */}
+            <MobileFilterButton
+              onClick={() => setIsMobileFiltersOpen(true)}
+              totalResults={filteredProducts.length}
+              hasActiveFilters={hasActiveFilters()}
+              className="mb-6"
+            />
+
+            {/* Мобильный поиск - только если десктопные фильтры скрыты */}
             <div className="lg:hidden">
               <CatalogSearch
                 searchQuery={searchQuery}
@@ -281,12 +296,12 @@ const CatalogPage: React.FC = () => {
               />
             </div>
 
-            {/* Активные фильтры
+            {/* Активные фильтры */}
             <ActiveFilters
               filters={filters}
               onRemoveFilter={handleRemoveFilter}
               onClearAll={clearFilters}
-            /> */}
+            />
 
             {/* Сортировка */}
             <CatalogSort
@@ -312,8 +327,6 @@ const CatalogPage: React.FC = () => {
       </div>
     </div>
   );
-
 };
 
 export default CatalogPage;
-
