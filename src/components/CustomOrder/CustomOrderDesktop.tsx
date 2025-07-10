@@ -10,33 +10,14 @@ const CustomOrderDesktop: React.FC<CustomOrderDesktopProps> = ({ onHowItWorksCli
   return (
     <>
       {/* Заголовок - черная часть, выровнена по левому краю */}
-      <h2 
-        className="text-[45px] lg:text-[55px] text-brand-dark leading-tight my-8 text-left"
-        style={{ 
-          fontFamily: 'Druk Wide Cyr, sans-serif',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
-          lineHeight: '0.95'
-        }}
-      >
+      <h2 className="custom-order-title custom-order-title--desktop text-brand-dark text-left my-8">
         В КАТАЛОГЕ НЕТ ИНТЕРЕСУЮЩЕЙ<br />
         МОДЕЛИ?<br />
         ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ
       </h2>
       
       {/* "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ" белым цветом */}
-      <p 
-        className="text-[45px] lg:text-[55px] text-white mb-16 text-left"
-        style={{ 
-          fontFamily: 'Druk Wide Cyr, sans-serif',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
-          lineHeight: '0.95',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-        }}
-      >
+      <p className="custom-order-title custom-order-title--desktop text-white mb-16 text-left custom-order-highlight">
         ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
       </p>
       
@@ -44,27 +25,17 @@ const CustomOrderDesktop: React.FC<CustomOrderDesktopProps> = ({ onHowItWorksCli
       <div className="text-center my-16">
         <a
           href="https://t.me/TIGRSHOPsupport"
-          className="inline-block bg-transparent border-2 border-white text-white px-12 py-4 text-[24px] lg:text-[26px] hover:bg-white hover:text-black transition-colors uppercase tracking-wide"
-          style={{ 
-            fontFamily: 'Random Grotesque, sans-serif',
-            fontWeight: 400,
-            width: '732px',
-            maxWidth: '90vw'
-          }}
+          className="custom-order-btn custom-order-btn--desktop"
         >
           ОФОРМИТЬ ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
         </a>
       </div>
 
       {/* Ссылка "Как это работает?" - десктопная версия */}
-      <div className="text-center ">
+      <div className="text-center">
         <button
           onClick={onHowItWorksClick}
-          className="text-gray-600 text-[16px] lg:text-[18px] underline hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none pt-10"
-          style={{ 
-            fontFamily: 'Random Grotesque, sans-serif',
-            fontWeight: 400
-          }}
+          className="custom-order-link custom-order-link--desktop pt-10"
         >
           Как это работает?
         </button>

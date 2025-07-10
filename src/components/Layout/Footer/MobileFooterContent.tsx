@@ -1,3 +1,4 @@
+// MobileFooterContent.tsx
 import React, { useState } from 'react';
 
 const MobileFooterContent = () => {
@@ -62,19 +63,13 @@ const MobileFooterContent = () => {
           <div key={section.key} className="border-b border-gray-700">
             <button
               onClick={() => toggleSection(section.key)}
-              className="w-full flex items-center justify-between py-6 text-left"
+              className="footer-accordion-btn"
             >
-              <span 
-                className="text-white font-medium text-lg uppercase tracking-wider"
-                style={{ 
-                  fontFamily: 'Random Grotesque, Arial, sans-serif',
-                  fontWeight: 500
-                }}
-              >
+              <span className="footer-accordion-title">
                 {section.title}
               </span>
               <div 
-                className="w-5 h-5 flex items-center justify-center transition-transform duration-300"
+                className="footer-accordion-icon"
                 style={{
                   transform: openSections[section.key] ? 'rotate(180deg)' : 'rotate(0deg)'
                 }}
@@ -87,20 +82,16 @@ const MobileFooterContent = () => {
 
             {/* Контент секции */}
             <div 
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                openSections[section.key] ? 'max-h-96 pb-6' : 'max-h-0'
+              className={`footer-accordion-content ${
+                openSections[section.key] ? 'footer-accordion-content--open' : ''
               }`}
             >
-              <ul className="space-y-4">
+              <ul className="footer-accordion-list">
                 {section.items.map((item, index) => (
                   <li key={index}>
                     <a 
                       href={item.href} 
-                      className="text-gray-300 hover:text-white transition-colors text-base"
-                      style={{ 
-                        fontFamily: 'Random Grotesque, Arial, sans-serif',
-                        fontWeight: 400
-                      }}
+                      className="footer-accordion-link"
                     >
                       {item.label}
                     </a>
@@ -113,10 +104,10 @@ const MobileFooterContent = () => {
       </div>
 
       {/* Социальные сети */}
-      <div className="mt-12 flex items-center justify-center space-x-4">
+      <div className="footer-social">
         <a 
           href="#" 
-          className="w-12 h-12 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
+          className="footer-social-btn"
           aria-label="VKontakte"
         >
           <img 
@@ -128,7 +119,7 @@ const MobileFooterContent = () => {
 
         <a 
           href="#" 
-          className="w-12 h-12 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
+          className="footer-social-btn"
           aria-label="Instagram"
         >
           <img 
@@ -140,7 +131,7 @@ const MobileFooterContent = () => {
 
         <a 
           href="https://t.me/TIGRSHOPsupport" 
-          className="w-12 h-12 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
+          className="footer-social-btn"
           aria-label="Telegram"
         >
           <img 
@@ -152,7 +143,7 @@ const MobileFooterContent = () => {
 
         <a 
           href="https://wa.me/79962814667" 
-          className="w-12 h-12 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
+          className="footer-social-btn"
           aria-label="WhatsApp"
         >
           <img 

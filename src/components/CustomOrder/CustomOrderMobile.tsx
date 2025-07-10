@@ -11,16 +11,7 @@ const CustomOrderMobile: React.FC<CustomOrderMobileProps> = ({ onHowItWorksClick
     <div className="md:hidden h-full flex flex-col justify-center px-2">
       {/* Первый блок: "В КАТАЛОГЕ НЕТ ИНТЕРЕСУЮЩЕЙ МОДЕЛИ?" - черный текст, левый край */}
       <div className="mb-2">
-        <h2 
-          className="text-2xl text-brand-dark text-left font-bold"
-          style={{ 
-            fontFamily: 'Druk Wide Cyr, sans-serif',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '-0.01em',
-            lineHeight: '1.05'
-          }}
-        >
+        <h2 className="custom-order-title custom-order-title--mobile text-brand-dark text-left">
           В КАТАЛОГЕ НЕТ<br />
           ИНТЕРЕСУЮЩЕЙ<br />
           МОДЕЛИ?
@@ -29,34 +20,14 @@ const CustomOrderMobile: React.FC<CustomOrderMobileProps> = ({ onHowItWorksClick
 
       {/* Второй блок: "ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ" - белый текст, центр */}
       <div className="mt-8 text-center">
-        <h3 
-          className="text-sm text-white font-bold"
-          style={{ 
-            fontFamily: 'Druk Wide Cyr, sans-serif',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '-0.01em',
-            lineHeight: '1.05',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-          }}
-        >
+        <h3 className="custom-order-subtitle custom-order-subtitle--mobile text-white custom-order-highlight">
           ВЫ ВСЕГДА МОЖЕТЕ ОФОРМИТЬ
         </h3>
       </div>
 
       {/* Третий блок: "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ" - белый текст, центр */}
       <div className="mb-8 text-center">
-        <h4 
-          className="text-[23px] text-white font-bold"
-          style={{ 
-            fontFamily: 'Druk Wide Cyr, sans-serif',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '-0.01em',
-            lineHeight: '1.05',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-          }}
-        >
+        <h4 className="custom-order-main custom-order-main--mobile text-white custom-order-highlight">
           ИНДИВИДУАЛЬНЫЙ<br />
           ЗАКАЗ
         </h4>
@@ -66,14 +37,7 @@ const CustomOrderMobile: React.FC<CustomOrderMobileProps> = ({ onHowItWorksClick
       <div className="flex justify-center mb-8">
         <a
           href="https://t.me/TIGRSHOPsupport"
-          className="inline-block bg-transparent border border-white text-white px-6 py-3 text-[12px] hover:bg-white hover:text-black transition-colors uppercase text-center leading-tight"
-          style={{ 
-            fontFamily: 'Random Grotesque, sans-serif',
-            fontWeight: 400,
-            borderWidth: '1px',
-            width: '290px',
-            maxWidth: '85vw'
-          }}
+          className="custom-order-btn custom-order-btn--mobile"
         >
           ОФОРМИТЬ ИНДИВИДУАЛЬНЫЙ ЗАКАЗ
         </a>
@@ -83,11 +47,7 @@ const CustomOrderMobile: React.FC<CustomOrderMobileProps> = ({ onHowItWorksClick
       <div className="text-center">
         <button
           onClick={onHowItWorksClick}
-          className="text-gray-600 text-[13px] underline hover:text-gray-800 transition-colors cursor-pointer bg-transparent border-none"
-          style={{ 
-            fontFamily: 'Random Grotesque, sans-serif',
-            fontWeight: 400
-          }}
+          className="custom-order-link custom-order-link--mobile"
         >
           Как это работает?
         </button>

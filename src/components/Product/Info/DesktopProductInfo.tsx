@@ -72,41 +72,18 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
   return (
     <div className="space-y-6 w-full">
       {/* Название товара */}
-      <h1 
-        className="text-black text-2xl leading-tight"
-        style={{
-          fontFamily: 'Random Grotesque, Arial, sans-serif',
-          fontWeight: 400,
-          fontSize: '25px',
-          lineHeight: '35px'
-        }}
-      >
+      <h1 className="product-name--large text-black">
         {product.name}
       </h1>
 
       {/* Цена */}
       <div className="flex items-center gap-4">
-        <span 
-          className="text-[#595047]"
-          style={{
-            fontFamily: 'Random Grotesque, Arial, sans-serif',
-            fontWeight: 400,
-            fontSize: '30px',
-            lineHeight: '41px'
-          }}
-        >
+        <span className="product-price--large text-brand-gray">
           {formatPrice(finalPrice)}
         </span>
         
         {hasDiscount && selectedSizeInfo?.originalPrice && (
-          <span 
-            className="text-gray-400 line-through"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 400,
-              fontSize: '24px'
-            }}
-          >
+          <span className="product-price--medium text-gray-400 line-through">
             {formatPrice(selectedSizeInfo.originalPrice)}
           </span>
         )}
@@ -117,44 +94,27 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
         <button
           onClick={onAddToCart}
           disabled={!selectedSize || isAddingToCart || !product.inStock}
-          className={`w-full h-20 flex items-center justify-between px-6 transition-all ${
+          className={`btn-add-cart btn-add-cart--desktop ${
             !selectedSize || !product.inStock
               ? 'bg-gray-400 cursor-not-allowed' 
               : isAddingToCart
               ? 'bg-gray-600 cursor-wait'
-              : 'bg-[#0B0B0D] hover:bg-gray-800'
+              : ''
           }`}
-          style={{
-            fontFamily: 'Random Grotesque, Arial, sans-serif'
-          }}
         >
-          {/* Левая часть - "Размер" или конкретный размер (увеличил ширину) */}
+          {/* Левая часть - "Размер" или конкретный размер */}
           <div className="flex items-center justify-center w-32">
-            <span 
-              className="text-white"
-              style={{
-                fontWeight: 400,
-                fontSize: '24px',
-                lineHeight: '32px'
-              }}
-            >
+            <span className="text-white text-[24px] leading-[32px]">
               {selectedSize || 'Размер'}
             </span>
           </div>
 
-          {/* Разделитель - показываем всегда */}
-          <div className="w-px h-12 bg-white"></div>
+          {/* Разделитель */}
+          <div className="btn-add-cart__divider btn-add-cart__divider--desktop"></div>
 
           {/* Правая часть - текст кнопки */}
           <div className="flex items-center justify-center flex-1">
-            <span 
-              className="text-white"
-              style={{
-                fontWeight: 400,
-                fontSize: '26px',
-                lineHeight: '41px'
-              }}
-            >
+            <span className="text-white text-[26px] leading-[41px]">
               {getButtonText()}
             </span>
           </div>
@@ -163,15 +123,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
 
       {/* Заголовок "ВЫБЕРИТЕ РАЗМЕР" */}
       <div>
-        <h3 
-          className="text-black mb-4"
-          style={{
-            fontFamily: 'Random Grotesque, Arial, sans-serif',
-            fontWeight: 400,
-            fontSize: '30px',
-            lineHeight: '41px'
-          }}
-        >
+        <h3 className="text-body--large text-black mb-4 uppercase">
           ВЫБЕРИТЕ РАЗМЕР
         </h3>
 
@@ -179,17 +131,9 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
         <div className="relative">
           <button
             onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
-            className="w-full h-20 border border-[#0B0B0D] bg-white flex items-center justify-between px-6 hover:bg-gray-50 transition-colors"
+            className="size-dropdown size-dropdown--desktop"
           >
-            <span 
-              className="text-black"
-              style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
-                fontWeight: 400,
-                fontSize: '30px',
-                lineHeight: '41px'
-              }}
-            >
+            <span className="text-black text-[30px] leading-[41px]">
               {selectedSize ? 
                 `${selectedSize} RU — ${formatPrice(selectedSizeInfo?.price || product.price)}` 
                 : 'Выберите размер'
@@ -207,7 +151,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
 
           {/* Список размеров */}
           {isSizeDropdownOpen && (
-            <div className="absolute top-full left-0 w-full bg-white border border-[#0B0B0D] border-t-0 shadow-lg z-10 max-h-80 overflow-y-auto">
+            <div className="size-dropdown-list">
               {sortedSizes.map((size, index) => (
                 <button
                   key={size.size}
@@ -216,24 +160,11 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
                     setIsSizeDropdownOpen(false);
                   }}
                   disabled={!size.available}
-                  className={`w-full h-20 border-b border-[#0B0B0D] last:border-b-0 flex items-center px-6 transition-colors ${
-                    !size.available 
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                      : selectedSize === size.size
-                      ? 'bg-gray-100'
-                      : 'hover:bg-gray-50'
+                  className={`size-dropdown-item size-dropdown-item--desktop ${
+                    selectedSize === size.size ? 'selected' : ''
                   }`}
                 >
-                  <span 
-                    className="text-left"
-                    style={{
-                      fontFamily: 'Random Grotesque, Arial, sans-serif',
-                      fontWeight: 400,
-                      fontSize: '30px',
-                      lineHeight: '41px',
-                      color: size.available ? '#000000' : '#9CA3AF'
-                    }}
-                  >
+                  <span className="text-left text-[30px] leading-[41px]">
                     {size.size} RU — {formatPrice(size.price)}
                     {!size.available && ' (нет в наличии)'}
                   </span>
@@ -249,73 +180,36 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
         {/* Иконка доставки */}
         <div className="flex-shrink-0 mt-1">
           <div className="w-10 h-10 flex items-center justify-center">
-            {/* SVG иконка грузовика */}
             <img src="../icons/delivery.svg" alt="" />
           </div>
         </div>
         
         <div>
-          <p 
-            className="text-black"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 400,
-              fontSize: '20px',
-              lineHeight: '27px'
-            }}
-          >
+          <p className="text-body--large text-black">
             {product.deliveryInfo || 'Среднее время стандартной доставки: 15-20 рабочих дней.'}
           </p>
         </div>
       </div>
 
       {/* Блок качества */}
-      <div 
-        className="w-full h-10 flex items-center px-6"
-        style={{ backgroundColor: '#C8EBB9' }}
-      >
-        <span 
-          className="text-black"
-          style={{
-            fontFamily: 'Random Grotesque, Arial, sans-serif',
-            fontWeight: 400,
-            fontSize: '15px',
-            lineHeight: '27px'
-          }}
-        >
+      <div className="quality-badge">
+        <span className="text-black text-[15px] leading-[27px]">
           Товар прошел проверку на качество и оригинальность
         </span>
       </div>
 
       {/* Информация о бренде */}
-      <div className="border-t border-b border-[#8C8072] py-4">
+      <div className="border-t border-b border-brand-light-gray py-4">
         <div className="flex justify-between items-center">
-          <span 
-            className="text-[#8C8072]"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 400,
-              fontSize: '20px',
-              lineHeight: '35px'
-            }}
-          >
+          <span className="text-brand-light-gray text-body--large leading-[35px]">
             Бренд
           </span>
-          <div className='flex justify-between items-center gap gap-2'>
-          <span 
-            className="text-[#8C8072]"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 400,
-              fontSize: '20px',
-              lineHeight: '35px'
-            }}
-          >
-            {product.brand}
-          </span>
-          
-          {/* Стрелка */}
-          <img src="../utils/arrow_right.svg" alt="" width={10}/>
+          <div className="flex justify-between items-center gap-2">
+            <span className="text-brand-light-gray text-body--large leading-[35px]">
+              {product.brand}
+            </span>
+            {/* Стрелка */}
+            <img src="../utils/arrow_right.svg" alt="" className="w-[10px]" />
           </div>
         </div>
       </div>

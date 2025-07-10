@@ -43,43 +43,17 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
 
   // Контент для доставки
   const deliveryContent = (
-    <div 
-      className="text-black"
-      style={{
-        fontFamily: 'Random Grotesque, Arial, sans-serif',
-        fontWeight: 900,
-        fontStyle: 'italic'
-      }}
-    >
-      <p 
-        className="mb-8"
-        style={{
-          fontSize: '30px',
-          lineHeight: '35px'
-        }}
-      >
+    <div className="delivery-content">
+      <p className="delivery-intro">
         Мы бережем ваше время, и работаем надёжно, учитывая все ваши пожелания.
       </p>
       
-      <div className="space-y-8">
+      <div className="delivery-sections">
         <div>
-          <h3 
-            className="font-bold mb-4"
-            style={{
-              fontSize: '30px',
-              lineHeight: '35px'
-            }}
-          >
+          <h3 className="delivery-section-title">
             Самовывоз
           </h3>
-          <p
-            style={{
-              fontSize: '20px',
-              lineHeight: '27px',
-              fontWeight: 400,
-              fontStyle: 'normal'
-            }}
-          >
+          <p className="delivery-section-text">
             Для Владивостока – доступен самовывоз или доставка по городу. 
             <br/>При поступлении товара на склад, в личном кабинете будет обозначено, что товар готов к выдаче. 
             <br/>Поступление занимает от 4 до 14 рабочих дней. 
@@ -88,117 +62,48 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
         </div>
         
         <div>
-          <h3 
-            className="font-bold mb-4"
-            style={{
-              fontSize: '30px',
-              lineHeight: '35px'
-            }}
-          >
+          <h3 className="delivery-section-title">
             Доставка по всей России и СНГ
           </h3>
           
-          <div className="space-y-4">
-            <p
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+          <div className="delivery-methods">
+            <p className="delivery-method">
               <strong>СДЭК</strong> — доставка до пункта выдачи или курьером. 
               <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор СДЭК.
             </p>
             
-            <p
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+            <p className="delivery-method">
               <strong>Почта России</strong> — доставка до пункта выдачи или курьером. 
               <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор Почта России.
             </p>
             
-            <p
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+            <p className="delivery-method">
               <strong>BoxBerry</strong> — доставка до пункта выдачи или курьером. 
               <br/>Сроки и стоимость рассчитываются индивидуально при оформлении заказа через калькулятор СДЭК.
             </p>
             
-            <p
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+            <p className="delivery-method">
               <strong>КАРГО</strong> — доставка в страны СНГ обговаривается и рассчитывается индивидуально с менеджером.
             </p>
           </div>
         </div>
         
         <div>
-          <p
-            style={{
-              fontSize: '20px',
-              lineHeight: '27px',
-              fontWeight: 400,
-              fontStyle: 'normal'
-            }}
-          >
+          <p className="delivery-section-text">
             Сроки и стоимость курьерской доставки рассчитываются индивидуально. Сервис может быть изменен при недоступности доставки по указанному адресу.
           </p>
           
-          <ul className="mt-4 space-y-2 list-disc list-inside">
-            <li
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+          <ul className="delivery-list">
+            <li className="delivery-list-item">
               Срок доставки: 7-14 рабочих дней.
             </li>
-            <li
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+            <li className="delivery-list-item">
               После оформления заявки на индивидуальный заказ, персональный менеджер свяжется с Вами и подберет для Вас подходящий размер.
             </li>
-            <li
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+            <li className="delivery-list-item">
               Курьер уведомляет получателя о доставке за 30 минут до своего приезда.
             </li>
-            <li
-              style={{
-                fontSize: '20px',
-                lineHeight: '27px',
-                fontWeight: 400,
-                fontStyle: 'normal'
-              }}
-            >
+            <li className="delivery-list-item">
               Электронный чек, подтверждающий покупку, Вы получите по электронной почте, указанной при оформлении заказа.
             </li>
           </ul>
@@ -209,37 +114,17 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
 
   // Контент для оплаты
   const paymentContent = (
-    <div 
-      className="text-black"
-      style={{
-        fontFamily: 'Random Grotesque, Arial, sans-serif',
-        fontWeight: 900,
-        fontStyle: 'italic'
-      }}
-    >
-      <div className="space-y-8">
+    <div className="delivery-content">
+      <div className="delivery-sections">
         <div>
-          <h3 
-            className="font-bold mb-4"
-            style={{
-              fontSize: '30px',
-              lineHeight: '35px'
-            }}
-          >
+          <h3 className="delivery-section-title">
             Какие способы оплаты возможны?
           </h3>
-          <div
-            style={{
-              fontSize: '20px',
-              lineHeight: '27px',
-              fontWeight: 400,
-              fontStyle: 'normal'
-            }}
-          >
+          <div className="delivery-section-text">
             <p className="mb-4">
               Мы принимаем оплату банковскими картами:
             </p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
+            <ul className="payment-cards-list">
               <li>Visa, Mastercard, МИР.</li>
               <li>СБП и др.</li>
             </ul>
@@ -250,23 +135,10 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
         </div>
         
         <div>
-          <h3 
-            className="font-bold mb-4"
-            style={{
-              fontSize: '30px',
-              lineHeight: '35px'
-            }}
-          >
+          <h3 className="delivery-section-title">
             Нужно ли дополнительно оплачивать налоги и таможенные сборы?
           </h3>
-          <p
-            style={{
-              fontSize: '20px',
-              lineHeight: '27px',
-              fontWeight: 400,
-              fontStyle: 'normal'
-            }}
-          >
+          <p className="delivery-section-text">
             Нет, не нужно, все налоги и таможенные сборы уже включены в итоговую стоимость товаров в нашем магазине.
           </p>
         </div>
@@ -283,28 +155,14 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
           <div className="flex items-center gap-16 mb-4">
             <button
               onClick={() => setActiveTab('delivery')}
-              className="text-black"
-              style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
-                fontWeight: 900,
-                fontStyle: 'italic',
-                fontSize: '30px',
-                lineHeight: '45px'
-              }}
+              className="delivery-tab-title"
             >
               ДОСТАВКА
             </button>
             
             <button
               onClick={() => setActiveTab('payment')}
-              className="text-black"
-              style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
-                fontWeight: 900,
-                fontStyle: 'italic',
-                fontSize: '30px',
-                lineHeight: '45px'
-              }}
+              className="delivery-tab-title"
             >
               ОПЛАТА
             </button>
@@ -312,11 +170,11 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
 
           {/* Подчеркивания заголовков - ближе к тексту */}
           <div className="flex gap-16 mb-8">
-            <div className={`w-44 h-0.5 transition-colors ${
-              activeTab === 'delivery' ? 'bg-black' : 'bg-[#BFB3A3]'
+            <div className={`delivery-tab-underline delivery-tab-underline--delivery ${
+              activeTab === 'delivery' ? 'bg-black' : 'bg-brand-light-beige'
             }`}></div>
-            <div className={`w-32 h-0.5 transition-colors ${
-              activeTab === 'payment' ? 'bg-black' : 'bg-[#BFB3A3]'
+            <div className={`delivery-tab-underline delivery-tab-underline--payment ${
+              activeTab === 'payment' ? 'bg-black' : 'bg-brand-light-beige'
             }`}></div>
           </div>
 
@@ -332,28 +190,14 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
           <div className="flex items-center gap-8 mb-3">
             <button
               onClick={() => setActiveTab('delivery')}
-              className="text-black"
-              style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
-                fontWeight: 900,
-                fontStyle: 'italic',
-                fontSize: '20px',
-                lineHeight: '30px'
-              }}
+              className="delivery-tab-title--mobile"
             >
               ДОСТАВКА
             </button>
             
             <button
               onClick={() => setActiveTab('payment')}
-              className="text-black"
-              style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
-                fontWeight: 900,
-                fontStyle: 'italic',
-                fontSize: '20px',
-                lineHeight: '30px'
-              }}
+              className="delivery-tab-title--mobile"
             >
               ОПЛАТА
             </button>
@@ -361,43 +205,34 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
 
           {/* Подчеркивания заголовков */}
           <div className="flex gap-8 mb-6">
-            <div className={`w-32 h-0.5 transition-colors ${
-              activeTab === 'delivery' ? 'bg-black' : 'bg-[#BFB3A3]'
+            <div className={`delivery-tab-underline--mobile-delivery ${
+              activeTab === 'delivery' ? 'bg-black' : 'bg-brand-light-beige'
             }`}></div>
-            <div className={`w-24 h-0.5 transition-colors ${
-              activeTab === 'payment' ? 'bg-black' : 'bg-[#BFB3A3]'
+            <div className={`delivery-tab-underline--mobile-payment ${
+              activeTab === 'payment' ? 'bg-black' : 'bg-brand-light-beige'
             }`}></div>
           </div>
 
           {/* Мобильный контент */}
-          <div 
-            className="text-black leading-tight"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 900,
-              fontStyle: 'italic',
-              fontSize: '20px',
-              lineHeight: '20px'
-            }}
-          >
+          <div className="delivery-content--mobile">
             {activeTab === 'delivery' ? (
               <div>
-                <p className="mb-4">
+                <p className="delivery-intro--mobile">
                   Мы бережем ваше время, и работаем надёжно, учитывая все ваши пожелания.
                 </p>
                 
-                <div className="space-y-4">
+                <div className="delivery-sections--mobile">
                   <div>
-                    <h3 className="font-bold mb-2">Самовывоз</h3>
-                    <p className="text-sm leading-snug">
+                    <h3 className="delivery-section-title--mobile">Самовывоз</h3>
+                    <p className="delivery-section-text--mobile">
                       Для Владивостока - доступен самовывоз или доставка по городу. При поступлении товара на склад, в личном кабинете будет обозначено, что товар готов к выдаче. Поступление занимает от 4 до 14 рабочих дней.
                     </p>
                   </div>
                   
                   <div>
-                    <h3 className="font-bold mb-2">Доставка по России и СНГ</h3>
+                    <h3 className="delivery-section-title--mobile">Доставка по России и СНГ</h3>
                     
-                    <div className="space-y-3 text-sm leading-snug">
+                    <div className="delivery-methods--mobile">
                       <p><strong>СДЭК</strong> — доставка до пункта выдачи или курьером.</p>
                       <p><strong>Почта России</strong> — доставка до пункта выдачи или курьером.</p>
                       <p><strong>BoxBerry</strong> — доставка до пункта выдачи или курьером.</p>
@@ -409,10 +244,10 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
               </div>
             ) : (
               <div>
-                <div className="space-y-4">
+                <div className="delivery-sections--mobile">
                   <div>
-                    <h3 className="font-bold mb-2">Какие способы оплаты возможны?</h3>
-                    <div className="text-sm leading-snug">
+                    <h3 className="delivery-section-title--mobile">Какие способы оплаты возможны?</h3>
+                    <div className="delivery-section-text--mobile">
                       <p className="mb-2">Мы принимаем оплату банковскими картами:</p>
                       <ul className="list-disc list-inside space-y-1 ml-2 mb-2">
                         <li>Visa, Mastercard, МИР.</li>
@@ -425,8 +260,8 @@ const DeliveryPaymentSection: React.FC<DeliveryPaymentSectionProps> = ({
                   </div>
                   
                   <div>
-                    <h3 className="font-bold mb-2">Нужно ли дополнительно оплачивать налоги и таможенные сборы?</h3>
-                    <p className="text-sm leading-snug">
+                    <h3 className="delivery-section-title--mobile">Нужно ли дополнительно оплачивать налоги и таможенные сборы?</h3>
+                    <p className="delivery-section-text--mobile">
                       Нет, не нужно, все налоги и таможенные сборы уже включены в итоговую стоимость товаров в нашем магазине.
                     </p>
                   </div>
