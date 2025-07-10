@@ -35,6 +35,8 @@ interface MobileFiltersProps {
   onSortChange?: (sort: string) => void;
 }
 
+// Исправить src/components/Catalog/MobileFilters.tsx
+
 const MobileFilters: React.FC<MobileFiltersProps> = ({
   filters,
   filterOptions,
@@ -73,19 +75,8 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
       const newValues = currentValues.includes(value as string)
         ? currentValues.filter(v => v !== value)
         : [...currentValues, value as string];
-      //@ts-ignore
       onFilterChange(filterType, newValues);
     }
-  };
-
-  const handleSortChange = (option: string) => {
-    if (onSortChange) {
-      onSortChange(option);
-    }
-  };
-
-  const handleShowResults = () => {
-    onClose();
   };
 
   const FilterDivider = () => (
@@ -97,9 +88,9 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-white">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between p-5 border-b border-gray-200">
+    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+      {/* Заголовок - ФИКСИРОВАННЫЙ */}
+      <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-white">
         <h2 className="text-black text-[20px] leading-[27px] font-product">
           Найдено: {totalResults}
         </h2>
@@ -120,81 +111,64 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
         </button>
       </div>
 
-      {/* Контент фильтров */}
-      <div className="flex-1 overflow-y-auto p-5">
-        
-        {/* Сортировка */}
-        <div className="mb-6">
-          <h3 className="text-black text-[15px] leading-[20px] font-product mb-4">
-            СОРТИРОВАТЬ ПО:
-          </h3>
+      {/* Контент фильтров - СКРОЛЛИТСЯ */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-5">
           
-          <div className="space-y-3">
-            {[
-              'по популярности',
-              'по новизне', 
-              'по цене: сначала дешевле',
-              'по цене: сначала дороже'
-            ].map((option, index) => (
-              <label key={index} className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="sort"
-                  checked={sortBy === option}
-                  onChange={() => handleSortChange(option)}
-                  className="w-[10px] h-[10px] border border-black mr-3 accent-black"
-                />
-                <span className="text-[#595047] text-[15px] leading-[20px] font-product">
-                  {option}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <h3 className="text-black text-[15px] leading-[20px] font-product">
-            ФИЛЬТРЫ:
-          </h3>
-        </div>
-
-        <FilterDivider />
-
-        {/* Цена */}
-        <div className="mb-6">
-          <h3 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-            Цена
-          </h3>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <input
-                type="number"
-                placeholder="от"
-                value={filters.priceRange.min}
-                onChange={(e) => handleFilterChange('priceRange', { ...filters.priceRange, min: e.target.value })}
-                className="w-full h-[52px] px-3 bg-[#E5DDD4] text-[#8C8072] text-[20px] leading-[27px] text-center border-0 focus:outline-none font-product"
-              />
-            </div>
-            <div className="flex-1">
-              <input
-                type="number"
-                placeholder="до"
-                value={filters.priceRange.max}
-                onChange={(e) => handleFilterChange('priceRange', { ...filters.priceRange, max: e.target.value })}
-                className="w-full h-[52px] px-3 bg-[#E5DDD4] text-[#8C8072] text-[20px] leading-[27px] text-center border-0 focus:outline-none font-product"
-              />
+          {/* Сортировка */}
+          <div className="mb-6">
+            <h3 className="text-black text-[15px] leading-[20px] font-product mb-4">
+              СОРТИРОВАТЬ ПО:
+            </h3>
+            
+            <div className="space-y-3">
+              {[
+                { value: 'popularity', label: 'по популярности' },
+                { value: 'newest', label: 'по новизне' }, 
+                { value: 'price-asc', label: 'по цене: сначала дешевле' },
+                { value: 'price-desc', label: 'по цене: сначала дороже' }
+              ].map((option, index) => (
+                <label key={index} className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sort"
+                    checked={sortBy === option.value}
+                    onChange={() => onSortChange && onSortChange(option.value)}
+                    className="w-[15px] h-[15px] border border-black mr-4"
+                  />
+                  <span className="text-black text-[15px] leading-[20px] font-product">
+                    {option.label}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
-        </div>
 
-        <FilterDivider />
+          <FilterDivider />
 
-        {/* Бренды */}
-        <div className="mb-6">
-          <h3 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-            Бренды
+          {/* ФИЛЬТРЫ */}
+          <h3 className="text-black text-[15px] leading-[20px] font-product mb-4">
+            ФИЛЬТРЫ
           </h3>
-          <div className="max-h-[340px] overflow-y-auto filter-scroll">
+
+          {/* Цена */}
+          <div className="mb-6">
+            <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+              Цена
+            </h4>
+            <PriceFilter
+              priceRange={filters.priceRange}
+              onChange={(priceRange) => onFilterChange('priceRange', priceRange)}
+            />
+          </div>
+
+          <FilterDivider />
+
+          {/* Бренды - УБИРАЕМ ограничения высоты */}
+          <div className="mb-6">
+            <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+              Бренды
+            </h4>
             <div className="space-y-3">
               {filterOptions.brands.map((brand, index) => (
                 <label key={index} className="flex items-center cursor-pointer">
@@ -211,131 +185,102 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
               ))}
             </div>
           </div>
-          
-          {/* Скроллбар для брендов */}
-          <div className="w-[10px] h-[235px] bg-[#E5DDD4] rounded-full relative mt-4">
-            <div className="w-[10px] h-[235px] bg-[#0B0B0D] rounded-full"></div>
-          </div>
-        </div>
 
-        <FilterDivider />
+          <FilterDivider />
 
-        {/* Пол */}
-        <div className="mb-6">
-          <h3 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-            Пол
-          </h3>
-          <div className="space-y-3">
-            {filterOptions.genders.map((gender, index) => (
-              <label key={index} className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.genders.includes(gender)}
-                  onChange={() => handleFilterChange('genders', gender)}
-                  className="w-[15px] h-[15px] border border-black mr-4"
-                />
-                <span className="text-black text-[15px] leading-[20px] font-product">
-                  {gender}
-                </span>
-              </label>
-            ))}
+          {/* Пол */}
+          <div className="mb-6">
+            <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+              Пол
+            </h4>
+            <div className="space-y-3">
+              {filterOptions.genders.map((gender, index) => (
+                <label key={index} className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.genders.includes(gender)}
+                    onChange={() => handleFilterChange('genders', gender)}
+                    className="w-[15px] h-[15px] border border-black mr-4"
+                  />
+                  <span className="text-black text-[15px] leading-[20px] font-product">
+                    {gender}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <FilterDivider />
+          <FilterDivider />
 
-        {/* Категория */}
-        <div className="mb-6">
-          <h3 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-            Категория
-          </h3>
-          <div className="space-y-3">
-            {filterOptions.categories.map((category, index) => (
-              <label key={index} className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.categories.includes(category)}
-                  onChange={() => handleFilterChange('categories', category)}
-                  className="w-[15px] h-[15px] border border-black mr-4"
-                />
-                <span className="text-black text-[15px] leading-[20px] font-product">
-                  {category}
-                </span>
-              </label>
-            ))}
+          {/* Категория */}
+          <div className="mb-6">
+            <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+              Категория
+            </h4>
+            <div className="space-y-3">
+              {filterOptions.categories.map((category, index) => (
+                <label key={index} className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.categories.includes(category)}
+                    onChange={() => handleFilterChange('categories', category)}
+                    className="w-[15px] h-[15px] border border-black mr-4"
+                  />
+                  <span className="text-black text-[15px] leading-[20px] font-product">
+                    {category}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <FilterDivider />
+          <FilterDivider />
 
-        {/* Размер */}
-        <div className="mb-6">
-          <h3 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-            Размер
-          </h3>
-          
-          {/* Сетка размеров в 6 колонок согласно макету */}
-          <div className="grid grid-cols-6 gap-1">
-            {filterOptions.sizes.slice(0, 18).map((size, index) => (
-              <button
-                key={index}
-                onClick={() => handleFilterChange('sizes', size)}
-                className={`size-button h-[50px] border border-[#595047] flex items-center justify-center text-[20px] leading-[27px] font-product transition-colors ${
-                  filters.sizes.includes(size)
-                    ? 'bg-[#595047] text-white'
-                    : 'bg-white text-[#595047] hover:bg-gray-50'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+          {/* Размер */}
+          <div className="mb-6">
+            <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+              Размер
+            </h4>
+            
+            {/* Сетка размеров */}
+            <div className="grid grid-cols-6 gap-1">
+              {filterOptions.sizes.map((size, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleFilterChange('sizes', size)}
+                  className={`h-[40px] border border-[#595047] flex items-center justify-center text-[16px] leading-[20px] font-product transition-colors ${
+                    filters.sizes.includes(size)
+                      ? 'bg-[#595047] text-white'
+                      : 'bg-white text-[#595047] hover:bg-gray-50'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
           </div>
-          
-          {/* Дополнительные ряды размеров */}
-          <div className="grid grid-cols-6 gap-1 mt-1">
-            {filterOptions.sizes.slice(18, 36).map((size, index) => (
-              <button
-                key={index + 18}
-                onClick={() => handleFilterChange('sizes', size)}
-                className={`size-button h-[50px] border border-[#595047] flex items-center justify-center text-[20px] leading-[27px] font-product transition-colors ${
-                  filters.sizes.includes(size)
-                    ? 'bg-[#595047] text-white'
-                    : 'bg-white text-[#595047] hover:bg-gray-50'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-3 gap-1 mt-1">
-            {filterOptions.sizes.slice(36, 39).map((size, index) => (
-              <button
-                key={index + 36}
-                onClick={() => handleFilterChange('sizes', size)}
-                className={`size-button h-[50px] border border-[#595047] flex items-center justify-center text-[20px] leading-[27px] font-product transition-colors ${
-                  filters.sizes.includes(size)
-                    ? 'bg-[#595047] text-white'
-                    : 'bg-white text-[#595047] hover:bg-gray-50'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
+
+          {/* Дополнительное пространство внизу */}
+          <div className="h-24"></div>
         </div>
       </div>
 
-      {/* Кнопка "ПОКАЗАТЬ" */}
-      <div className="p-5 border-t border-gray-200">
-        <button
-          onClick={handleShowResults}
-          className="w-full h-[57px] bg-[#0B0B0D] text-white flex items-center justify-center hover:bg-gray-800 transition-colors"
-        >
-          <span className="text-[25px] leading-[34px] font-product">
-            ПОКАЗАТЬ
-          </span>
-        </button>
+      {/* Футер с кнопками - ФИКСИРОВАННЫЙ */}
+      <div className="bg-white border-t border-gray-200 p-5">
+        <div className="flex gap-3">
+          <button
+            onClick={onClearFilters}
+            className="flex-1 h-[48px] bg-white border border-black text-black text-[14px] font-product hover:bg-gray-50 transition-colors"
+          >
+            СБРОСИТЬ
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 h-[48px] bg-black text-white text-[14px] font-product hover:bg-gray-800 transition-colors"
+          >
+            ПОКАЗАТЬ ({totalResults})
+          </button>
+        </div>
       </div>
     </div>,
     document.body

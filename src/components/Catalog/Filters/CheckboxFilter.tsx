@@ -16,14 +16,15 @@ const CheckboxFilter: React.FC<CheckboxFilterProps> = ({
   options,
   selectedValues,
   onChange,
-  maxHeight = 'max-h-[200px] lg:max-h-[300px]'
+  maxHeight // Игнорируем этот параметр
 }) => {
   return (
     <div className="filter-section">
       <h3 className="text-black text-[20px] lg:text-[25px] leading-[25px] lg:leading-[37px] font-product font-black italic mb-4">
         {title}
       </h3>
-      <div className={`space-y-2 lg:space-y-3 ${maxHeight} overflow-y-auto filter-scroll`}>
+      {/* УБИРАЕМ maxHeight и overflow-y-auto */}
+      <div className="space-y-2 lg:space-y-3">
         {options.map((option, index) => (
           <label key={index} className="flex items-center cursor-pointer group">
             <input

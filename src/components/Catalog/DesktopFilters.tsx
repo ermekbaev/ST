@@ -60,8 +60,8 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
   );
 
   return (
-    <div className="hidden lg:block w-[475px] bg-white border-r border-gray-200 min-h-screen">
-      <div className="p-5 filter-scroll h-screen overflow-y-auto">
+    <div className="hidden lg:block w-[475px] bg-white border-r border-gray-200">
+      <div className="p-5">
         {/* Поиск */}
         <CatalogSearch
           searchQuery={searchQuery}

@@ -8,29 +8,34 @@ interface SizeFilterProps {
   selectedSizes: string[];
   onChange: (size: string) => void;
   maxItems?: number;
+  showAll?: boolean;
 }
 
 const SizeFilter: React.FC<SizeFilterProps> = ({
   sizes,
   selectedSizes,
   onChange,
-  maxItems = 18
+  maxItems = 18,
+  showAll = false
 }) => {
-  const displaySizes = sizes.slice(0, maxItems);
-
+  // Если showAll = true, показываем все размеры
+  const displaySizes = showAll ? sizes : sizes.slice(0, maxItems);
+  
   return (
     <div className="filter-section">
       <h3 className="text-black text-[20px] lg:text-[25px] leading-[25px] lg:leading-[37px] font-product font-black italic mb-4">
         Размер
       </h3>
-      <div className="grid grid-cols-4 lg:grid-cols-6 gap-1 lg:gap-2">
+      
+      {/* Сетка размеров - показываем все */}
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-1 lg:gap-2">
         {displaySizes.map((size, index) => (
           <button
             key={index}
             onClick={() => onChange(size)}
-            className={`size-button h-[40px] lg:w-[68px] lg:h-[68px] border border-[#595047] flex items-center justify-center text-[16px] lg:text-[25px] leading-[20px] lg:leading-[34px] font-product transition-colors ${
+            className={`h-[40px] lg:h-[50px] border border-[#595047] flex items-center justify-center text-[16px] lg:text-[20px] leading-[20px] lg:leading-[27px] font-product transition-colors ${
               selectedSizes.includes(size)
-                ? 'size-button--selected'
+                ? 'bg-[#595047] text-white'
                 : 'bg-white text-[#595047] hover:bg-gray-50'
             }`}
           >
@@ -39,10 +44,11 @@ const SizeFilter: React.FC<SizeFilterProps> = ({
         ))}
       </div>
       
-      {sizes.length > maxItems && (
-        <div className="mt-2 text-[#8C8072] text-[12px] lg:text-[14px] font-product">
+      {/* Показываем количество размеров если не все отображены */}
+      {!showAll && sizes.length > maxItems && (
+        <p className="text-[12px] lg:text-[14px] text-gray-500 mt-2 font-product">
           Показано {maxItems} из {sizes.length} размеров
-        </div>
+        </p>
       )}
     </div>
   );

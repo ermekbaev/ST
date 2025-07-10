@@ -43,7 +43,7 @@ const CatalogPage: React.FC = () => {
   const [sortBy, setSortBy] = useState('popularity');
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const itemsPerPage = 20;
+  const itemsPerPage = 36;
 
   // Состояние фильтров
   const [filters, setFilters] = useState<FilterState>({
@@ -148,25 +148,37 @@ const CatalogPage: React.FC = () => {
     setCurrentPage(1); // Сбрасываем на первую страницу при изменении фильтров
   }, [products, searchQuery, filters, sortBy]);
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/products');
-      const result = await response.json();
+const fetchProducts = async () => {
+  try {
+    setLoading(true);    
+    const response = await fetch('/api/products');
+    const result = await response.json();
+    
+    if (result.success) {
+      // Перемешиваем товары только для каталога
+      //@ts-ignore
+      const shuffleArray = (array) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
       
-      if (result.success) {
-        setProducts(result.data || []);
-      } else {
-        console.error('Ошибка загрузки товаров:', result.error);
-        setProducts([]);
-      }
-    } catch (err) {
-      console.error('Ошибка:', err);
-      setProducts([]);
-    } finally {
-      setLoading(false);
+      const shuffledProducts = shuffleArray(result.data || []);
+      setProducts(shuffledProducts);
+      console.log('🎲 Товары перемешаны для каталога');
+    } else {
+      throw new Error(result.error || 'Ошибка загрузки данных');
     }
-  };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+    console.error('Ошибка загрузки товаров:', errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Обработчики фильтров
   const handleFilterChange = (filterType: keyof FilterState, value: string | string[] | { min: string; max: string }) => {
@@ -285,16 +297,6 @@ const CatalogPage: React.FC = () => {
               hasActiveFilters={hasActiveFilters()}
               className="mb-6"
             />
-
-            {/* Мобильный поиск - только если десктопные фильтры скрыты */}
-            <div className="lg:hidden">
-              <CatalogSearch
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                totalResults={filteredProducts.length}
-                className="mb-6"
-              />
-            </div>
 
             {/* Активные фильтры */}
             <ActiveFilters
