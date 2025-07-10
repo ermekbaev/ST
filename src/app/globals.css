@@ -323,3 +323,89 @@ input:focus:not(:focus-visible) {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Стили для модального окна HowItWorksModal */
+
+/* Добавьте этот код в конец вашего src/app/globals.css файла */
+
+/* ============================================
+   МОДАЛЬНЫЕ ОКНА
+   ============================================ */
+
+/* Стили для модального окна HowItWorksModal */
+
+/* Бэкдроп модального окна */
+.modal-backdrop {
+  @apply fixed inset-0 flex items-center justify-center z-50;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  /* Fallback для браузеров без поддержки backdrop-filter */
+  background-image: radial-gradient(
+      circle at 50% 50%,
+      rgba(0, 0, 0, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.1) 0%, transparent 50%);
+}
+
+/* Контейнер модального окна */
+.modal-container {
+  @apply bg-white relative;
+  width: 730px;
+  height: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Кнопка закрытия */
+.modal-close-button {
+  @apply absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold w-8 h-8 flex items-center justify-center transition-colors z-10;
+}
+
+/* Контент модального окна */
+.modal-content {
+  @apply p-8 pr-12 h-full overflow-y-auto;
+}
+
+/* Заголовок модального окна */
+.modal-title {
+  @apply text-2xl text-black mb-6;
+  font-family: var(--font-random-grotesque);
+  font-weight: 900;
+  font-style: italic;
+}
+
+/* Текст модального окна */
+.modal-text {
+  @apply text-black leading-relaxed space-y-4;
+  font-family: var(--font-random-grotesque);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .modal-container {
+    width: 95vw;
+    height: 80vh;
+    margin: 0 auto;
+  }
+
+  .modal-content {
+    @apply p-6;
+  }
+
+  .modal-title {
+    @apply text-xl mb-4;
+  }
+
+  .modal-text {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}

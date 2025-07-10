@@ -54,58 +54,33 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) =>
   // Используем portal для рендера в body
   return createPortal(
     <div 
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="modal-backdrop"
+      onClick={handleBackdropClick}
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)'
       }}
-      onClick={handleBackdropClick}
     >
-      <div 
-        className="bg-white relative"
-        style={{
-          width: '730px',
-          height: '500px',
-          maxWidth: '90vw',
-          maxHeight: '90vh',
-          borderRadius: '8px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
-        }}
-      >
+      <div className="modal-container">
         {/* Кнопка закрытия */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold w-8 h-8 flex items-center justify-center transition-colors z-10"
+          className="modal-close-button"
           aria-label="Закрыть модальное окно"
         >
           ×
         </button>
         
         {/* Контент модального окна */}
-        <div className="p-8 pr-12 h-full overflow-y-auto">
+        <div className="modal-content">
           {/* Заголовок */}
-          <h2 
-            className="text-2xl text-black mb-6"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 900,
-              fontStyle: 'italic'
-            }}
-          >
+          <h2 className="modal-title">
             Как это работает?
           </h2>
           
           {/* Основной текст */}
-          <div 
-            className="text-black leading-relaxed space-y-4"
-            style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
-              fontWeight: 400,
-              fontSize: '16px',
-              lineHeight: '1.6'
-            }}
-          >
+          <div className="modal-text">
             <p>
               <strong>1.</strong> Для размещения индивидуального заказа на интересующий Вас товар нажмите "Оформить индивидуальный заказ" и перейдите в Telegram.
             </p>

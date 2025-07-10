@@ -96,12 +96,15 @@ const parsePhotos = (photoString: string): string[] => {
   return cleanPhotos;
 };
 
+// ИСПРАВЛЕНИЕ: Правильно типизируем params
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse>> {
   try {
-    const productId = params.id;
+    // ИСПРАВЛЕНИЕ: Ждем разрешения Promise
+    const resolvedParams = await params;
+    const productId = resolvedParams.id;
     
     // Получаем все товары из Google Sheets
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
