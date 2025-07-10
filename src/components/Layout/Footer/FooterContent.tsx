@@ -50,7 +50,7 @@ const FooterContent = () => {
         </h3>
         <ul className="space-y-3">
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/contacts" className="text-gray-300 hover:text-white transition-colors text-sm">
               контакты
             </a>
           </li>

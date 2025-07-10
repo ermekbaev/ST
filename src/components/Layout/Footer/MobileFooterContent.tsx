@@ -28,7 +28,7 @@ const MobileFooterContent = () => {
       title: 'ИНФОРМАЦИЯ',
       key: 'info',
       items: [
-        { label: 'контакты', href: '#' },
+        { label: 'контакты', href: '/contacts' },
         { label: 'доставка', href: '#' },
         { label: 'оплата', href: '#' },
         { label: 'возврат', href: '#' },
