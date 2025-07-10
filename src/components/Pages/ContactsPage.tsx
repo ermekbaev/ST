@@ -152,13 +152,43 @@ const ContactsPage: React.FC = () => {
             </div>
 
             {/* ПРАВАЯ ЗОНА - только карта */}
-            <div className="relative overflow-hidden w-full h-[408px] bg-[#E5DDD4]">
-              {/* Заглушка карты */}
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-center text-gray-600">
-                  <div className="font-product text-[14px]">
-                    Здесь будет интерактивная карта
-                  </div>
+            <div className="relative overflow-hidden w-full h-[408px]">
+              {/* Яндекс карта */}
+              <div className="w-full h-full">
+                <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
+                  <a 
+                    href="https://yandex.com/maps/75/vladivostok/?utm_medium=mapframe&utm_source=maps" 
+                    style={{ 
+                      color: '#eee', 
+                      fontSize: '12px', 
+                      position: 'absolute', 
+                      top: '0px',
+                      zIndex: 10
+                    }}
+                  >
+                    Владивосток
+                  </a>
+                  <a 
+                    href="https://yandex.com/maps/75/vladivostok/house/1_ya_prigorodnaya_ulitsa_13a/ZUoEaAdlT0EPVEJuYGJzdnVlbQ0=/?ll=132.056488%2C43.279695&utm_medium=mapframe&utm_source=maps&z=17.11" 
+                    style={{ 
+                      color: '#eee', 
+                      fontSize: '12px', 
+                      position: 'absolute', 
+                      top: '14px',
+                      zIndex: 10
+                    }}
+                  >
+                    Яндекс Карты — транспорт, навигация, поиск мест
+                  </a>
+                  <iframe 
+                    src="https://yandex.com/map-widget/v1/?ll=132.056488%2C43.279695&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Nzc4OTk0ORJx0KDQvtGB0YHQuNGPLCDQn9GA0LjQvNC-0YDRgdC60LjQuSDQutGA0LDQuSwg0JLQu9Cw0LTQuNCy0L7RgdGC0L7QuiwgMS3RjyDQn9GA0LjQs9C-0YDQvtC00L3QsNGPINGD0LvQuNGG0LAsIDEz0JAiCg12DgRDFWgeLUI%2C&z=17.11" 
+                    width="100%" 
+                    height="100%" 
+                    frameBorder="0" 
+                    allowFullScreen={true} 
+                    style={{ position: 'relative', border: 'none' }}
+                    title="Карта расположения магазина"
+                  />
                 </div>
               </div>
             </div>
@@ -230,13 +260,43 @@ const ContactsPage: React.FC = () => {
             </div>
 
             {/* Карта - размеры для мобильного W:300, H:130 */}
-            <div className="relative overflow-hidden w-[300px] h-[130px] bg-[#E5DDD4] mx-auto">
-              {/* Заглушка карты */}
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-center text-gray-600">
-                  <div className="font-product text-[12px]">
-                    Карта
-                  </div>
+            <div className="relative overflow-hidden w-[300px] h-[130px] mx-auto">
+              {/* Яндекс карта для мобильного */}
+              <div className="w-full h-full">
+                <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
+                  <a 
+                    href="https://yandex.com/maps/75/vladivostok/?utm_medium=mapframe&utm_source=maps" 
+                    style={{ 
+                      color: '#eee', 
+                      fontSize: '10px', 
+                      position: 'absolute', 
+                      top: '0px',
+                      zIndex: 10
+                    }}
+                  >
+                    Владивосток
+                  </a>
+                  <a 
+                    href="https://yandex.com/maps/75/vladivostok/house/1_ya_prigorodnaya_ulitsa_13a/ZUoEaAdlT0EPVEJuYGJzdnVlbQ0=/?ll=132.056488%2C43.279695&utm_medium=mapframe&utm_source=maps&z=17.11" 
+                    style={{ 
+                      color: '#eee', 
+                      fontSize: '9px', 
+                      position: 'absolute', 
+                      top: '10px',
+                      zIndex: 10
+                    }}
+                  >
+                    Яндекс Карты
+                  </a>
+                  <iframe 
+                    src="https://yandex.com/map-widget/v1/?ll=132.056488%2C43.279695&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg1Nzc4OTk0ORJx0KDQvtGB0YHQuNGPLCDQn9GA0LjQvNC-0YDRgdC60LjQuSDQutGA0LDQuSwg0JLQu9Cw0LTQuNCy0L7RgdGC0L7QuiwgMS3RjyDQn9GA0LjQs9C-0YDQvtC00L3QsNGPINGD0LvQuNGG0LAsIDEz0JAiCg12DgRDFWgeLUI%2C&z=17.11" 
+                    width="100%" 
+                    height="100%" 
+                    frameBorder="0" 
+                    allowFullScreen={true} 
+                    style={{ position: 'relative', border: 'none' }}
+                    title="Карта расположения магазина"
+                  />
                 </div>
               </div>
             </div>
