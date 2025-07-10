@@ -29,11 +29,11 @@ const MobileFooterContent = () => {
       key: 'info',
       items: [
         { label: 'контакты', href: '/contacts' },
-        { label: 'доставка', href: '#' },
-        { label: 'оплата', href: '#' },
-        { label: 'возврат', href: '#' },
-        { label: 'FAQ', href: '#' },
-        { label: 'о нас', href: '#' }
+        { label: 'доставка', href: '/delivery' },
+        { label: 'оплата', href: '/payment' },
+        { label: 'возврат', href: '/returns' },
+        { label: 'FAQ', href: '/faq' },
+        { label: 'о нас', href: '/about' }
       ]
     },
     {

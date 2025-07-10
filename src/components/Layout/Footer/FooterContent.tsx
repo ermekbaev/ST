@@ -55,27 +55,27 @@ const FooterContent = () => {
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/delivery" className="text-gray-300 hover:text-white transition-colors text-sm">
               доставка
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/payment" className="text-gray-300 hover:text-white transition-colors text-sm">
               оплата
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/returns" className="text-gray-300 hover:text-white transition-colors text-sm">
               возврат
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/faq" className="text-gray-300 hover:text-white transition-colors text-sm">
               FAQ
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/about" className="text-gray-300 hover:text-white transition-colors text-sm">
               о нас
             </a>
           </li>
