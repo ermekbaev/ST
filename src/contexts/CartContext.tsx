@@ -27,6 +27,7 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  getTotalPrice: () => number; // ✅ Добавляем эту функцию
   totalItems: number;
   totalPrice: number;
   isCartOpen: boolean;
@@ -42,6 +43,7 @@ const CartContext = createContext<CartContextType>({
   removeFromCart: () => {},
   updateQuantity: () => {},
   clearCart: () => {},
+  getTotalPrice: () => 0, // ✅ Добавляем в дефолтное значение
   totalItems: 0,
   totalPrice: 0,
   isCartOpen: false,
@@ -135,6 +137,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
   };
 
+  // ✅ Добавляем функцию getTotalPrice
+  const getTotalPrice = (): number => {
+    return isHydrated ? items.reduce((total, item) => total + (item.price * item.quantity), 0) : 0;
+  };
+
   // Управление состоянием корзины
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
@@ -152,6 +159,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     removeFromCart,
     updateQuantity,
     clearCart,
+    getTotalPrice, // ✅ Добавляем функцию в value
     totalItems,
     totalPrice,
     isCartOpen,

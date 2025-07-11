@@ -315,7 +315,7 @@ const ContactsPage: React.FC = () => {
                     Наименование
                   </h3>
                   <span className='font-product text-black text-[14px] leading-[18px]'>
-                    ИП Воздюк Глеб Витальевич
+                    ИП Айвазян Тигран Эдуардович 
                   </span>
                 </div>
 
@@ -325,7 +325,7 @@ const ContactsPage: React.FC = () => {
                     ОГРНИП
                   </h3>
                   <span className='font-product text-black text-[14px] leading-[18px]'>
-                    322250000009070
+                    325253600049875
                   </span>
                 </div>
 
@@ -335,7 +335,7 @@ const ContactsPage: React.FC = () => {
                     ИНН
                   </h3>
                   <span className='font-product text-black text-[14px] leading-[18px]'>
-                    792028574102
+                    253812345040
                   </span>
                 </div>
 

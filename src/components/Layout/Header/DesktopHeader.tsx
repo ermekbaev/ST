@@ -209,7 +209,6 @@ const DesktopHeader: React.FC = () => {
         onMouseEnter={() => setActiveMenu(activeMenu)}
         onMouseLeave={handleMenuLeave}
         style={{
-          // Добавляем небольшой отрицательный margin-top чтобы убрать промежуток
           marginTop: '-1px'
         }}
       >
@@ -220,17 +219,17 @@ const DesktopHeader: React.FC = () => {
           >
             <div className="mb-16">
               <div className="flex items-start">
-                <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
+                <h3 className="mega-menu-title">
                   {menuData.title}
                 </h3>
                 <div className="flex-1">
-                  <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
+                  <div className="w-full h-0.5 bg-brand-dark mb-8 mt-6"></div>
                   <div className="grid grid-cols-2 gap-x-16 gap-y-3">
                     {menuData.categories.map((category: string, index: number) => (
                       <a
                         key={index}
                         href={menuData.links?.[category] || '#'}
-                        className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
+                        className="mega-menu-link"
                       >
                         {category}
                       </a>
@@ -244,17 +243,17 @@ const DesktopHeader: React.FC = () => {
             {activeMenu !== 'информация' && (
               <div>
                 <div className="flex items-start">
-                  <h3 className="brand-text-large text-4xl text-brand-dark mr-8 italic min-w-[200px]">
+                  <h3 className="mega-menu-title">
                     КАТЕГОРИЯ
                   </h3>
                   <div className="flex-1">
-                    <div className="w-full h-px bg-brand-dark mb-8 mt-6"></div>
+                    <div className="w-full h-0.5 bg-brand-dark mb-8 mt-6"></div>
                     <div className="grid grid-cols-2 gap-x-16 gap-y-3">
                       {menuData.subcategories.map((subcategory: string, index: number) => (
                         <a
                           key={index}
                           href="#"
-                          className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
+                          className="mega-menu-link"
                         >
                           {subcategory}
                         </a>
@@ -263,7 +262,7 @@ const DesktopHeader: React.FC = () => {
                         <a
                           key={`additional-${index}`}
                           href="#"
-                          className="text-brand-dark hover:text-brand-gray transition-colors text-base font-medium tracking-wide font-heading"
+                          className="mega-menu-link"
                         >
                           {item}
                         </a>
@@ -285,12 +284,11 @@ const DesktopHeader: React.FC = () => {
         {/* Логотип */}
         <div className="flex-shrink-0">
           <a href="/">
-          <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[37px] h-[58px]" />
+            <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[37px] h-[58px]" />
           </a>
         </div>
 
         {/* Навигация - точно по центру */}
-        {/* ВАЖНО: Убираем onMouseLeave с nav - теперь только на самом мега-меню */}
         <nav className="flex-shrink-0 relative">
           {/* Поисковая строка - анимация справа налево */}
           <div 
@@ -319,11 +317,10 @@ const DesktopHeader: React.FC = () => {
               <li 
                 key={index}
                 onMouseEnter={() => handleMenuEnter(item)}
-                // Убираем onMouseLeave с отдельных пунктов меню
               >
                 <a 
                   href="#"
-                  className={`hover:text-brand-gray transition-colors duration-200 uppercase font-heading font-medium tracking-wide ${
+                  className={`nav-link ${
                     activeMenu === item ? 'text-brand-gray' : ''
                   }`}
                 >
@@ -347,7 +344,6 @@ const DesktopHeader: React.FC = () => {
             onClick={handleCartClick}
           >
             <img src="/icons/cart.svg" alt="Корзина" className="w-6 h-6" />
-            {/* Показываем счетчик только после монтирования */}
             {mounted && totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold font-price">
                 {totalItems > 99 ? '99+' : totalItems}

@@ -54,9 +54,8 @@ const CartSidebar: React.FC = () => {
   };
 
   const handleOrderClick = () => {
-    console.log('Оформление заказа');
-    // Здесь будет логика перехода к оформлению заказа
-    closeCart();
+    closeCart(); // Закрываем корзину
+    window.location.href = '/checkout'; // Переходим на страницу оформления
   };
 
   if (!mounted || !isCartOpen) {

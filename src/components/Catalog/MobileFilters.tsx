@@ -75,6 +75,7 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
       const newValues = currentValues.includes(value as string)
         ? currentValues.filter(v => v !== value)
         : [...currentValues, value as string];
+        //@ts-ignore
       onFilterChange(filterType, newValues);
     }
   };

@@ -835,6 +835,38 @@ h6 {
   color: var(--brand-gray);
 }
 
+.nav-link-modern {
+  color: var(--brand-dark);
+  text-decoration: none;
+  text-transform: uppercase;
+  font-family: var(--font-random-grotesque);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.025em;
+  transition: color 0.2s ease;
+  display: block;
+}
+
+.nav-link-modern:hover {
+  color: var(--brand-gray);
+}
+
+/* Мега-меню ссылки - соответствуют текущему коду */
+.mega-menu-link {
+  color: var(--brand-dark);
+  text-decoration: none;
+  font-family: var(--font-random-grotesque);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.025em;
+  transition: color 0.2s ease;
+  display: block;
+}
+
+.mega-menu-link:hover {
+  color: var(--brand-gray);
+}
+
 /* Иконки хедера */
 .header-icons {
   display: flex;
@@ -2569,4 +2601,452 @@ select {
 
 .filter-scroll::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* ============================================
+   КОМПОНЕНТЫ - СТРАНИЦА ВОЗВРАТА
+   ============================================ */
+
+/* Заголовок страницы возврата */
+.returns-page-title {
+  font-family: var(--font-druk-wide);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 35px;
+  color: #0b0b0d;
+  text-transform: uppercase;
+  width: 361px;
+  min-width: 361px;
+}
+
+.returns-page-line {
+  background-color: #000000;
+  height: 3px;
+  flex: 1;
+  margin-left: 183px;
+  max-width: calc(100vw - 100px);
+}
+
+/* Desktop заголовок */
+@media (min-width: 1024px) {
+  .returns-page-title {
+    font-size: 50px;
+    line-height: 61px;
+  }
+}
+
+/* Mobile - скрыть линию */
+@media (max-width: 1023px) {
+  .returns-page-line {
+    display: none;
+  }
+}
+
+/* Основной контент страницы возврата */
+.returns-page-content {
+  font-family: "Random Grotesque Spacious Black", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  color: #000000;
+}
+
+/* Контент секций */
+.returns-section-content {
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* ============================================
+   КОМПОНЕНТЫ - СТРАНИЦА ОФОРМЛЕНИЯ ЗАКАЗА
+   ============================================ */
+
+/* Заголовки секций */
+.checkout-section-title {
+  font-family: "Random Grotesque Spacious Black", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 20px;
+  line-height: 30px;
+  color: #000000;
+}
+
+.checkout-section-title--mobile {
+  font-family: "Random Grotesque Spacious Black", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 26px;
+  color: #000000;
+}
+
+/* Поля ввода */
+.checkout-input {
+  width: 100%;
+  height: 50px;
+  background: #bfb3a3;
+  border: none;
+  outline: none;
+  padding: 0 30px;
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #000000;
+}
+
+.checkout-input::placeholder {
+  color: #000000;
+  opacity: 1;
+}
+
+.checkout-input:focus {
+  background: #a69a89;
+}
+
+.checkout-input--mobile {
+  height: 45px;
+  font-size: 18px;
+  line-height: 24px;
+  padding: 0 20px;
+}
+
+/* Чекбоксы для способов доставки и оплаты */
+.checkout-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+}
+
+.checkout-checkbox {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #000000;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+
+.checkout-checkbox--checked {
+  background: #000000;
+}
+
+.checkout-checkbox--checked::after {
+  content: "✓";
+  color: white;
+  font-size: 10px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.checkout-checkbox-label {
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 23px;
+  color: #000000;
+  cursor: pointer;
+}
+
+.checkout-checkbox-label--mobile {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+/* Промокод */
+.checkout-promo-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.checkout-promo-input {
+  flex: 1;
+  height: 50px;
+  background: #e5ddd4;
+  border: none;
+  outline: none;
+  padding: 0 30px;
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #000000;
+}
+
+.checkout-promo-input::placeholder {
+  color: #000000;
+  opacity: 1;
+}
+
+.checkout-promo-btn {
+  height: 50px;
+  background: #0b0b0d;
+  color: #e5ddd4;
+  border: none;
+  padding: 0 30px;
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.checkout-promo-btn:hover {
+  background: #2a2a2a;
+}
+
+.checkout-promo-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Итоговая стоимость */
+.checkout-summary-total {
+  font-family: "Random Grotesque Spacious Black", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 20px;
+  line-height: 30px;
+  color: #000000;
+}
+
+/* Кнопка оформления заказа */
+.checkout-order-btn {
+  width: 407px;
+  height: 50px;
+  background: #0b0b0d;
+  color: #e5ddd4;
+  border: none;
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.checkout-order-btn:hover {
+  background: #2a2a2a;
+}
+
+.checkout-order-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkout-order-btn--mobile {
+  width: 100%;
+  height: 50px;
+  font-size: 18px;
+}
+
+/* Текст согласия с условиями */
+.checkout-terms-text {
+  width: 820px;
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 20px;
+  color: #000000;
+}
+
+.checkout-terms-text--mobile {
+  width: 100%;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* Карточка товара в сводке заказа */
+.checkout-order-item {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.checkout-order-item--mobile {
+  gap: 15px;
+}
+
+.checkout-order-item-image {
+  width: 218px;
+  height: 121px;
+  background: #e5ddd4;
+  flex-shrink: 0;
+}
+
+.checkout-order-item-image--mobile {
+  width: 120px;
+  height: 80px;
+}
+
+.checkout-order-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-order-item-name {
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 23px;
+  color: #000000;
+}
+
+.checkout-order-item-name--mobile {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.checkout-order-item-size {
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 23px;
+  color: #8c8072;
+}
+
+.checkout-order-item-size--mobile {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.checkout-order-item-price {
+  font-family: var(--font-random-grotesque);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #000000;
+}
+
+.checkout-order-item-price--mobile {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.checkout-order-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.checkout-order-item-controls--mobile {
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Контролы количества */
+.checkout-quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #e5ddd4;
+  padding: 8px 12px;
+  width: fit-content;
+}
+
+.checkout-quantity-controls--mobile {
+  gap: 10px;
+  padding: 6px 10px;
+}
+
+.checkout-quantity-btn {
+  background: none;
+  border: none;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #8c8072;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.checkout-quantity-btn:hover {
+  color: #000000;
+}
+
+.checkout-quantity-btn--mobile {
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+}
+
+.checkout-quantity-number {
+  font-family: "Inter", var(--font-inter), Arial, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 36px;
+  color: #000000;
+  min-width: 20px;
+  text-align: center;
+}
+
+.checkout-quantity-number--mobile {
+  font-size: 24px;
+  line-height: 30px;
+  min-width: 18px;
+}
+
+/* Ошибки валидации */
+.checkout-error {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 4px;
+  font-family: var(--font-random-grotesque);
+}
+
+.checkout-error--mobile {
+  font-size: 12px;
+}
+
+/* Responsive стили */
+@media (max-width: 1023px) {
+  .checkout-order-btn {
+    width: 100%;
+  }
+
+  .checkout-terms-text {
+    width: 100%;
+  }
+
+  .checkout-promo-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .checkout-promo-input,
+  .checkout-promo-btn {
+    width: 100%;
+    height: 45px;
+    font-size: 18px;
+  }
 }
