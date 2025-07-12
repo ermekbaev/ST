@@ -1,6 +1,7 @@
-// src/hooks/useDeliverySettings.ts - ВРЕМЕННЫЙ ФИКС
+// src/hooks/useDeliverySettings.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { useState, useEffect } from 'react';
 import { DeliveryOption, PaymentOption, PromoCode } from '@/types/checkout';
+import { getDeliverySettings, DeliverySettingsData } from '@/services/deliverySettingsService';
 
 interface GeneralSettings {
   deliveryTimeGeneral: string;
@@ -35,101 +36,33 @@ export const useDeliverySettings = (): DeliverySettings => {
       setLoading(true);
       setError(null);
 
-      // 🔧 ВРЕМЕННО: используем встроенные настройки
-      console.log('⚡ Используем встроенные настройки доставки');
+      console.log('🔄 Загружаем настройки доставки из Google Таблицы...');
       
-      const testDeliveryOptions: DeliveryOption[] = [
-        {
-          id: 'store_pickup',
-          name: 'Доставить в магазин TS',
-          price: 0,
-          estimatedDays: '5-7 дней',
-          description: 'Бесплатный самовывоз'
-        },
-        {
-          id: 'courier_ts',
-          name: 'Доставка курьером TS',
-          price: 0,
-          estimatedDays: '5-7 дней',
-          description: 'Бесплатная доставка по Владивостоку'
-        },
-        {
-          id: 'cdek_pickup',
-          name: 'СДЭК - доставка до пункта выдачи',
-          price: 300,
-          estimatedDays: '3-5 дней',
-          description: 'Доставка до ближайшего пункта СДЭК'
-        },
-        {
-          id: 'cdek_courier',
-          name: 'СДЭК - доставка курьером',
-          price: 500,
-          estimatedDays: '3-5 дней',
-          description: 'Доставка курьером СДЭК'
-        },
-        {
-          id: 'post_russia',
-          name: 'Почта России',
-          price: 250,
-          estimatedDays: '7-14 дней',
-          description: 'Доставка Почтой России'
-        },
-        {
-          id: 'boxberry',
-          name: 'BoxBerry',
-          price: 350,
-          estimatedDays: '4-6 дней',
-          description: 'Доставка до пункта BoxBerry'
-        }
-      ];
+      // ✅ ИСПРАВЛЕНО: используем реальный API
+      const settings: DeliverySettingsData = await getDeliverySettings(forceRefresh);
 
-      const testPaymentOptions: PaymentOption[] = [
-        {
-          id: 'card',
-          name: 'Оплата картой (МИР, VISA, MasterCard)',
-          description: 'Онлайн оплата банковской картой'
-        },
-        {
-          id: 'cash_vladivostok',
-          name: 'Оплата наличными в городе Владивосток',
-          description: 'Оплата наличными при получении'
-        }
-      ];
+      setDeliveryOptions(settings.deliveryOptions);
+      setPaymentOptions(settings.paymentOptions);
+      setPromoCodes(settings.promoCodes);
+      setGeneralSettings(settings.generalSettings);
 
-      const testPromoCodes: PromoCode[] = [
-        {
-          code: 'WELCOME10',
-          discount: 10,
-          type: 'percentage'
-        },
-        {
-          code: 'SAVE500',
-          discount: 500,
-          type: 'amount'
-        },
-        {
-          code: 'FREESHIP',
-          discount: 0,
-          type: 'free_shipping'
-        }
-      ];
+      console.log('✅ Настройки доставки загружены из API:', {
+        deliveryOptions: settings.deliveryOptions.length,
+        paymentOptions: settings.paymentOptions.length,
+        promoCodes: settings.promoCodes.length
+      });
 
-      // Имитируем небольшую задержку
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      setDeliveryOptions(testDeliveryOptions);
-      setPaymentOptions(testPaymentOptions);
-      setPromoCodes(testPromoCodes);
-
-      console.log('✅ Настройки доставки загружены:', {
-        deliveryOptions: testDeliveryOptions.length,
-        paymentOptions: testPaymentOptions.length,
-        promoCodes: testPromoCodes.length
+      // Отладочная информация по ценам
+      console.log('💰 Цены доставки:');
+      settings.deliveryOptions.forEach(option => {
+        console.log(`  ${option.name}: ${option.price}₽`);
       });
 
     } catch (err) {
       console.error('❌ Ошибка загрузки настроек:', err);
       setError(err instanceof Error ? err.message : 'Ошибка загрузки настроек доставки');
+      
+
     } finally {
       setLoading(false);
     }

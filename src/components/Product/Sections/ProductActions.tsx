@@ -21,23 +21,12 @@ const ProductActions: React.FC<ProductActionsProps> = ({
   }, []);
 
   const handleContinueShopping = () => {
-    if (onContinueShopping) {
-      onContinueShopping();
-    } else {
-      // Заглушка - переход в каталог
-      console.log('Переход в каталог');
-      // window.location.href = '/catalog';
-    }
+      window.location.href = '/catalog';
+
   };
 
   const handleBackToStore = () => {
-    if (onBackToStore) {
-      onBackToStore();
-    } else {
-      // Заглушка - переход на главную
-      console.log('Переход на главную');
-      // window.location.href = '/';
-    }
+      window.location.href = '/';
   };
 
   if (!mounted) {

@@ -52,14 +52,6 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         СПОСОБ ОПЛАТЫ
       </h2>
 
-      {/* Отладочная информация (можно убрать в продакшене) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
-          💳 Загружено способов оплаты: {options.length}
-          {paymentOptions && paymentOptions.length > 0 ? ' (из API)' : ' (фоллбэк)'}
-        </div>
-      )}
-
       {/* Опции оплаты */}
       <div className="checkout-checkbox-group">
         {options.map((option) => (

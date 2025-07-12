@@ -518,6 +518,7 @@ h6 {
   border-right: none;
   border-top: none;
   text-align: left;
+  color: #000000;
 }
 
 .size-dropdown-item:last-child {
@@ -550,6 +551,7 @@ h6 {
   padding: 0 16px;
   font-size: 15px;
   line-height: 20px;
+  color: #000000;
 }
 
 /* Поле поиска */

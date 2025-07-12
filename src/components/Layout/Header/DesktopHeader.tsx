@@ -178,6 +178,25 @@ const DesktopHeader: React.FC = () => {
     toggleCart();
   }, [toggleCart]);
 
+  // 🆕 Обработчик клика по элементам навигации
+  const handleNavClick = useCallback((item: string, e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Если это sale - переходим в каталог
+    if (item === 'sale') {
+      e.preventDefault();
+      window.location.href = '/catalog';
+      return;
+    }
+    
+    // Для информации оставляем стандартное поведение (мега-меню)
+    if (item === 'информация') {
+      return;
+    }
+    
+    // Для остальных элементов блокируем переход (пока не настроены роуты)
+    e.preventDefault();
+    console.log(`Клик по навигации: ${item}`);
+  }, []);
+
   const getMenuPosition = useCallback((): React.CSSProperties => {
     if (!activeMenu) return {};
     
@@ -310,6 +329,7 @@ const DesktopHeader: React.FC = () => {
             </form>
           </div>
 
+          {/* 🆕 Обновленная навигация с обработчиком клика */}
           <ul className={`flex items-center gap-8 text-sm text-brand-dark h-[27px] transition-opacity duration-300 ${
             isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}>
@@ -319,10 +339,11 @@ const DesktopHeader: React.FC = () => {
                 onMouseEnter={() => handleMenuEnter(item)}
               >
                 <a 
-                  href="#"
+                  href={item === 'sale' ? '/catalog' : '#'}
                   className={`nav-link ${
                     activeMenu === item ? 'text-brand-gray' : ''
                   }`}
+                  onClick={(e) => handleNavClick(item, e)}
                 >
                   {item}
                 </a>

@@ -50,14 +50,6 @@ const DeliverySection: React.FC<DeliverySectionProps> = ({
         СПОСОБ ДОСТАВКИ
       </h2>
 
-      {/* Отладочная информация (можно убрать в продакшене) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
-          📦 Загружено опций доставки: {options.length} 
-          {deliveryOptions && deliveryOptions.length > 0 ? ' (из API)' : ' (фоллбэк)'}
-        </div>
-      )}
-
       {/* Опции доставки */}
       <div className="checkout-checkbox-group">
         {options.map((option) => (

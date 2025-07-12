@@ -80,7 +80,7 @@ const CheckoutPage: React.FC = () => {
         <div className="hidden lg:block">
           <div className="grid grid-cols-2 min-h-screen">
             {/* Левая колонка - Форма */}
-            <div className="bg-[#E5DDD4] pl-[70px] pr-[20px] py-8">
+            <div className="bg-[#E5DDD4] pl-[70px] pr-[20px] pt-8 pb-16">
               <CheckoutForm checkout={checkout} />
             </div>
                      

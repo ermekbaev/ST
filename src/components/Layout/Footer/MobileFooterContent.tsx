@@ -16,7 +16,7 @@ const MobileFooterContent = () => {
       title: 'РАЗДЕЛЫ',
       key: 'sections',
       items: [
-        { label: 'sale', href: '#' },
+        { label: 'sale', href: '/catalog' },
         { label: 'обувь', href: '#' },
         { label: 'одежда', href: '#' },
         { label: 'аксессуары', href: '#' },
