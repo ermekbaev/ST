@@ -16,7 +16,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ checkout, isMobile = false 
   const { form, submitOrder, isSubmitting } = checkout;
 
   return (
-    <form onSubmit={form.handleSubmit(submitOrder)} className="space-y-8">
+    <form 
+        id={isMobile ? 'checkout-form-mobile' : 'checkout-form'}
+        onSubmit={form.handleSubmit(submitOrder)} 
+        className="space-y-8"
+    >
       {/* Личные данные */}
       <PersonalDataSection form={form} isMobile={isMobile} />
       

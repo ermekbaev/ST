@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useCart } from '@/contexts/CartContext';
 
-// Локальные типы для формы (упрощенные)
+// Простой интерфейс для формы
 interface CheckoutFormData {
   firstName: string;
   lastName: string;
@@ -14,29 +12,12 @@ interface CheckoutFormData {
   city: string;
   address: string;
   postalCode: string;
-  recipientFirstName?: string;
-  recipientLastName?: string;
-  recipientPhone?: string;
-  deliveryMethod: 'store_pickup' | 'courier_ts' | 'cdek_pickup' | 'cdek_courier' | 'post_russia' | 'boxberry';
-  paymentMethod: 'card' | 'cash_vladivostok';
+  recipientFirstName: string;
+  recipientLastName: string;
+  recipientPhone: string;
+  deliveryMethod: string;
+  paymentMethod: string;
 }
-
-// Упрощенная схема валидации
-const checkoutValidationSchema = z.object({
-  firstName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
-  lastName: z.string().min(2, 'Фамилия должна содержать минимум 2 символа'),
-  email: z.string().email('Некорректный email'),
-  phone: z.string().min(10, 'Укажите корректный номер телефона'),
-  region: z.string().min(1, 'Выберите регион'),
-  city: z.string().min(1, 'Укажите город'),
-  address: z.string().min(5, 'Укажите полный адрес'),
-  postalCode: z.string().min(6, 'Укажите почтовый индекс'),
-  recipientFirstName: z.string().optional(),
-  recipientLastName: z.string().optional(),
-  recipientPhone: z.string().optional(),
-  deliveryMethod: z.enum(['store_pickup', 'courier_ts', 'cdek_pickup', 'cdek_courier', 'post_russia', 'boxberry']),
-  paymentMethod: z.enum(['card', 'cash_vladivostok'])
-});
 
 // Простой расчет доставки
 const calculateDeliveryPrice = (method: string, city: string = ''): number => {
@@ -67,11 +48,22 @@ export const useCheckout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<CheckoutFormData>({
-    resolver: zodResolver(checkoutValidationSchema),
     defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      region: '',
+      city: '',
+      address: '',
+      postalCode: '',
+      recipientFirstName: '',
+      recipientLastName: '',
+      recipientPhone: '',
       deliveryMethod: 'store_pickup',
       paymentMethod: 'card',
-    }
+    },
+    mode: 'onChange'
   });
 
   // Применение промокода
@@ -112,7 +104,8 @@ export const useCheckout = () => {
   const submitOrder = async (data: CheckoutFormData) => {
     setIsSubmitting(true);
     try {
-      // Здесь будет отправка заказа на сервер
+      console.log('Submitting order:', data);
+      
       const orderData = {
         ...data,
         items,
@@ -142,6 +135,11 @@ export const useCheckout = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Отладочная информация
+  console.log('useCheckout - form values:', form.watch());
+  console.log('useCheckout - deliveryMethod:', form.watch('deliveryMethod'));
+  console.log('useCheckout - paymentMethod:', form.watch('paymentMethod'));
 
   return {
     form,

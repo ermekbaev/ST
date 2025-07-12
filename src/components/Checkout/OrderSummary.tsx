@@ -22,16 +22,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false 
   } = checkout;
 
   return (
-    <div className="space-y-6">
+    <div className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
       {/* Срок доставки */}
-      <div className="text-[17px] leading-[23px] font-normal text-black">
+      <div className={`${isMobile ? 'text-[10px] leading-[14px] text-center' : 'text-[17px] leading-[23px]'} font-normal text-black`}>
         Ориентировочный срок доставки по этим товарам: 16-21 дней
       </div>
 
       {/* Список товаров */}
-      <div className="space-y-4">
+      <div className={`${isMobile ? 'space-y-2' : 'space-y-4'}`}>
         {items.map((item: any) => (
-          <OrderItem key={item.article} item={item} />
+          <OrderItem key={item.article} item={item} isMobile={isMobile} />
         ))}
       </div>
 
@@ -40,25 +40,25 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false 
 
       {/* Расчет стоимости */}
       <div className="space-y-3 pt-4">
-        <div className="flex justify-between text-[20px] leading-[27px] text-[#595047]">
+        <div className={`flex justify-between ${isMobile ? 'text-[16px] leading-[20px]' : 'text-[20px] leading-[27px]'} text-[#595047]`}>
           <span>Общая стоимость</span>
           <span>{subtotal.toLocaleString('ru-RU')} ₽</span>
         </div>
         
-        <div className="flex justify-between text-[20px] leading-[27px] text-[#595047]">
+        <div className={`flex justify-between ${isMobile ? 'text-[16px] leading-[20px]' : 'text-[20px] leading-[27px]'} text-[#595047]`}>
           <span>Доставка</span>
           <span>{deliveryPrice.toLocaleString('ru-RU')} ₽</span>
         </div>
 
         {promoDiscount > 0 && (
-          <div className="flex justify-between text-[20px] leading-[27px] text-green-600">
+          <div className={`flex justify-between ${isMobile ? 'text-[16px] leading-[20px]' : 'text-[20px] leading-[27px]'} text-green-600`}>
             <span>Скидка</span>
             <span>-{promoDiscount.toLocaleString('ru-RU')} ₽</span>
           </div>
         )}
 
         <div className="border-t border-gray-300 pt-3">
-          <div className="flex justify-between checkout-summary-total">
+          <div className={`flex justify-between ${isMobile ? 'checkout-summary-total text-[18px]' : 'checkout-summary-total'}`}>
             <span>ИТОГО</span>
             <span>{total.toLocaleString('ru-RU')} ₽</span>
           </div>

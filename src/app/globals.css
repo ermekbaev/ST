@@ -2884,7 +2884,19 @@ select {
 }
 
 .checkout-order-item--mobile {
-  gap: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.checkout-order-item-info--mobile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0; /* для правильного переноса текста */
 }
 
 .checkout-order-item-image {
@@ -2895,8 +2907,10 @@ select {
 }
 
 .checkout-order-item-image--mobile {
-  width: 120px;
-  height: 80px;
+  width: 140px;
+  height: 70px;
+  background: #e5ddd4;
+  flex-shrink: 0;
 }
 
 .checkout-order-item-info {
@@ -2916,8 +2930,19 @@ select {
 }
 
 .checkout-order-item-name--mobile {
-  font-size: 15px;
-  line-height: 20px;
+  font-family: "Random Grotesque Spacious Book", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 9px;
+  color: #000000;
+  width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .checkout-order-item-size {
@@ -2930,8 +2955,13 @@ select {
 }
 
 .checkout-order-item-size--mobile {
+  font-family: "Random Grotesque Spacious Book", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-style: normal;
+  font-weight: 400;
   font-size: 15px;
   line-height: 20px;
+  color: #8c8072;
 }
 
 .checkout-order-item-price {
@@ -2944,8 +2974,14 @@ select {
 }
 
 .checkout-order-item-price--mobile {
-  font-size: 18px;
-  line-height: 24px;
+  font-family: "Random Grotesque Spacious Book", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 19px;
+  color: #000000;
+  text-align: right;
 }
 
 .checkout-order-item-controls {
@@ -2956,8 +2992,34 @@ select {
 }
 
 .checkout-order-item-controls--mobile {
-  gap: 10px;
-  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.checkout-remove-btn--mobile {
+  color: #8c8072;
+  font-size: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  transition: color 0.2s ease;
+}
+
+.checkout-remove-btn--mobile:hover {
+  color: #000000;
+}
+
+.checkout-order-item-price-section--mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 4px;
+  min-width: 60px;
 }
 
 /* Контролы количества */
@@ -2971,8 +3033,14 @@ select {
 }
 
 .checkout-quantity-controls--mobile {
-  gap: 10px;
-  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e5ddd4;
+  padding: 4px 8px;
+  width: 56px;
+  height: 16.8px;
+  border-radius: 2px;
 }
 
 .checkout-quantity-btn {
@@ -2994,9 +3062,18 @@ select {
 }
 
 .checkout-quantity-btn--mobile {
-  width: 18px;
-  height: 18px;
-  font-size: 16px;
+  background: none;
+  border: none;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #8c8072;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
 }
 
 .checkout-quantity-number {
@@ -3011,9 +3088,14 @@ select {
 }
 
 .checkout-quantity-number--mobile {
-  font-size: 24px;
-  line-height: 30px;
-  min-width: 18px;
+  font-family: "Inter", var(--font-inter), Arial, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 14px;
+  color: #000000;
+  min-width: 12px;
+  text-align: center;
 }
 
 /* Ошибки валидации */
@@ -3049,4 +3131,54 @@ select {
     height: 45px;
     font-size: 18px;
   }
+}
+
+.checkout-checkbox--checked {
+  background: #e5ddd4;
+}
+
+.checkout-checkbox--checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 13px;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='13' viewBox='0 0 12 13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 1L1 11V5.5' stroke='black'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* мобильные размеры для OrderItem */
+.checkout-order-item-image--mobile {
+  width: 140px;
+  height: 77px;
+}
+
+.checkout-order-item-name--mobile {
+  font-size: 7px;
+  line-height: 9px;
+}
+
+.checkout-order-item-size--mobile {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.checkout-order-item-price--mobile {
+  font-size: 14px;
+  line-height: 19px;
+}
+
+.checkout-quantity-controls--mobile {
+  width: 56px;
+  height: 13px;
+  padding: 0;
+}
+
+.checkout-quantity-number--mobile {
+  font-size: 15px;
+  line-height: 18px;
 }

@@ -1,12 +1,10 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
-import { CartItem } from '@/types/cart';
 import { useCart } from '@/contexts/CartContext';
 
 interface OrderItemProps {
-  item: CartItem;
+  item: any;
   isMobile?: boolean;
 }
 
@@ -14,33 +12,39 @@ const OrderItem: React.FC<OrderItemProps> = ({ item, isMobile = false }) => {
   const { updateQuantity, removeFromCart } = useCart();
 
   const handleQuantityChange = (newQuantity: number) => {
+    const itemKey = item.id || item.article;
+     
     if (newQuantity <= 0) {
-      removeFromCart(item.article);
+      removeFromCart(itemKey);
     } else {
-      updateQuantity(item.article, newQuantity);
+      updateQuantity(itemKey, newQuantity);
     }
   };
 
+  const handleRemove = () => {
+    const itemKey = item.id || item.article;
+    removeFromCart(itemKey);
+  };
+
   return (
-    <div className={`checkout-order-item ${isMobile ? 'checkout-order-item--mobile' : ''}`}>
+    <div className={`checkout-order-item ${isMobile ? 'checkout-order-item--mobile py-2' : ''}`}>
       {/* Изображение товара */}
-      <div className={`checkout-order-item-image ${isMobile ? 'checkout-order-item-image--mobile' : ''}`}>
-        {item.image ? (
-          <Image
-            src={item.image}
+      <div className={`checkout-order-item-image ${isMobile ? 'checkout-order-item-image--mobile' : ''} relative overflow-hidden`}>
+        {item.image || item.photo ? (
+          <img
+            src={item.image || item.photo}
             alt={item.name}
-            fill
-            className="object-cover"
+            className="w-full h-full object-contain bg-white"
           />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400">Нет фото</span>
+            <span className="text-gray-400 text-xs">Нет фото</span>
           </div>
         )}
       </div>
 
       {/* Информация о товаре */}
-      <div className="checkout-order-item-info">
+      <div className={`checkout-order-item-info ${isMobile ? 'checkout-order-item-info--mobile' : ''}`}>
         {/* Название */}
         <h3 className={`checkout-order-item-name ${isMobile ? 'checkout-order-item-name--mobile' : ''}`}>
           {item.name}
@@ -51,46 +55,93 @@ const OrderItem: React.FC<OrderItemProps> = ({ item, isMobile = false }) => {
           Размер: {item.size}
         </p>
 
-        {/* Контролы количества */}
-        <div className={`checkout-order-item-controls ${isMobile ? 'checkout-order-item-controls--mobile' : ''}`}>
-          <div className={`checkout-quantity-controls ${isMobile ? 'checkout-quantity-controls--mobile' : ''}`}>
+        {/* Контролы количества и удаления - только для мобильной версии */}
+        {isMobile && (
+          <div className={`checkout-order-item-controls ${isMobile ? 'checkout-order-item-controls--mobile' : ''}`}>
+            <div className={`checkout-quantity-controls ${isMobile ? 'checkout-quantity-controls--mobile' : ''}`}>
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(item.quantity - 1)}
+                className={`checkout-quantity-btn ${isMobile ? 'checkout-quantity-btn--mobile' : ''}`}
+                disabled={item.quantity <= 1}
+              >
+                −
+              </button>
+              
+              <span className={`checkout-quantity-number ${isMobile ? 'checkout-quantity-number--mobile' : ''}`}>
+                {item.quantity}
+              </span>
+              
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(item.quantity + 1)}
+                className={`checkout-quantity-btn ${isMobile ? 'checkout-quantity-btn--mobile' : ''}`}
+              >
+                +
+              </button>
+            </div>
+
+            {/* Кнопка удаления */}
             <button
               type="button"
-              onClick={() => handleQuantityChange(item.quantity - 1)}
-              className={`checkout-quantity-btn ${isMobile ? 'checkout-quantity-btn--mobile' : ''}`}
+              onClick={handleRemove}
+              className={`checkout-remove-btn ${isMobile ? 'checkout-remove-btn--mobile' : ''}`}
             >
-              −
-            </button>
-            
-            <span className={`checkout-quantity-number ${isMobile ? 'checkout-quantity-number--mobile' : ''}`}>
-              {item.quantity}
-            </span>
-            
-            <button
-              type="button"
-              onClick={() => handleQuantityChange(item.quantity + 1)}
-              className={`checkout-quantity-btn ${isMobile ? 'checkout-quantity-btn--mobile' : ''}`}
-            >
-              +
+              ✕
             </button>
           </div>
-        </div>
+        )}
+
+        {/* Контролы для десктопной версии */}
+        {!isMobile && (
+          <div className={`checkout-order-item-controls`}>
+            <div className={`checkout-quantity-controls`}>
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(item.quantity - 1)}
+                className={`checkout-quantity-btn`}
+                disabled={item.quantity <= 1}
+              >
+                −
+              </button>
+              
+              <span className={`checkout-quantity-number`}>
+                {item.quantity}
+              </span>
+              
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(item.quantity + 1)}
+                className={`checkout-quantity-btn`}
+              >
+                +
+              </button>
+            </div>
+
+            {/* Кнопка удаления */}
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="text-red-500 hover:text-red-700 text-sm ml-4 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Цена */}
+      {/* Цена - всегда отображается */}
       <div className="flex flex-col items-end justify-between">
         <p className={`checkout-order-item-price ${isMobile ? 'checkout-order-item-price--mobile' : ''}`}>
           {(item.price * item.quantity).toLocaleString('ru-RU')} ₽
         </p>
         
-        {/* Кнопка удаления */}
-        <button
-          type="button"
-          onClick={() => removeFromCart(item.article)}
-          className="text-red-500 hover:text-red-700 text-sm mt-2"
-        >
-          Удалить
-        </button>
+        {/* Цена за единицу - только на десктопе */}
+        {!isMobile && (
+          <p className="text-sm text-gray-500 mt-1">
+            {item.price.toLocaleString('ru-RU')} ₽ за шт.
+          </p>
+        )}
       </div>
     </div>
   );

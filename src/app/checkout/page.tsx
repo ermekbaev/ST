@@ -33,7 +33,7 @@ const CheckoutPage: React.FC = () => {
   // Показываем лоадер пока идет загрузка
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#E5DDD4] flex items-center justify-center">
+      <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl">Загрузка...</div>
         </div>
@@ -44,7 +44,7 @@ const CheckoutPage: React.FC = () => {
   // Если корзина пуста после загрузки
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-[#E5DDD4] flex items-center justify-center">
+      <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Корзина пуста</h2>
           <p className="text-gray-600 mb-6">Добавьте товары в корзину для оформления заказа</p>
@@ -60,17 +60,17 @@ const CheckoutPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#E5DDD4]">
+    <div className="min-h-screen lg:bg-[#E5DDD4] bg-white">
       {/* Основной контент */}
       <main className="min-h-screen">
         {/* Desktop Layout - 2 колонки */}
         <div className="hidden lg:block">
           <div className="grid grid-cols-2 min-h-screen">
             {/* Левая колонка - Форма */}
-            <div className="bg-[#E5DDD4] pl-[70px] pr-[20px] pt-8 pb-36">
+            <div className="bg-[#E5DDD4] pl-[70px] pr-[20px] py-8">
               <CheckoutForm checkout={checkout} />
             </div>
-            
+                     
             {/* Правая колонка - Сводка заказа */}
             <div className="bg-white pl-[20px] pr-[70px] py-8">
               <OrderSummary checkout={checkout} />
@@ -78,19 +78,17 @@ const CheckoutPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Layout - 1 колонка */}
-        <div className="lg:hidden">
-          <div className="px-4 py-6 space-y-8">
-            {/* Сводка заказа сверху на мобиле */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <OrderSummary checkout={checkout} isMobile />
+        {/* Mobile Layout - 1 колонка с белым фоном */}
+        <div className="lg:hidden bg-white min-h-screen">
+            {/* Форма сверху */}
+            <div className="px-[10px] py-6 space-y-6">
+            <CheckoutForm checkout={checkout} isMobile={true} />
             </div>
-            
-            {/* Форма снизу на мобиле */}
-            <div className="bg-[#E5DDD4] p-6 rounded-lg">
-              <CheckoutForm checkout={checkout} isMobile />
+                     
+            {/* Белый блок снизу */}
+            <div className="bg-white px-[10px] py-6">
+            <OrderSummary checkout={checkout} isMobile={true} />
             </div>
-          </div>
         </div>
       </main>
     </div>
