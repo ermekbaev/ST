@@ -42,8 +42,11 @@ const PromoCode: React.FC<PromoCodeProps> = ({ onApply, isMobile = false }) => {
 
   return (
     <div className="space-y-3">
-      {/* Заголовок */}
-      <div className="text-[17px] leading-[23px] font-normal text-black">
+      {/* Заголовок с шрифтом Random Grotesque */}
+      <div 
+        className={`font-bold text-black ${isMobile ? 'text-[15px] leading-[20px]' : 'text-[17px] leading-[23px]'}`}
+        style={{ fontFamily: 'var(--font-random-grotesque)' }}
+      >
         ПРОМОКОД
       </div>
 
@@ -69,9 +72,12 @@ const PromoCode: React.FC<PromoCodeProps> = ({ onApply, isMobile = false }) => {
         </button>
       </div>
 
-      {/* Сообщения */}
+      {/* Сообщения с шрифтом Random Grotesque */}
       {message && (
-        <p className={`text-sm ${message.includes('применен') ? 'text-green-600' : 'text-red-500'}`}>
+        <p 
+          className={`text-sm ${message.includes('применен') ? 'text-green-600' : 'text-red-500'}`}
+          style={{ fontFamily: 'var(--font-random-grotesque)' }}
+        >
           {message}
         </p>
       )}

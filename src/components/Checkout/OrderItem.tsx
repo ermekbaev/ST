@@ -27,9 +27,9 @@ const OrderItem: React.FC<OrderItemProps> = ({ item, isMobile = false }) => {
   };
 
   return (
-    <div className={`checkout-order-item ${isMobile ? 'checkout-order-item--mobile py-2' : ''}`}>
+    <div className={`${isMobile ? 'flex gap-2 items-start py-2' : 'checkout-order-item'}`}>
       {/* Изображение товара */}
-      <div className={`checkout-order-item-image ${isMobile ? 'checkout-order-item-image--mobile' : ''} relative overflow-hidden`}>
+      <div className={`${isMobile ? 'w-20 h-19 bg-[#e5ddd4] flex-shrink-0 overflow-hidden' : 'checkout-order-item-image'} relative overflow-hidden`}>
         {item.image || item.photo ? (
           <img
             src={item.image || item.photo}
@@ -43,106 +43,110 @@ const OrderItem: React.FC<OrderItemProps> = ({ item, isMobile = false }) => {
         )}
       </div>
 
-      {/* Информация о товаре */}
-      <div className={`checkout-order-item-info ${isMobile ? 'checkout-order-item-info--mobile' : ''}`}>
-        {/* Название */}
-        <h3 className={`checkout-order-item-name ${isMobile ? 'checkout-order-item-name--mobile' : ''}`}>
-          {item.name}
-        </h3>
-
-        {/* Размер */}
-        <p className={`checkout-order-item-size ${isMobile ? 'checkout-order-item-size--mobile' : ''}`}>
-          Размер: {item.size}
-        </p>
-
-        {/* Контролы количества и удаления - только для мобильной версии */}
-        {isMobile && (
-          <div className={`checkout-order-item-controls ${isMobile ? 'checkout-order-item-controls--mobile' : ''}`}>
-            <div className={`checkout-quantity-controls ${isMobile ? 'checkout-quantity-controls--mobile' : ''}`}>
-              <button
-                type="button"
-                onClick={() => handleQuantityChange(item.quantity - 1)}
-                className={`checkout-quantity-btn ${isMobile ? 'checkout-quantity-btn--mobile' : ''}`}
-                disabled={item.quantity <= 1}
-              >
-                −
-              </button>
-              
-              <span className={`checkout-quantity-number ${isMobile ? 'checkout-quantity-number--mobile' : ''}`}>
-                {item.quantity}
-              </span>
-              
-              <button
-                type="button"
-                onClick={() => handleQuantityChange(item.quantity + 1)}
-                className={`checkout-quantity-btn ${isMobile ? 'checkout-quantity-btn--mobile' : ''}`}
-              >
-                +
-              </button>
+      {/* Информация о товаре и цена */}
+      {isMobile ? (
+        <div className="flex-1 flex flex-col gap-1">
+          {/* Название и цена в одной строке с минимальным отступом */}
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <h3 className="text-[7px] leading-[9px] font-normal text-black overflow-hidden text-ellipsis">
+                {item.name}
+              </h3>
             </div>
-
-            {/* Кнопка удаления */}
-            <button
-              type="button"
-              onClick={handleRemove}
-              className={`checkout-remove-btn ${isMobile ? 'checkout-remove-btn--mobile' : ''}`}
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Контролы для десктопной версии */}
-        {!isMobile && (
-          <div className={`checkout-order-item-controls`}>
-            <div className={`checkout-quantity-controls`}>
-              <button
-                type="button"
-                onClick={() => handleQuantityChange(item.quantity - 1)}
-                className={`checkout-quantity-btn`}
-                disabled={item.quantity <= 1}
-              >
-                −
-              </button>
-              
-              <span className={`checkout-quantity-number`}>
-                {item.quantity}
-              </span>
-              
-              <button
-                type="button"
-                onClick={() => handleQuantityChange(item.quantity + 1)}
-                className={`checkout-quantity-btn`}
-              >
-                +
-              </button>
+            <div className="flex-shrink-0">
+              <p className="text-[14px] leading-[19px] font-normal text-black">
+                {(item.price * item.quantity).toLocaleString('ru-RU')} ₽
+              </p>
             </div>
-
-            {/* Кнопка удаления */}
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="text-red-500 hover:text-red-700 text-sm ml-4 transition-colors"
-            >
-              ✕
-            </button>
           </div>
-        )}
-      </div>
-
-      {/* Цена - всегда отображается */}
-      <div className="flex flex-col items-end justify-between">
-        <p className={`checkout-order-item-price ${isMobile ? 'checkout-order-item-price--mobile' : ''}`}>
-          {(item.price * item.quantity).toLocaleString('ru-RU')} ₽
-        </p>
-        
-        {/* Цена за единицу - только на десктопе */}
-        {!isMobile && (
-          <p className="text-sm text-gray-500 mt-1">
-            {item.price.toLocaleString('ru-RU')} ₽ за шт.
+          
+          {/* Размер */}
+          <p className="text-[15px] leading-[20px] font-normal text-[#8C8072]">
+            Размер: {item.size}
           </p>
-        )}
-      </div>
+          
+          {/* Контролы количества */}
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 bg-[#e5ddd4] px-2 py-1 rounded-sm">
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(item.quantity - 1)}
+                className="text-[12px] text-[#8c8072] w-3 h-3 flex items-center justify-center"
+                disabled={item.quantity <= 1}
+              >
+                −
+              </button>
+              <span className="text-[12px] text-black min-w-[12px] text-center">
+                {item.quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(item.quantity + 1)}
+                className="text-[12px] text-[#8c8072] w-3 h-3 flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="text-[12px] text-[#8c8072] ml-2"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Десктопная версия */}
+          <div className="checkout-order-item-info">
+            <h3 className="checkout-order-item-name">
+              {item.name}
+            </h3>
+            <p className="checkout-order-item-size">
+              Размер: {item.size}
+            </p>
+            <div className="checkout-order-item-controls">
+              <div className="checkout-quantity-controls">
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(item.quantity - 1)}
+                  className="checkout-quantity-btn"
+                  disabled={item.quantity <= 1}
+                >
+                  −
+                </button>
+                <span className="checkout-quantity-number">
+                  {item.quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(item.quantity + 1)}
+                  className="checkout-quantity-btn"
+                >
+                  +
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="text-red-500 hover:text-red-700 text-sm ml-4 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-end justify-between">
+            <p className="checkout-order-item-price">
+              {(item.price * item.quantity).toLocaleString('ru-RU')} ₽
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {item.price.toLocaleString('ru-RU')} ₽ за шт.
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 };

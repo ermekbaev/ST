@@ -1,3 +1,4 @@
+// src/types/checkout.ts
 import { CartItem } from './cart';
 
 export interface CheckoutFormData {
@@ -41,7 +42,7 @@ export interface DeliveryOption {
   id: DeliveryMethod;
   name: string;
   description?: string;
-  price?: number;
+  price: number; // ✅ Убрал знак вопроса - цена обязательна
   estimatedDays?: string;
 }
 
@@ -63,5 +64,10 @@ export interface OrderSummaryData {
 export interface PromoCode {
   code: string;
   discount: number; // в рублях или процентах
-  type: 'amount' | 'percentage';
+  type: 'amount' | 'percentage' | 'free_shipping'; // ✅ Добавил 'free_shipping'
+}
+
+// ✅ НОВЫЙ ТИП - добавьте эту строку
+export interface AppliedPromoCode extends PromoCode {
+  appliedDiscount: number; // реальная скидка в рублях
 }

@@ -8,24 +8,24 @@ import RecipientSection from './RecipientSection';
 import PaymentSection from './PaymentSection';
 
 interface CheckoutFormProps {
-  checkout: any; // Заменим на правильный тип когда создадим хук
+  checkout: any; // Данные из useCheckout с API
   isMobile?: boolean;
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({ checkout, isMobile = false }) => {
-  const { form, submitOrder, isSubmitting } = checkout;
+  const { form, submitOrder, isSubmitting, deliveryOptions, paymentOptions } = checkout;
 
   return (
-    <form 
-        id={isMobile ? 'checkout-form-mobile' : 'checkout-form'}
-        onSubmit={form.handleSubmit(submitOrder)} 
-        className="space-y-8"
-    >
+    <form onSubmit={form.handleSubmit(submitOrder)} className="space-y-8" id="checkout-form">
       {/* Личные данные */}
       <PersonalDataSection form={form} isMobile={isMobile} />
       
-      {/* Способ доставки */}
-      <DeliverySection form={form} isMobile={isMobile} />
+      {/* Способ доставки - ТЕПЕРЬ С ДАННЫМИ ИЗ API */}
+      <DeliverySection 
+        form={form} 
+        isMobile={isMobile}
+        deliveryOptions={deliveryOptions} // ✅ Передаем данные из API
+      />
       
       {/* Адрес доставки */}
       <AddressSection form={form} isMobile={isMobile} />
@@ -33,38 +33,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ checkout, isMobile = false 
       {/* Получатель */}
       <RecipientSection form={form} isMobile={isMobile} />
       
-      {/* Способ оплаты */}
-      <PaymentSection form={form} isMobile={isMobile} />
+      {/* Способ оплаты - ТЕПЕРЬ С ДАННЫМИ ИЗ API */}
+      <PaymentSection 
+        form={form} 
+        isMobile={isMobile}
+        paymentOptions={paymentOptions} // ✅ Передаем данные из API
+      />
 
-      {/* Согласие с условиями - только на мобиле, на десктопе в OrderSummary */}
-      {isMobile && (
-        <div className="text-sm text-gray-600 leading-5">
-          Оформляя заказ, Вы подтверждаете согласие с{' '}
-          <a href="/terms" className="underline hover:no-underline">
-            Пользовательским соглашением
-          </a>
-          ,{' '}
-          <a href="/privacy" className="underline hover:no-underline">
-            Политикой конфиденциальности
-          </a>{' '}
-          и{' '}
-          <a href="/offer" className="underline hover:no-underline">
-            Договором оферты
-          </a>
-          .
-        </div>
-      )}
-
-      {/* Кнопка оформления на мобиле */}
-      {isMobile && (
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
-        </button>
-      )}
+      {/* Кнопка и согласие перенесены в OrderSummary для правильного порядка */}
     </form>
   );
 };

@@ -36,7 +36,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false 
       </div>
 
       {/* Промокод */}
-      <PromoCode onApply={applyPromoCode} />
+      <PromoCode onApply={applyPromoCode} isMobile={isMobile} />
 
       {/* Расчет стоимости */}
       <div className="space-y-3 pt-4">
@@ -65,6 +65,37 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false 
         </div>
       </div>
 
+      {/* Кнопка оформления заказа - только на мобиле */}
+      {isMobile && (
+        <button
+          type="submit"
+          form="checkout-form"
+          disabled={isSubmitting}
+          className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+        </button>
+      )}
+
+      {/* Согласие с условиями - на мобиле после кнопки */}
+      {isMobile && (
+        <div className="text-sm text-gray-600 leading-5">
+          Оформляя заказ, Вы подтверждаете согласие с{' '}
+          <a href="/terms" className="underline hover:no-underline">
+            Пользовательским соглашением
+          </a>
+          ,{' '}
+          <a href="/privacy" className="underline hover:no-underline">
+            Политикой конфиденциальности
+          </a>{' '}
+          и{' '}
+          <a href="/offer" className="underline hover:no-underline">
+            Договором оферты
+          </a>
+          .
+        </div>
+      )}
+
       {/* Кнопка оформления заказа - только на десктопе */}
       {!isMobile && (
         <>
@@ -76,24 +107,26 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false 
           >
             {isSubmitting ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
           </button>
-
-          {/* Согласие с условиями */}
-          <div className="checkout-terms-text">
-            Оформляя заказ, Вы подтверждаете согласие с{' '}
-            <a href="/terms" className="underline hover:no-underline">
-              Пользовательским соглашением
-            </a>
-            ,{' '}
-            <a href="/privacy" className="underline hover:no-underline">
-              Политикой конфиденциальности
-            </a>{' '}
-            и{' '}
-            <a href="/offer" className="underline hover:no-underline">
-              Договором оферты
-            </a>
-            .
-          </div>
         </>
+      )}
+
+      {/* Согласие с условиями - только на десктопе и в самом низу */}
+      {!isMobile && (
+        <div className="checkout-terms-text">
+          Оформляя заказ, Вы подтверждаете согласие с{' '}
+          <a href="/terms" className="underline hover:no-underline">
+            Пользовательским соглашением
+          </a>
+          ,{' '}
+          <a href="/privacy" className="underline hover:no-underline">
+            Политикой конфиденциальности
+          </a>{' '}
+          и{' '}
+          <a href="/offer" className="underline hover:no-underline">
+            Договором оферты
+          </a>
+          .
+        </div>
       )}
     </div>
   );
