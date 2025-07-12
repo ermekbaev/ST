@@ -8,22 +8,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import CheckoutForm from '@/components/Checkout/CheckoutForm';
 import OrderSummary from '@/components/Checkout/OrderSummary';
-import CheckoutDebug from '@/components/debug/CheckoutDebug';
-
-// В вашу страницу checkout добавьте:
-
-
 
 const CheckoutPage: React.FC = () => {
   const { items } = useCart();
   const router = useRouter();
   const checkout = useCheckout(); // ✅ Теперь возвращает все данные из API
   const [isLoading, setIsLoading] = useState(true);
-
-  // В JSX:
-{process.env.NODE_ENV === 'development' && (
-  <CheckoutDebug checkout={checkout} />
-)}
 
   // Даем время на загрузку корзины и настроек доставки
   useEffect(() => {
