@@ -10,24 +10,40 @@ const HeroSlider = () => {
     {
       id: 1,
       title: "ШИРОКИЙ АССОРТИМЕНТ ОРИГИНАЛЬНЫХ БРЕНДОВ",
-      imageDesktop: "/banners/banner1-1.png", 
-      imageMobile: "/banners/Banner1-2.png",  
+      imageDesktop: "/banners/Banner1-1.jpg", 
+      imageMobile: "/banners/Banner1-2.jpg",  
       link: "/catalog", 
       alt: "Широкий ассортимент оригинальных брендов"
     },
     {
       id: 2,
-      title: "ШИРОКИЙ АССОРТИМЕНТ ОРИГИНАЛЬНЫХ БРЕНДОВ",
-      imageDesktop: "/banners/Banner2-1.png", 
-      imageMobile: "/banners/Banner2-2.png",  
+      title: "ДОЛЯМИ",
+      imageDesktop: "/banners/Banner2-1.jpg", 
+      imageMobile: "/banners/Banner2-2.webp",  
       link: "/catalog/sneakers", 
       alt: "Ассортимент кроссовок"
     },
     {
       id: 3,
-      title: "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ",
-      imageDesktop: "/banners/Banner3-1.webp", 
+      title: "100500",
+      imageDesktop: "/banners/Banner3-1.jpg", 
       imageMobile: "/banners/Banner3-2.webp",  
+      link: "https://t.me/TIGRSHOPsupport", 
+      alt: "Индивидуальный заказ"
+    },
+    {
+      id: 4,
+      title: "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ",
+      imageDesktop: "/banners/Banner4-1.jpg", 
+      imageMobile: "/banners/Banner4-2.webp",  
+      link: "https://t.me/TIGRSHOPsupport", 
+      alt: "Индивидуальный заказ"
+    },
+    {
+      id: 5,
+      title: "ОПТОВЫЙ ЗАКАЗ",
+      imageDesktop: "/banners/Banner5-1.jpg", 
+      imageMobile: "/banners/Banner5  -2.webp",  
       link: "https://t.me/TIGRSHOPsupport", 
       alt: "Индивидуальный заказ"
     }

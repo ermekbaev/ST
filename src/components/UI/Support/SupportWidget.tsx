@@ -128,50 +128,49 @@ const SupportWidget: React.FC<SupportWidgetProps> = ({ forceVisible = false, onT
             <>
               <button
                 onClick={() => handleContactClick('telegram')}
-                className="absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 w-12 h-12"
+                className="absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 shadow-lg"
                 title="Telegram"
                 style={{ 
-                  backgroundColor: '#0088cc',
-                  transform: 'translateY(-156px)',
+                  transform: 'translateY(-170px)',
                   transitionDelay: '0ms',
                   transitionDuration: '300ms',
                   transitionTimingFunction: 'ease-out',
-                  transitionProperty: 'all'
+                  transitionProperty: 'all',
+                  border: 'none',
+                  outline: 'none'
                 }}
               >
-                <img src="/supportIcons/tg_white.svg" alt="Telegram" className="w-7 h-7" />
+                <img src="/supportIcons/Telegram.svg" alt="Telegram" className="w-13 h-13" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }} />
               </button>
 
               <button
                 onClick={() => handleContactClick('whatsapp')}
-                className="absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 w-12 h-12"
+                className="absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 shadow-lg"
                 title="WhatsApp"
                 style={{ 
-                  backgroundColor: '#25D366',
-                  transform: 'translateY(-104px)',
+                  transform: 'translateY(-112px)',
                   transitionDelay: '100ms',
                   transitionDuration: '300ms',
                   transitionTimingFunction: 'ease-out',
-                  transitionProperty: 'all'
+                  transitionProperty: 'all',
                 }}
               >
-                <img src="/supportIcons/wa_white.svg" alt="WhatsApp" className="w-7 h-7" />
+                <img src="/supportIcons/WhatsApp.svg" alt="WhatsApp" className="w-13 h-13" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }} />
               </button>
 
               <button
                 onClick={() => handleContactClick('email')}
-                className="absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 w-12 h-12"
+                className="absolute bottom-0 right-0 rounded-full flex items-center justify-center hover:opacity-80 hover:scale-105 shadow-lg"
                 title="Email"
                 style={{ 
-                  backgroundColor: '#EA4335',
-                  transform: 'translateY(-52px)',
+                  transform: 'translateY(-56px)',
                   transitionDelay: '200ms',
                   transitionDuration: '300ms',
                   transitionTimingFunction: 'ease-out',
-                  transitionProperty: 'all'
+                  transitionProperty: 'all',
                 }}
               >
-                <img src="/supportIcons/email_white.svg" alt="Email" className="w-7 h-7" />
+                <img src="/supportIcons/Email.svg" alt="Email" className="w-13 h-13" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }} />
               </button>
             </>
           )}
@@ -179,26 +178,29 @@ const SupportWidget: React.FC<SupportWidgetProps> = ({ forceVisible = false, onT
           {/* Основная кнопка поддержки */}
           <button
             onClick={handleMainButtonClick}
-            className={`bg-[#595047] rounded-full flex items-center justify-center hover:opacity-90 hover:scale-105 ${
+            className={` rounded-full flex items-center justify-center hover:opacity-90 hover:scale-105 shadow-lg ${
               isExpanded ? 'w-12 h-12' : 'w-16 h-16'
             }`}
             title="Связаться с нами"
             style={{ 
               transitionDuration: '500ms',
               transitionTimingFunction: 'ease-out',
-              transitionProperty: 'all'
+              transitionProperty: 'all',
+              border: 'none',
+              outline: 'none'
             }}
           >
             <img 
               src="/supportIcons/Support.svg" 
               alt="Support" 
               className={`${
-                isExpanded ? 'w-10 h-10' : 'w-14 h-14'
+                isExpanded ? 'w-13 h-13' : 'w-14 h-14'
               }`}
               style={{
                 transitionDuration: '300ms',
                 transitionTimingFunction: 'ease-out',
-                transitionProperty: 'all'
+                transitionProperty: 'all',
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
               }}
             /> 
           </button>

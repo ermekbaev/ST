@@ -39,13 +39,6 @@ export const useCheckout = () => {
     const selectedDelivery = deliveryOptions.find(option => option.id === selectedDeliveryMethod);
     let deliveryPrice = selectedDelivery?.price || 0;
     
-    console.log('🚚 Расчет доставки:', {
-      selectedDeliveryMethod,
-      selectedDelivery,
-      deliveryPrice,
-      deliveryOptions: deliveryOptions.length
-    });
-    
     // Бесплатная доставка при достижении минимальной суммы
     const originalDeliveryPrice = deliveryPrice;
     if (subtotal >= generalSettings.minOrderFreeDelivery && deliveryPrice > 0) {
@@ -129,12 +122,6 @@ export const useCheckout = () => {
     setAppliedPromoCode(null);
     console.log('🗑️ Промокод удален');
   };
-
-  // 🔧 ДОБАВЛЯЕМ useEffect для отладки изменений способа доставки
-  useEffect(() => {
-    console.log('🔄 Способ доставки изменен:', selectedDeliveryMethod);
-    console.log('📦 Доступные способы доставки:', deliveryOptions);
-  }, [selectedDeliveryMethod, deliveryOptions]);
 
   // Отправка заказа
   const submitOrder = async (data: CheckoutFormData) => {

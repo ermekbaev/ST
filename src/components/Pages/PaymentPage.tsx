@@ -56,7 +56,7 @@ const PaymentPage: React.FC = () => {
                   </p>
                   
                   <div className="ml-8">
-                    <ul className="space-y-3 text-[30px] leading-[45px]">
+                    <ul className="space-y-3 text-[20px] leading-[45px]">
                       <li>• Visa, Mastercard, МИР.</li>
                       <li>• СБП и др.</li>
                     </ul>

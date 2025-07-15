@@ -242,16 +242,19 @@ h6 {
 }
 
 .product-price--large {
+  font-family: var(--font-random-grotesque);
   font-size: 30px;
   line-height: 41px;
 }
 
 .product-price--medium {
+  font-family: var(--font-random-grotesque);
   font-size: 25px;
   line-height: 34px;
 }
 
 .product-price--small {
+  font-family: var(--font-random-grotesque);
   font-size: 15px;
   line-height: 20px;
 }
@@ -3183,4 +3186,362 @@ select {
 .checkout-quantity-number--mobile {
   font-size: 15px;
   line-height: 18px;
+}
+
+/* ============================================
+   КОМПОНЕНТЫ - СТРАНИЦА УСПЕШНОГО ЗАКАЗА (ИСПРАВЛЕНО)
+   ============================================ */
+
+/* Основной контейнер */
+.order-success-hero-container {
+  position: relative;
+  width: 100%;
+  height: 645px;
+  background: radial-gradient(
+    60.39% 60.39% at 50% 50%,
+    #595047 0%,
+    #d9cdbf 100%
+  );
+  overflow: hidden;
+}
+
+/* Мобильная версия */
+@media (max-width: 1023px) {
+  .order-success-hero-container {
+    height: 563px;
+    background: radial-gradient(
+      72.9% 50.73% at 50% 50%,
+      #595047 0%,
+      #d9cdbf 100%
+    );
+  }
+}
+
+/* Декоративные линии по бокам (десктоп) */
+.order-success-hero-lines {
+  position: absolute;
+  top: 35%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 2px;
+  z-index: 1;
+}
+
+@media (max-width: 1023px) {
+  .order-success-hero-lines {
+    display: none;
+  }
+}
+
+.order-success-hero-line-left {
+  position: absolute;
+  left: 20px;
+  width: 455px;
+  height: 2px;
+  background: #ffffff;
+}
+
+.order-success-hero-line-right {
+  position: absolute;
+  right: 20px;
+  width: 455px;
+  height: 2px;
+  background: #ffffff;
+}
+
+/* Вертикальные линии (мобиль) */
+.order-success-hero-vertical-lines {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .order-success-hero-vertical-lines {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+  }
+}
+
+.order-success-hero-vertical-line-top {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 216px;
+  background: #ffffff;
+}
+
+.order-success-hero-vertical-line-bottom {
+  position: absolute;
+  bottom: 143px;
+  width: 1px;
+  height: 217px;
+  background: #ffffff;
+}
+
+/* Основной контент с заголовком - перемещен в левый верх */
+.order-success-hero-content {
+  position: absolute;
+  left: 543px;
+  top: 200px;
+  text-align: left;
+  z-index: 2;
+}
+
+@media (max-width: 1023px) {
+  .order-success-hero-content {
+    left: 50%;
+    top: 303px;
+    transform: translateX(-50%);
+    width: 350px;
+    text-align: center;
+  }
+}
+
+/* Заголовок */
+.order-success-title {
+  font-family: "Random Grotesque Spacious Black", var(--font-random-grotesque),
+    Arial, sans-serif;
+  font-weight: 700;
+  font-size: 50px;
+  line-height: 59px;
+  color: #ffffff;
+  width: 850px;
+  max-width: calc(100vw - 586px);
+  margin: 0 0 7px 0;
+}
+
+@media (max-width: 1023px) {
+  .order-success-title {
+    font-family: var(--font-druk-wide);
+    font-size: 30px;
+    line-height: 35px;
+    width: 300px;
+    height: 86px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 0 0 12px 0;
+    max-width: 300px;
+  }
+}
+
+/* Подзаголовок */
+.order-success-subtitle {
+  font-family: var(--font-random-grotesque);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #d9cdbf;
+  margin: 0;
+  width: 441px;
+  max-width: calc(100vw - 586px);
+}
+
+@media (max-width: 1023px) {
+  .order-success-subtitle {
+    font-size: 10px;
+    line-height: 10px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 300px;
+    max-width: 300px;
+  }
+}
+
+/* Левая секция - номер заказа и кнопки - понижена */
+.order-success-left-section {
+  position: absolute;
+  left: 543px;
+  top: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  z-index: 2;
+}
+
+@media (max-width: 1023px) {
+  .order-success-left-section {
+    left: 10px;
+    top: 446px;
+    gap: 8px;
+  }
+}
+
+/* Текст номера заказа */
+.order-success-order-text {
+  font-family: var(--font-random-grotesque);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #ffffff;
+  margin: 0;
+  width: 262px;
+}
+
+@media (max-width: 1023px) {
+  .order-success-order-text {
+    font-size: 10px;
+    line-height: 14px;
+    width: 131px;
+  }
+}
+
+/* Кнопка отслеживания */
+.order-success-track-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-random-grotesque);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #ffffff;
+  text-decoration: underline;
+  transition: opacity 0.2s ease;
+}
+
+.order-success-track-btn:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 1023px) {
+  .order-success-track-btn {
+    width: 140px;
+    height: 25px;
+    background: #595047;
+    font-size: 10px;
+    line-height: 14px;
+    justify-content: center;
+    text-decoration: none;
+    padding: 0 12px;
+  }
+}
+
+/* Стрелка для отслеживания */
+.order-success-track-arrow {
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 1023px) {
+  .order-success-track-arrow {
+    display: none;
+  }
+}
+
+/* Главная кнопка */
+.order-success-main-btn {
+  background: #0b0b0d;
+  border: none;
+  width: 255px;
+  height: 50px;
+  cursor: pointer;
+  font-family: var(--font-random-grotesque);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #ffffff;
+  transition: background-color 0.2s ease;
+  margin-top: 8px;
+}
+
+.order-success-main-btn:hover {
+  background: #2a2a2a;
+}
+
+@media (max-width: 1023px) {
+  .order-success-main-btn {
+    width: 140px;
+    height: 25px;
+    font-size: 10px;
+    line-height: 14px;
+    margin-top: 8px;
+  }
+}
+
+/* Правая секция - поддержка - понижена */
+.order-success-right-section {
+  position: absolute;
+  right: 543px;
+  top: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  z-index: 2;
+}
+
+@media (max-width: 1023px) {
+  .order-success-right-section {
+    right: 10px;
+    top: 446px;
+    gap: 12px;
+  }
+}
+
+/* Текст поддержки */
+.order-success-support-text {
+  font-family: var(--font-random-grotesque);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 27px;
+  color: #d9cdbf;
+  margin: 0;
+  width: 342px;
+}
+
+@media (max-width: 1023px) {
+  .order-success-support-text {
+    font-size: 10px;
+    line-height: 14px;
+    color: #ffffff;
+    width: 140px;
+  }
+}
+
+/* Контейнер иконок */
+.order-success-contact-icons {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+@media (max-width: 1023px) {
+  .order-success-contact-icons {
+    gap: 20px;
+  }
+}
+
+/* Кнопки контактов */
+.order-success-contact-btn {
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+@media (max-width: 1023px) {
+  .order-success-contact-btn {
+    width: 24px;
+    height: 24px;
+  }
 }

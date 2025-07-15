@@ -84,7 +84,7 @@ const FAQPage: React.FC = () => {
     {
       id: 'order-origin',
       question: 'Откуда идёт Мой заказ?',
-      answer: 'Мы покупаем привозим каждую вещи индивидуально, под каждого клиента. Вещи выкупаем ваши вещи на различных зарубежных площадках, которые реализуют оригинальную продукцию. Все вещи идут сначала до Владивостока, затем отправляются логистическими компаниями к вам. Цена на сайте указана до Владивостока. За цену отправки по стране, продавец ответственности не несёт'
+      answer: 'Мы покупаем и привозим каждую вещь индивидуально, под каждого клиента. Вещи выкупаем на различных зарубежных площадках, которые реализуют оригинальную продукцию. Все вещи идут сначала до Владивостока, затем отправляются логистическими компаниями к вам. Цена на сайте указана до Владивостока. За цену отправки по стране продавец ответственности не несёт.'
     }
   ];
 
@@ -154,7 +154,7 @@ const FAQPage: React.FC = () => {
             </h1>
             
             {/* Линия справа от заголовка - только на десктопе */}
-            <div className="faq-page-line "></div>
+            <div className="faq-page-line"></div>
           </div>
         </div>
 
@@ -164,13 +164,9 @@ const FAQPage: React.FC = () => {
             
             {/* DESKTOP ВЕРСИЯ */}
             <div className="hidden lg:block">
-              
-              {/* Секция "ТОВАР" */}
+              {/* Заголовок ТОВАР */}
               <div className="mb-8">
-                <h2 className="faq-section-title">
-                  ТОВАР
-                </h2>
-                
+                <h2 className="faq-section-title">ТОВАР</h2>
                 <div className="space-y-0">
                   {productQuestions.map((item) => (
                     <FAQAccordion key={item.id} item={item} />
@@ -178,33 +174,22 @@ const FAQPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Секция "ДОСТАВКА И ВОЗВРАТ" */}
+              {/* Заголовок ДОСТАВКА И ВОЗВРАТ */}
               <div className="mb-8">
-                <h2 className="faq-section-title">
-                  ДОСТАВКА И ВОЗВРАТ
-                </h2>
-                
+                <h2 className="faq-section-title">ДОСТАВКА И ВОЗВРАТ</h2>
                 <div className="space-y-0">
                   {deliveryQuestions.map((item) => (
                     <FAQAccordion key={item.id} item={item} />
                   ))}
-                  
-                  {/* Финальная линия */}
-                  <div className="faq-divider"></div>
                 </div>
               </div>
-              
             </div>
 
             {/* MOBILE ВЕРСИЯ */}
             <div className="block lg:hidden">
-              
-              {/* Секция "ТОВАР" */}
+              {/* Заголовок ТОВАР */}
               <div className="mb-6">
-                <h2 className="faq-section-title-mobile">
-                  ТОВАР
-                </h2>
-                
+                <h2 className="faq-section-title-mobile">ТОВАР</h2>
                 <div className="space-y-0">
                   {productQuestions.map((item) => (
                     <FAQAccordion key={item.id} item={item} />
@@ -212,27 +197,19 @@ const FAQPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Секция "ДОСТАВКА И ВОЗВРАТ" */}
+              {/* Заголовок ДОСТАВКА И ВОЗВРАТ */}
               <div className="mb-6">
-                <h2 className="faq-section-title-mobile">
-                  ДОСТАВКА И ВОЗВРАТ
-                </h2>
-                
+                <h2 className="faq-section-title-mobile">ДОСТАВКА И ВОЗВРАТ</h2>
                 <div className="space-y-0">
                   {deliveryQuestions.map((item) => (
                     <FAQAccordion key={item.id} item={item} />
                   ))}
-                  
-                  {/* Финальная линия */}
-                  <div className="faq-divider"></div>
                 </div>
               </div>
-              
             </div>
-
+            
           </div>
         </div>
-
       </div>
     </div>
   );

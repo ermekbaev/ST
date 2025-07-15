@@ -25,7 +25,7 @@ const ReturnsPage = () => {
             <div className="returns-section-content text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px]">
               <p className="mb-4 lg:mb-6">
                 *Если вы считаете, что вам пришел товар с браком или товар ненадлежащего качества, 
-                свяжитесь с нами по почте <a href="mailto:tigran200615@gmail.com" className="underline hover:text-gray-600 transition-colors">tigran200615@gmail.com</a>
+                свяжитесь с нами по почте <a href="mailto:contact@tigrshop.ru" className="underline hover:text-gray-600 transition-colors">tigran200615@gmail.com</a>
               </p>
               <p className="mb-4 lg:mb-6">
                 Приложите к обращению фото и подробное описание вашей проблемы, наша команда свяжется 

@@ -32,16 +32,16 @@ const cleanString = (str: string): string => {
 const isValidProductRow = (values: string[]): boolean => {
   if (values.length < 7) return false;
   
-  const article = cleanString(values[0]);
-  const brand = cleanString(values[1]);
-  const name = cleanString(values[2]);
-  const priceString = cleanString(values[6]);
+  const article: string = cleanString(values[0]);
+  const brand: string = cleanString(values[1]);
+  const name: string = cleanString(values[2]);
+  const priceString: string = cleanString(values[6]);
   
-  const hasValidArticle = /^TS-\d+/.test(article);
-  const hasValidBrand = brand && !/^\d+$/.test(brand) && /[a-zA-Zа-яА-Я]/.test(brand);
-  const hasValidName = name && name.length > 3 && /[a-zA-Zа-яА-Я]/.test(name);
-  const hasValidPrice = !isNaN(parseFloat(priceString.replace(/[^\d.]/g, ''))) && parseFloat(priceString.replace(/[^\d.]/g, '')) > 0;
-  //@ts-ignore
+  const hasValidArticle: boolean = Boolean(article && /^TS-\d+/.test(article));
+  const hasValidBrand: boolean = Boolean(brand && brand.length > 0 && !/^\d+$/.test(brand) && /[a-zA-Zа-яА-Я]/.test(brand));
+  const hasValidName: boolean = Boolean(name && name.length > 3 && /[a-zA-Zа-яА-Я]/.test(name));
+  const hasValidPrice: boolean = Boolean(priceString && !isNaN(parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.'))) && parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.')) > 0);
+  
   return hasValidArticle && hasValidBrand && hasValidName && hasValidPrice;
 };
 
@@ -49,18 +49,58 @@ const isValidProductRow = (values: string[]): boolean => {
 const parsePhotoField = (photoField: string): string => {
   if (!photoField || !photoField.trim()) return '';
   
-  const urlRegex = /https?:\/\/[^\s,;"'\n\r\t]+/;
-  const match = photoField.match(urlRegex);
-  if (match) {
-    return match[0];
+  console.log('🔍 Парсинг фото в каталоге:', photoField.substring(0, 100));
+  
+  let photos: string[] = [];
+  
+  // ПРИОРИТЕТ: Сначала пробуем точку с запятой как разделитель
+  if (photoField.includes(';')) {
+    photos = photoField.split(';');
+    console.log('Разделение по ";" найдено:', photos.length, 'частей');
+  }
+  // Затем пробуем переносы строк
+  else if (photoField.includes('\n') || photoField.includes('\r')) {
+    photos = photoField.split(/[\r\n]+/);
+    console.log('Разделение по переносам строк:', photos.length, 'частей');
+  }
+  // Потом запятые
+  else if (photoField.includes(',')) {
+    photos = photoField.split(',');
+    console.log('Разделение по запятым:', photos.length, 'частей');
+  }
+  // Пробуем regex для поиска всех HTTP ссылок
+  else {
+    const urlRegex: RegExp = /https?:\/\/[^\s,;"'\n\r\t]+/g;
+    const foundUrls: RegExpMatchArray | null = photoField.match(urlRegex);
+    if (foundUrls && foundUrls.length > 0) {
+      photos = foundUrls;
+      console.log('Найдено через regex:', photos.length, 'URL');
+    } else {
+      // Возвращаем всю строку как один URL
+      photos = [photoField];
+      console.log('Используем всю строку как один URL');
+    }
   }
   
-  return '';
+  console.log('Сырые части:', photos);
+  
+  // Очищаем результат и берем первое изображение
+  const cleanPhotos: string[] = photos
+    .map((url: string) => url.trim().replace(/^["']+|["']+$/g, '')) // Убираем кавычки и пробелы
+    .filter((url: string) => url.length > 0) // Убираем пустые строки
+    .filter((url: string) => url.startsWith('http') || url.includes('cdn') || url.includes('imgur') || url.includes('image')); // Только URL
+  
+  const firstPhoto: string = cleanPhotos.length > 0 ? cleanPhotos[0] : '';
+  console.log('✅ Первое фото для каталога:', firstPhoto);
+  
+  return firstPhoto;
 };
 
 export async function GET(): Promise<NextResponse<ApiResponse>> {
   try {
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+    console.log('🚀 Начало обработки API /products');
+    
+    const csvUrl: string = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
     
     const response = await fetch(csvUrl, {
       cache: 'no-store',
@@ -85,11 +125,11 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
     // Функция для парсинга CSV строки
     const parseCSVLine = (line: string): string[] => {
       const result: string[] = [];
-      let current = '';
-      let inQuotes = false;
+      let current: string = '';
+      let inQuotes: boolean = false;
       
       for (let i = 0; i < line.length; i++) {
-        const char = line[i];
+        const char: string = line[i];
         
         if (char === '"') {
           inQuotes = !inQuotes;
@@ -105,19 +145,19 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
     };
     
     console.log('=== АНАЛИЗ СТРУКТУРЫ CSV ===');
-    console.log(`Всего строк: ${lines.length}`);
+    console.log(`📊 Всего строк в файле: ${lines.length}`);
     
-    // Анализируем первые 10 строк
+    // Анализируем первые 10 строк для отладки
     console.log('=== ПЕРВЫЕ 10 СТРОК ===');
     for (let i = 0; i < Math.min(10, lines.length); i++) {
-      const values = parseCSVLine(lines[i]);
-      console.log(`Строка ${i}: [${values.slice(0, 8).map(v => `"${v.substring(0, 20)}"`).join(', ')}]`);
+      const values: string[] = parseCSVLine(lines[i]);
+      console.log(`Строка ${i + 1}: [${values.slice(0, 8).map((v: string) => `"${v.substring(0, 20)}"`).join(', ')}]`);
     }
     
     // Ищем строки, которые выглядят как корректные товары
     console.log('=== ПОИСК КОРРЕКТНЫХ ТОВАРОВ ===');
-    let validRows = 0;
-    let invalidRows = 0;
+    let validRows: number = 0;
+    let invalidRows: number = 0;
     const products: Product[] = [];
     
     for (let i = 0; i < lines.length; i++) {
@@ -130,16 +170,17 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
         if (isValidProductRow(values)) {
           validRows++;
           
-          const article = cleanString(values[0]);
-          const brand = cleanString(values[1]);
-          const name = cleanString(values[2]);
-          const size = cleanString(values[3]);
-          const category = cleanString(values[4]);
-          const gender = cleanString(values[5]);
-          const priceString = cleanString(values[6]);
-          const photoField = cleanString(values[7] || '');
+          const article: string = cleanString(values[0]);
+          const brand: string = cleanString(values[1]);
+          const name: string = cleanString(values[2]);
+          const size: string = cleanString(values[3]);
+          const category: string = cleanString(values[4]);
+          const gender: string = cleanString(values[5]);
+          const priceString: string = cleanString(values[6]);
+          const photoField: string = cleanString(values[7] || '');
           
-          const price = parseFloat(priceString.replace(/[^\d.]/g, ''));
+          // Обработка цен с запятыми (российский формат)
+          const price: number = parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.'));
           
           const product: Product = {
             id: article,
@@ -157,10 +198,10 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
           
           // Логируем первые 3 корректных товара
           if (validRows <= 3) {
-            console.log(`✅ Корректный товар ${validRows} (строка ${i}):`, {
+            console.log(`✅ Корректный товар ${validRows} (строка ${i + 1}):`, {
               article: product.article,
               brand: product.brand,
-              name: product.name.substring(0, 30),
+              name: product.name.substring(0, 30) + (product.name.length > 30 ? '...' : ''),
               size: product.size,
               price: product.price
             });
@@ -168,29 +209,38 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
         } else {
           invalidRows++;
           
-          // Логируем первые 3 некорректные строки
+          // Логируем первые 3 некорректные строки с подробным анализом
           if (invalidRows <= 3) {
-            console.log(`❌ Некорректная строка ${i}:`, {
-              first3Cols: values.slice(0, 3),
-              reasons: {
-                hasTS: /^TS-\d+/.test(cleanString(values[0] || '')),
-                validBrand: values[1] && !/^\d+$/.test(cleanString(values[1])),
-                validName: values[2] && values[2].length > 3,
-                validPrice: !isNaN(parseFloat((values[6] || '').replace(/[^\d.]/g, '')))
+            const article: string = cleanString(values[0] || '');
+            const brand: string = cleanString(values[1] || '');
+            const name: string = cleanString(values[2] || '');
+            const priceString: string = cleanString(values[6] || '');
+            
+            console.log(`❌ Некорректная строка ${i + 1}:`, {
+              article: article,
+              brand: brand,
+              name: name.substring(0, 20) + (name.length > 20 ? '...' : ''),
+              price: priceString,
+              validationResults: {
+                hasValidArticle: Boolean(article && /^TS-\d+/.test(article)),
+                hasValidBrand: Boolean(brand && brand.length > 0 && !/^\d+$/.test(brand) && /[a-zA-Zа-яА-Я]/.test(brand)),
+                hasValidName: Boolean(name && name.length > 3 && /[a-zA-Zа-яА-Я]/.test(name)),
+                hasValidPrice: Boolean(priceString && !isNaN(parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.'))) && parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.')) > 0)
               }
             });
           }
         }
-      } catch (parseError) {
-        console.warn(`Ошибка парсинга строки ${i}:`, parseError);
+      } catch (parseError: unknown) {
+        console.warn(`⚠️ Ошибка парсинга строки ${i + 1}:`, parseError);
+        invalidRows++;
         continue;
       }
     }
     
-    console.log(`📊 СТАТИСТИКА:`);
+    console.log(`📊 ФИНАЛЬНАЯ СТАТИСТИКА:`);
     console.log(`   ✅ Корректных строк: ${validRows}`);
     console.log(`   ❌ Некорректных строк: ${invalidRows}`);
-    console.log(`   📦 Итого товаров: ${products.length}`);
+    console.log(`   📦 Итого товаров в каталоге: ${products.length}`);
     
     return NextResponse.json<ApiResponse>({
       success: true,
@@ -199,8 +249,8 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
     });
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    console.error('Ошибка API /products:', errorMessage);
+    const errorMessage: string = error instanceof Error ? error.message : 'Неизвестная ошибка сервера';
+    console.error('💥 Критическая ошибка API /products:', errorMessage);
     
     return NextResponse.json<ApiResponse>({
       success: false,

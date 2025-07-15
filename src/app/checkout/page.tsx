@@ -1,8 +1,8 @@
-// src/app/checkout/page.tsx (или где у вас страница checkout)
+// src/app/checkout/page.tsx
 'use client';
 
 import React from 'react';
-import { useCheckout } from '@/hooks/useCheckout';
+import { useCheckout } from '@/hooks/useCheckout'; // Наш обновленный хук
 import { useCart } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -12,7 +12,7 @@ import OrderSummary from '@/components/Checkout/OrderSummary';
 const CheckoutPage: React.FC = () => {
   const { items } = useCart();
   const router = useRouter();
-  const checkout = useCheckout(); // ✅ Теперь возвращает все данные из API
+  const checkout = useCheckout(); // Теперь включает логику заказов
   const [isLoading, setIsLoading] = useState(true);
 
   // Даем время на загрузку корзины и настроек доставки
@@ -34,7 +34,7 @@ const CheckoutPage: React.FC = () => {
   // Показываем лоадер пока идет загрузка корзины или настроек
   if (isLoading || checkout.loading) {
     return (
-      <div className="min-h-screen  lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
+      <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl">
             {checkout.loading ? 'Загрузка настроек доставки...' : 'Загрузка...'}
@@ -47,7 +47,7 @@ const CheckoutPage: React.FC = () => {
   // Если корзина пуста после загрузки
   if (items.length === 0) {
     return (
-      <div className="min-h-screen  lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
+      <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Корзина пуста</h2>
           <p className="text-gray-600 mb-6">Добавьте товары в корзину для оформления заказа</p>
@@ -63,7 +63,7 @@ const CheckoutPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen  lg:bg-[#E5DDD4] bg-white">
+    <div className="min-h-screen lg:bg-[#E5DDD4] bg-white">
       {/* Основной контент */}
       <main className="min-h-screen">
         {/* Desktop Layout - 2 колонки */}
