@@ -46,13 +46,6 @@ const MobileFooterContent = () => {
         { label: 'wa: +79962814667', href: 'https://wa.me/79962814667' }
       ]
     },
-    {
-      title: 'ДЕТАЛИ',
-      key: 'details',
-      items: [
-        { label: 'Подвал - 320 рх.', href: '#' }
-      ]
-    }
   ];
 
   return (

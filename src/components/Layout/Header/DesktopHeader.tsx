@@ -134,22 +134,25 @@ const DesktopHeader: React.FC = () => {
     'информация'
   ];
 
+  // Обработчики для мега-меню
   const handleMenuEnter = useCallback((item: string): void => {
-    if (megaMenuData[item as MenuKey] && !isSearchOpen) {
-      setActiveMenu(item);
-    }
-  }, [isSearchOpen]);
+    if (item === 'sale') return;
+    setActiveMenu(item);
+  }, []);
 
   const handleMenuLeave = useCallback((): void => {
-    if (!isSearchOpen) {
+    setTimeout(() => {
       setActiveMenu(null);
-    }
-  }, [isSearchOpen]);
+    }, 100);
+  }, []);
 
+  // Обработчики для поиска
   const handleSearchToggle = useCallback((): void => {
-    setIsSearchOpen(!isSearchOpen);
-    setActiveMenu(null); 
-    if (!isSearchOpen) {
+    setIsSearchOpen(prev => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (isSearchOpen) {
       setTimeout(() => {
         const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
         if (searchInput) {
@@ -178,40 +181,63 @@ const DesktopHeader: React.FC = () => {
     toggleCart();
   }, [toggleCart]);
 
-  // 🆕 Обработчик клика по элементам навигации
+  // Обработчик клика по элементам навигации
   const handleNavClick = useCallback((item: string, e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Если это sale - переходим в каталог
     if (item === 'sale') {
       e.preventDefault();
       window.location.href = '/catalog';
       return;
     }
     
-    // Для информации оставляем стандартное поведение (мега-меню)
     if (item === 'информация') {
       return;
     }
     
-    // Для остальных элементов блокируем переход (пока не настроены роуты)
     e.preventDefault();
     console.log(`Клик по навигации: ${item}`);
   }, []);
 
+  // 🔧 ИСПРАВЛЕННАЯ функция позиционирования мега-меню
   const getMenuPosition = useCallback((): React.CSSProperties => {
     if (!activeMenu) return {};
     
     const activeIndex = menuItems.indexOf(activeMenu);
     
-    // Уменьшаем сдвиг для "информация" (последний пункт)
-    let centerOffset;
-    if (activeIndex === menuItems.length - 1) { // информация
-      centerOffset = (activeIndex - 3.5) * 120 + 50; // уменьшили сдвиг до +50px
-    } else {
-      centerOffset = (activeIndex - 3.5) * 120 + 200; // обычный сдвиг для остальных
-    }
+    // Адаптивные значения сдвига в зависимости от размера экрана
+    const getOffset = () => {
+      const screenWidth = window.innerWidth;
+      
+      if (screenWidth >= 1400) {
+        // Большие экраны - используем текущую логику
+        if (activeIndex === menuItems.length - 1) { // информация
+          return (activeIndex - 3.5) * 120 + 50;
+        } else {
+          return (activeIndex - 3.5) * 120 + 200;
+        }
+      } else if (screenWidth >= 1200) {
+        // Средние экраны - уменьшаем сдвиги
+        if (activeIndex === menuItems.length - 1) { // информация
+          return (activeIndex - 3.5) * 100 + 30;
+        } else {
+          return (activeIndex - 3.5) * 100 + 150;
+        }
+      } else {
+        // Маленькие экраны - минимальные сдвиги
+        if (activeIndex === menuItems.length - 1) { // информация
+          return (activeIndex - 3.5) * 80 + 10;
+        } else {
+          return (activeIndex - 3.5) * 80 + 100;
+        }
+      }
+    };
     
     return {
-      transform: `translateX(${centerOffset}px)`
+      transform: `translateX(${getOffset()}px)`,
+      // 🆕 Добавляем ограничения, чтобы меню не вылезало за края
+      maxWidth: 'calc(100vw - 40px)',
+      left: '50%',
+      marginLeft: '-400px', // половина от ширины 800px
+      marginRight: '20px'
     };
   }, [activeMenu, menuItems]);
 
@@ -224,7 +250,7 @@ const DesktopHeader: React.FC = () => {
 
     return (
       <div 
-        className="absolute top-full left-0 w-full bg-brand-beige z-50 animate-slide-down"
+        className="absolute top-full left-0 w-full bg-brand-beige z-50 animate-slide-down overflow-hidden"
         onMouseEnter={() => setActiveMenu(activeMenu)}
         onMouseLeave={handleMenuLeave}
         style={{
@@ -232,23 +258,27 @@ const DesktopHeader: React.FC = () => {
         }}
       >
         <div className="w-full py-12">
+          {/* 🔧 ИСПРАВЛЕННЫЙ контейнер мега-меню */}
           <div 
-            className="w-[800px] mx-auto px-16"
-            style={getMenuPosition()}
+            className="relative mx-auto px-4 lg:px-8 xl:px-16"
+            style={{
+              width: 'min(800px, calc(100vw - 120px))', // Адаптивная ширина
+              ...getMenuPosition()
+            }}
           >
-            <div className="mb-16">
-              <div className="flex items-start">
-                <h3 className="mega-menu-title">
+            <div className="mb-8 lg:mb-16">
+              <div className="flex items-start flex-col lg:flex-row gap-4 lg:gap-0">
+                <h3 className="mega-menu-title text-2xl lg:text-[36px] leading-none min-w-0 lg:min-w-[200px] flex-shrink-0">
                   {menuData.title}
                 </h3>
-                <div className="flex-1">
-                  <div className="w-full h-0.5 bg-brand-dark mb-8 mt-6"></div>
-                  <div className="grid grid-cols-2 gap-x-16 gap-y-3">
+                <div className="flex-1 w-full">
+                  <div className="w-full h-0.5 bg-brand-dark mb-4 lg:mb-8 mt-0 lg:mt-6"></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 lg:gap-x-16 gap-y-2 lg:gap-y-3">
                     {menuData.categories.map((category: string, index: number) => (
                       <a
                         key={index}
                         href={menuData.links?.[category] || '#'}
-                        className="mega-menu-link"
+                        className="mega-menu-link text-sm lg:text-base"
                       >
                         {category}
                       </a>
@@ -261,18 +291,18 @@ const DesktopHeader: React.FC = () => {
             {/* Показываем секцию КАТЕГОРИЯ только если это НЕ информация */}
             {activeMenu !== 'информация' && (
               <div>
-                <div className="flex items-start">
-                  <h3 className="mega-menu-title">
+                <div className="flex items-start flex-col lg:flex-row gap-4 lg:gap-0">
+                  <h3 className="mega-menu-title text-2xl lg:text-[36px] leading-none min-w-0 lg:min-w-[200px] flex-shrink-0">
                     КАТЕГОРИЯ
                   </h3>
-                  <div className="flex-1">
-                    <div className="w-full h-0.5 bg-brand-dark mb-8 mt-6"></div>
-                    <div className="grid grid-cols-2 gap-x-16 gap-y-3">
+                  <div className="flex-1 w-full">
+                    <div className="w-full h-0.5 bg-brand-dark mb-4 lg:mb-8 mt-0 lg:mt-6"></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 lg:gap-x-16 gap-y-2 lg:gap-y-3">
                       {menuData.subcategories.map((subcategory: string, index: number) => (
                         <a
                           key={index}
                           href="#"
-                          className="mega-menu-link"
+                          className="mega-menu-link text-sm lg:text-base"
                         >
                           {subcategory}
                         </a>
@@ -281,7 +311,7 @@ const DesktopHeader: React.FC = () => {
                         <a
                           key={`additional-${index}`}
                           href="#"
-                          className="mega-menu-link"
+                          className="mega-menu-link text-sm lg:text-base"
                         >
                           {item}
                         </a>
@@ -299,7 +329,8 @@ const DesktopHeader: React.FC = () => {
 
   return (
     <header className="w-full bg-white border-b border-gray-200 relative">
-      <div className="w-full h-[120px] flex items-center justify-between px-[139px]">
+      {/* 🔧 ИСПРАВЛЕННЫЙ контейнер хедера с адаптивными отступами */}
+      <div className="w-full h-[120px] flex items-center justify-between px-4 sm:px-8 lg:px-16 xl:px-[139px]">
         {/* Логотип */}
         <div className="flex-shrink-0">
           <a href="/">
@@ -312,40 +343,49 @@ const DesktopHeader: React.FC = () => {
           {/* Поисковая строка - анимация справа налево */}
           <div 
             className={`absolute top-1/2 right-0 transform -translate-y-1/2 h-10 flex items-center transition-all duration-500 ease-in-out z-20 ${
-              isSearchOpen ? 'w-full opacity-100' : 'w-0 opacity-0'
-            } overflow-hidden`}
+              isSearchOpen ? 'w-[300px] lg:w-[400px] opacity-100' : 'w-0 opacity-0'
+            }`}
+            style={{ 
+              overflow: 'hidden',
+              backgroundColor: 'white'
+            }}
           >
-            <form onSubmit={handleSearchSubmit} className="w-full">
+            <form onSubmit={handleSearchSubmit} className="w-full h-full flex items-center">
               <input
                 id="search-input"
                 type="text"
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="введите название товара"
-                className="w-full h-10 px-4 bg-brand-beige text-brand-dark placeholder-brand-gray focus:outline-none rounded-full text-sm border-0 brand-text-small"
-                style={{ border: 'none', outline: 'none' }}
+                placeholder="Поиск..."
+                className="w-full h-full px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm lg:text-base"
+                style={{
+                  fontFamily: 'Random Grotesque, Arial, sans-serif'
+                }}
               />
             </form>
           </div>
 
-          {/* 🆕 Обновленная навигация с обработчиком клика */}
-          <ul className={`flex items-center gap-8 text-sm text-brand-dark h-[27px] transition-opacity duration-300 ${
-            isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}>
+          {/* Основное меню навигации */}
+          <ul 
+            className={`flex items-center gap-6 lg:gap-8 h-[27px] transition-opacity duration-300 m-0 p-0 list-none ${
+              isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
             {menuItems.map((item: string, index: number) => (
-              <li 
-                key={index}
-                onMouseEnter={() => handleMenuEnter(item)}
-              >
-                <a 
+              <li key={index} className="relative">
+                <a
                   href={item === 'sale' ? '/catalog' : '#'}
-                  className={`nav-link ${
-                    activeMenu === item ? 'text-brand-gray' : ''
-                  }`}
+                  className="nav-link text-xs lg:text-sm xl:text-base"
+                  onMouseEnter={() => handleMenuEnter(item)}
+                  onMouseLeave={handleMenuLeave}
                   onClick={(e) => handleNavClick(item, e)}
+                  style={{
+                    fontFamily: 'Random Grotesque, Arial, sans-serif',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  {item}
+                  {item.toUpperCase()}
                 </a>
               </li>
             ))}
@@ -378,7 +418,7 @@ const DesktopHeader: React.FC = () => {
       </div>
 
       {/* Мега-меню */}
-      {!isSearchOpen && renderMegaMenu()}
+      {renderMegaMenu()}
     </header>
   );
 };

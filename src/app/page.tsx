@@ -321,46 +321,10 @@ export default function Home() {
         />
 
         {/* Секция "КОЛЛЕКЦИИ" */}
-        <section className="mb-16">
-          <div className="flex justify-between items-center mb-6 lg:mb-8">
-            <h2 className="section-title text-[22px] lg:text-[35px] text-black">
-              КОЛЛЕКЦИИ
-            </h2>
-            <a 
-              href="#" 
-              className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
-            >
-              {/* Десктопная версия */}
-              <span className="hidden lg:inline">
-                все модели
-              </span>
-              <img src="/utils/Vector3.svg" alt="" className="hidden lg:block w-3 h-3 lg:w-4 lg:h-4" />
-              {/* Мобильная версия - своя иконка стрелки */}
-              <img src="/utils/arrow_right.svg" alt="" className="lg:hidden w-4 h-4" />
-            </a>
-          </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {[
-              { name: 'НАЗВАНИЕ' },
-              { name: 'НАЗВАНИЕ' },
-              { name: 'НАЗВАНИЕ' },
-              { name: 'НАЗВАНИЕ' }
-            ].map((collection, index) => (
-              <div key={index} className="cursor-pointer group bg-white w-full hover-lift">
-                <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
-                  <span className="text-gray-400 text-sm font-product">png?</span>
-                </div>
-                <div className="w-full h-px bg-brand-dark"></div>
-                <div className="py-2">
-                  <div className="product-name text-brand-dark text-[18px] lg:text-[25px] leading-[22px] lg:leading-[31px]">
-                    {collection.name}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <ProductSection 
+          title="КОЛЛЕКЦИИ" 
+          categoryFilters={["коллекции", "коллекция", "фигурки", "интерьера", "предметы интерьера", "другое всё"]}
+        />
 
       </div>
 
