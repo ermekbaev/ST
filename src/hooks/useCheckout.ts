@@ -130,38 +130,42 @@ export const useCheckout = () => {
   }, [calculateTotals]);
 
   // ✅ ОТПРАВКА ЗАКАЗА
-  const submitOrder = useCallback(async (data: CheckoutFormData) => {
-    try {
-      setIsSubmitting(true);
-      
-      const finalCalculations = calculateTotals(data.deliveryMethod);
-      
-      const orderData = {
-        ...data,
-        items,
-        calculations: finalCalculations,
-        appliedPromoCode,
-        timestamp: new Date().toISOString()
-      };
-      
-      console.log('📦 Отправка заказа:', orderData);
-      
-      // Имитация отправки
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Очищаем корзину после успешного заказа
-      clearCart();
-      
-      // Перенаправляем на страницу успеха
-      window.location.href = '/order-success';
-      
-    } catch (error) {
-      console.error('❌ Ошибка при оформлении заказа:', error);
-      alert('Ошибка при оформлении заказа. Попробуйте еще раз.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [items, calculateTotals, appliedPromoCode, clearCart]);
+const submitOrder = useCallback(async (data: CheckoutFormData) => {
+  try {
+    setIsSubmitting(true);
+    
+    const finalCalculations = calculateTotals(data.deliveryMethod);
+    
+    // Генерируем номер заказа
+    const orderNumber = `TS-${Date.now().toString().slice(-6)}`;
+    
+    const orderData = {
+      ...data,
+      items,
+      calculations: finalCalculations,
+      appliedPromoCode,
+      orderNumber,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('📦 Отправка заказа:', orderData);
+    
+    // Имитация отправки
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Очищаем корзину после успешного заказа
+    clearCart();
+    
+    // Перенаправляем на страницу успеха с номером заказа
+    window.location.href = `/order-success?orderNumber=${orderNumber}`;
+    
+  } catch (error) {
+    console.error('❌ Ошибка при оформлении заказа:', error);
+    alert('Ошибка при оформлении заказа. Попробуйте еще раз.');
+  } finally {
+    setIsSubmitting(false);
+  }
+}, [items, calculateTotals, appliedPromoCode, clearCart]);
 
   return {
     form,
