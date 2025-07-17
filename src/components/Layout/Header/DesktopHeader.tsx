@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, JSX } from 'react';
 import { useCart } from '../../../contexts/CartContext';
+import AuthModal from '../../Auth/AuthModal'; // 🆕 Импорт компонента
 
 interface MegaMenuData {
   title: string;
@@ -18,6 +19,7 @@ const DesktopHeader: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false); // 🆕 Состояние для модального окна
   const { totalItems, toggleCart } = useCart();
   
   useEffect(() => {
@@ -164,7 +166,7 @@ const DesktopHeader: React.FC = () => {
     }
   }, [isSearchOpen]);
 
-  const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSearchSubmit = useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
     e.preventDefault();
     console.log('Поиск:', searchQuery);
     // Здесь будет логика поиска
@@ -180,6 +182,16 @@ const DesktopHeader: React.FC = () => {
   const handleCartClick = useCallback((): void => {
     toggleCart();
   }, [toggleCart]);
+
+  // 🆕 Обработчик клика по иконке профиля
+  const handleProfileClick = useCallback((): void => {
+    setShowAuthModal(true);
+  }, []);
+
+  // 🆕 Обработчик закрытия модального окна
+  const handleCloseAuthModal = useCallback((): void => {
+    setShowAuthModal(false);
+  }, []);
 
   // Обработчик клика по элементам навигации
   const handleNavClick = useCallback((item: string, e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -197,33 +209,28 @@ const DesktopHeader: React.FC = () => {
     console.log(`Клик по навигации: ${item}`);
   }, []);
 
-  // 🔧 ИСПРАВЛЕННАЯ функция позиционирования мега-меню
   const getMenuPosition = useCallback((): React.CSSProperties => {
     if (!activeMenu) return {};
     
     const activeIndex = menuItems.indexOf(activeMenu);
     
-    // Адаптивные значения сдвига в зависимости от размера экрана
     const getOffset = () => {
       const screenWidth = window.innerWidth;
       
       if (screenWidth >= 1400) {
-        // Большие экраны - используем текущую логику
-        if (activeIndex === menuItems.length - 1) { // информация
+        if (activeIndex === menuItems.length - 1) {
           return (activeIndex - 3.5) * 120 + 50;
         } else {
           return (activeIndex - 3.5) * 120 + 200;
         }
       } else if (screenWidth >= 1200) {
-        // Средние экраны - уменьшаем сдвиги
-        if (activeIndex === menuItems.length - 1) { // информация
+        if (activeIndex === menuItems.length - 1) {
           return (activeIndex - 3.5) * 100 + 30;
         } else {
           return (activeIndex - 3.5) * 100 + 150;
         }
       } else {
-        // Маленькие экраны - минимальные сдвиги
-        if (activeIndex === menuItems.length - 1) { // информация
+        if (activeIndex === menuItems.length - 1) {
           return (activeIndex - 3.5) * 80 + 10;
         } else {
           return (activeIndex - 3.5) * 80 + 100;
@@ -233,10 +240,9 @@ const DesktopHeader: React.FC = () => {
     
     return {
       transform: `translateX(${getOffset()}px)`,
-      // 🆕 Добавляем ограничения, чтобы меню не вылезало за края
       maxWidth: 'calc(100vw - 40px)',
       left: '50%',
-      marginLeft: '-400px', // половина от ширины 800px
+      marginLeft: '-400px',
       marginRight: '20px'
     };
   }, [activeMenu, menuItems]);
@@ -258,11 +264,10 @@ const DesktopHeader: React.FC = () => {
         }}
       >
         <div className="w-full py-12">
-          {/* 🔧 ИСПРАВЛЕННЫЙ контейнер мега-меню */}
           <div 
             className="relative mx-auto px-4 lg:px-8 xl:px-16"
             style={{
-              width: 'min(800px, calc(100vw - 120px))', // Адаптивная ширина
+              width: 'min(800px, calc(100vw - 120px))',
               ...getMenuPosition()
             }}
           >
@@ -288,7 +293,6 @@ const DesktopHeader: React.FC = () => {
               </div>
             </div>
 
-            {/* Показываем секцию КАТЕГОРИЯ только если это НЕ информация */}
             {activeMenu !== 'информация' && (
               <div>
                 <div className="flex items-start flex-col lg:flex-row gap-4 lg:gap-0">
@@ -329,7 +333,6 @@ const DesktopHeader: React.FC = () => {
 
   return (
     <header className="w-full bg-white border-b border-gray-200 relative">
-      {/* 🔧 ИСПРАВЛЕННЫЙ контейнер хедера с адаптивными отступами */}
       <div className="w-full h-[120px] flex items-center justify-between px-4 sm:px-8 lg:px-16 xl:px-[139px]">
         {/* Логотип */}
         <div className="flex-shrink-0">
@@ -338,9 +341,9 @@ const DesktopHeader: React.FC = () => {
           </a>
         </div>
 
-        {/* Навигация - точно по центру */}
+        {/* Навигация */}
         <nav className="flex-shrink-0 relative">
-          {/* Поисковая строка - анимация справа налево */}
+          {/* Поисковая строка */}
           <div 
             className={`absolute top-1/2 right-0 transform -translate-y-1/2 h-10 flex items-center transition-all duration-500 ease-in-out z-20 ${
               isSearchOpen ? 'w-[300px] lg:w-[400px] opacity-100' : 'w-0 opacity-0'
@@ -350,20 +353,25 @@ const DesktopHeader: React.FC = () => {
               backgroundColor: 'white'
             }}
           >
-            <form onSubmit={handleSearchSubmit} className="w-full h-full flex items-center">
+            <div className="w-full h-full flex items-center">
               <input
                 id="search-input"
                 type="text"
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchSubmit(e as any);
+                  }
+                  handleSearchKeyDown(e);
+                }}
                 placeholder="Поиск..."
                 className="w-full h-full px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm lg:text-base"
                 style={{
                   fontFamily: 'Random Grotesque, Arial, sans-serif'
                 }}
               />
-            </form>
+            </div>
           </div>
 
           {/* Основное меню навигации */}
@@ -411,7 +419,11 @@ const DesktopHeader: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="cursor-pointer hover:opacity-70 transition-opacity duration-200 hover-lift">
+          {/* 🆕 Иконка профиля с обработчиком клика */}
+          <div 
+            className="cursor-pointer hover:opacity-70 transition-opacity duration-200 hover-lift"
+            onClick={handleProfileClick}
+          >
             <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-8" />
           </div>
         </div>
@@ -419,6 +431,11 @@ const DesktopHeader: React.FC = () => {
 
       {/* Мега-меню */}
       {renderMegaMenu()}
+
+      {/* 🆕 Модальное окно авторизации - теперь как отдельный компонент */}
+      {showAuthModal && (
+        <AuthModal onClose={handleCloseAuthModal} />
+      )}
     </header>
   );
 };

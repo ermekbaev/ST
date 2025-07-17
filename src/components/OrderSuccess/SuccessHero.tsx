@@ -16,11 +16,13 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
   };
 
   return (
-    <div className="order-success-hero-container relative w-full h-[645px] lg:h-[563px] overflow-hidden">
+    // ИЗМЕНЕНИЕ: убираем фиксированную высоту h-[645px] lg:h-[563px] 
+    // и заменяем на min-h-screen, чтобы компонент занимал всю высоту экрана
+    <div className="order-success-hero-container relative w-full min-h-screen overflow-hidden">
       
       {/* ======== ДЕСКТОПНАЯ ВЕРСИЯ ======== */}
-      <div className="hidden lg:block relative z-20 h-full">
-        <div className="h-full flex flex-col justify-center items-center px-8">
+      <div className="hidden lg:block relative z-20 min-h-screen">
+        <div className="min-h-screen flex flex-col justify-center items-center px-8">
           
           {/* Заголовочная секция с линиями по бокам */}
           <div className="w-full mb-16">
@@ -48,10 +50,10 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
           </div>
 
           {/* Нижний блок - разделен на два */}
-          <div className="grid grid-cols-2 gap-16 max-w-4xl mx-auto w-full">
+          <div className="grid grid-cols-2 gap-50 max-w-4xl w-full ">
             
             {/* Левая секция */}
-            <div className="flex flex-col items-start gap-4">
+            <div className="flex flex-col items-start gap-4 ml-8">
               <p className="order-success-subtitle text-white text-[20px] leading-[27px] font-normal">
                 Номер заказа: {orderNumber}
               </p>
@@ -101,8 +103,8 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
       </div>
 
       {/* ======== МОБИЛЬНАЯ ВЕРСИЯ ======== */}
-      <div className="lg:hidden relative z-20 h-full">
-        <div className="h-full flex flex-col justify-center items-center px-4">
+      <div className="lg:hidden relative z-20 min-h-screen">
+        <div className="min-h-screen flex flex-col justify-center items-center px-4">
           
           {/* 1. Верхний блок - может быть пустым или с декором */}
           <div className="flex-1 flex items-end justify-center pb-8">

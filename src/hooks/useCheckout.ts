@@ -1,5 +1,5 @@
-// src/hooks/useCheckout.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ
-import { useState, useEffect, useMemo } from 'react';
+// src/hooks/useCheckout.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ БЕЗ ЦИКЛИЧЕСКИХ ЗАВИСИМОСТЕЙ
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useCart } from '@/contexts/CartContext';
 import { useDeliverySettings } from './useDeliverySettings';
@@ -11,6 +11,7 @@ export const useCheckout = () => {
   const [appliedPromoCode, setAppliedPromoCode] = useState<AppliedPromoCode | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // ✅ ФОРМА БЕЗ ЦИКЛИЧЕСКИХ ЗАВИСИМОСТЕЙ
   const form = useForm<CheckoutFormData>({
     defaultValues: {
       firstName: '',
@@ -26,66 +27,79 @@ export const useCheckout = () => {
       recipientPhone: '',
       deliveryMethod: 'store_pickup' as DeliveryMethod,
       paymentMethod: 'card' as PaymentMethod,
-    }
+    },
+    mode: 'onChange'
   });
 
-  const selectedDeliveryMethod = form.watch('deliveryMethod');
-
-  // 🔧 ИСПРАВЛЕННЫЙ расчет стоимости
-  const calculations = useMemo(() => {
+  // ✅ БАЗОВЫЕ РАСЧЕТЫ БЕЗ ЗАВИСИМОСТИ ОТ ФОРМЫ
+  const baseCalculations = useMemo(() => {
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // 🔍 Находим выбранный способ доставки
-    const selectedDelivery = deliveryOptions.find(option => option.id === selectedDeliveryMethod);
+    return { subtotal };
+  }, [items]);
+
+  // ✅ ФУНКЦИЯ РАСЧЕТА ДОСТАВКИ
+  const calculateDeliveryPrice = useCallback((deliveryId: string) => {
+    const selectedDelivery = deliveryOptions.find(option => option.id === deliveryId);
     let deliveryPrice = selectedDelivery?.price || 0;
     
     // Бесплатная доставка при достижении минимальной суммы
-    const originalDeliveryPrice = deliveryPrice;
-    if (subtotal >= generalSettings.minOrderFreeDelivery && deliveryPrice > 0) {
+    if (baseCalculations.subtotal >= generalSettings.minOrderFreeDelivery && deliveryPrice > 0) {
       deliveryPrice = 0;
-      console.log('✅ Бесплатная доставка активирована (сумма >= ' + generalSettings.minOrderFreeDelivery + ')');
     }
     
-    let promoDiscount = 0;
+    return deliveryPrice;
+  }, [deliveryOptions, baseCalculations.subtotal, generalSettings.minOrderFreeDelivery]);
+
+  // ✅ ФУНКЦИЯ РАСЧЕТА СКИДКИ
+  const calculatePromoDiscount = useCallback((deliveryId: string) => {
+    if (!appliedPromoCode) return 0;
     
-    if (appliedPromoCode) {
-      switch (appliedPromoCode.type) {
-        case 'amount':
-          promoDiscount = Math.min(appliedPromoCode.discount, subtotal);
-          break;
-        case 'percentage':
-          promoDiscount = Math.floor(subtotal * (appliedPromoCode.discount / 100));
-          break;
-        case 'free_shipping':
-          if (originalDeliveryPrice > 0) {
-            promoDiscount = originalDeliveryPrice;
-            deliveryPrice = 0;
-          }
-          break;
-      }
+    const originalDeliveryPrice = deliveryOptions.find(opt => opt.id === deliveryId)?.price || 0;
+    
+    switch (appliedPromoCode.type) {
+      case 'amount':
+        return Math.min(appliedPromoCode.discount, baseCalculations.subtotal);
+      case 'percentage':
+        return Math.floor(baseCalculations.subtotal * (appliedPromoCode.discount / 100));
+      case 'free_shipping':
+        return originalDeliveryPrice > 0 ? originalDeliveryPrice : 0;
+      default:
+        return 0;
     }
+  }, [appliedPromoCode, baseCalculations.subtotal, deliveryOptions]);
+
+  // ✅ ОБЩАЯ ФУНКЦИЯ РАСЧЕТА
+  const calculateTotals = useCallback((deliveryMethod?: string) => {
+    const currentDeliveryMethod = deliveryMethod || form.getValues('deliveryMethod');
+    const deliveryPrice = calculateDeliveryPrice(currentDeliveryMethod);
+    const promoDiscount = calculatePromoDiscount(currentDeliveryMethod);
+    const total = Math.max(0, baseCalculations.subtotal + deliveryPrice - promoDiscount);
     
-    const total = subtotal + deliveryPrice - promoDiscount;
-    
-    console.log('💰 Итоговый расчет:', {
-      subtotal,
+    return {
+      ...baseCalculations,
       deliveryPrice,
       promoDiscount,
       total,
-      appliedPromoCode: appliedPromoCode?.code
-    });
-    
-    return {
-      subtotal,
-      deliveryPrice,
-      promoDiscount,
-      total: Math.max(0, total),
       estimatedDelivery: generalSettings.deliveryTimeGeneral
     };
-  }, [items, selectedDeliveryMethod, appliedPromoCode, deliveryOptions, generalSettings]);
+  }, [baseCalculations, calculateDeliveryPrice, calculatePromoDiscount, generalSettings.deliveryTimeGeneral, form]);
 
-  // Применение промокода
-  const applyPromoCode = (code: string): boolean => {
+  // ✅ ТЕКУЩИЕ РАСЧЕТЫ БЕЗ ПРЯМОЙ ЗАВИСИМОСТИ ОТ form.watch
+  const [calculations, setCalculations] = useState(() => calculateTotals());
+
+  // ✅ ОБНОВЛЯЕМ РАСЧЕТЫ КОГДА МЕНЯЮТСЯ БАЗОВЫЕ ДАННЫЕ
+  useEffect(() => {
+    setCalculations(calculateTotals());
+  }, [calculateTotals]);
+
+  // ✅ СЛУШАЕМ ИЗМЕНЕНИЯ СПОСОБА ДОСТАВКИ ОТДЕЛЬНО
+  const selectedDeliveryMethod = form.watch('deliveryMethod');
+  useEffect(() => {
+    setCalculations(calculateTotals(selectedDeliveryMethod));
+  }, [selectedDeliveryMethod, calculateTotals]);
+
+  // ✅ ПРИМЕНЕНИЕ ПРОМОКОДА
+  const applyPromoCode = useCallback((code: string): boolean => {
     const foundPromo = promoCodes.find(promo => promo.code === code.toUpperCase());
     
     if (!foundPromo) {
@@ -93,45 +107,39 @@ export const useCheckout = () => {
       return false;
     }
     
-    let appliedDiscount = 0;
-    
-    switch (foundPromo.type) {
-      case 'amount':
-        appliedDiscount = Math.min(foundPromo.discount, calculations.subtotal);
-        break;
-      case 'percentage':
-        appliedDiscount = Math.floor(calculations.subtotal * (foundPromo.discount / 100));
-        break;
-      case 'free_shipping':
-        const selectedDelivery = deliveryOptions.find(option => option.id === selectedDeliveryMethod);
-        appliedDiscount = selectedDelivery?.price || 0;
-        break;
-    }
+    const currentDeliveryMethod = form.getValues('deliveryMethod');
+    const appliedDiscount = calculatePromoDiscount(currentDeliveryMethod);
     
     setAppliedPromoCode({
       ...foundPromo,
       appliedDiscount
     });
     
+    // Обновляем расчеты после применения промокода
+    setTimeout(() => setCalculations(calculateTotals()), 0);
+    
     console.log('✅ Промокод применен:', foundPromo.code, appliedDiscount);
     return true;
-  };
+  }, [promoCodes, form, calculatePromoDiscount, calculateTotals]);
 
-  // Удаление промокода
-  const removePromoCode = () => {
+  // ✅ УДАЛЕНИЕ ПРОМОКОДА
+  const removePromoCode = useCallback(() => {
     setAppliedPromoCode(null);
+    setTimeout(() => setCalculations(calculateTotals()), 0);
     console.log('🗑️ Промокод удален');
-  };
+  }, [calculateTotals]);
 
-  // Отправка заказа
-  const submitOrder = async (data: CheckoutFormData) => {
+  // ✅ ОТПРАВКА ЗАКАЗА
+  const submitOrder = useCallback(async (data: CheckoutFormData) => {
     try {
       setIsSubmitting(true);
+      
+      const finalCalculations = calculateTotals(data.deliveryMethod);
       
       const orderData = {
         ...data,
         items,
-        calculations,
+        calculations: finalCalculations,
         appliedPromoCode,
         timestamp: new Date().toISOString()
       };
@@ -153,7 +161,7 @@ export const useCheckout = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [items, calculateTotals, appliedPromoCode, clearCart]);
 
   return {
     form,

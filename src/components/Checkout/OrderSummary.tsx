@@ -3,8 +3,6 @@
 import React, { useState } from 'react';
 import OrderItem from './OrderItem';
 import PromoCode from './PromoCode';
-import { useRouter } from 'next/navigation';
-import { generateOrderNumber } from '@/utils/orderUtils';
 
 interface OrderSummaryProps {
   checkout: any; // Заменим на правильный тип
@@ -12,69 +10,16 @@ interface OrderSummaryProps {
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false }) => {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const { 
     items, 
     subtotal, 
-    deliveryFee = 0,
     deliveryPrice, 
     promoDiscount, 
     total, 
     form,
+    isSubmitting,
     applyPromoCode 
   } = checkout;
-
-
-  // Функция обработки оформления заказа
-  const handleSubmitOrder = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      console.log('🚀 Оформляем заказ...');
-      
-      // Имитируем небольшую задержку для UX
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Генерируем номер заказа
-      const orderNumber = generateOrderNumber();
-      
-      console.log('✅ Заказ оформлен:', orderNumber);
-      
-      // Сохраняем базовую информацию о заказе для страницы успеха
-      const orderData = {
-        orderNumber,
-        total,
-        subtotal,
-        deliveryFee,
-        items: items.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          brand: item.brand,
-          size: item.size,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        createdAt: new Date().toISOString()
-      };
-      
-      localStorage.setItem('lastOrder', JSON.stringify(orderData));
-      
-      // Переходим на страницу успеха
-      router.push(`/order-success?order=${orderNumber}`);
-      
-    } catch (error) {
-      console.error('❌ Ошибка оформления заказа:', error);
-      alert('Произошла ошибка. Попробуйте еще раз.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
@@ -125,7 +70,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false 
         <button
           type="submit"
           form="checkout-form"
-          onClick={handleSubmitOrder}
           disabled={isSubmitting}
           className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -158,7 +102,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ checkout, isMobile = false 
           <button
             type="submit"
             form="checkout-form"
-            onClick={handleSubmitOrder}
             disabled={isSubmitting}
             className="checkout-order-btn"
           >
