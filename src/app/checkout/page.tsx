@@ -1,21 +1,22 @@
 // src/app/checkout/page.tsx
 'use client';
 
-import React from 'react';
-import { useCheckout } from '@/hooks/useCheckout'; // Наш обновленный хук
-import { useCart } from '@/contexts/CartContext';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import CheckoutForm from '@/components/Checkout/CheckoutForm';
-import OrderSummary from '@/components/Checkout/OrderSummary';
+import { useCart } from '@/contexts/CartContext';
+import NewCheckoutForm from '@/components/Checkout/newChekoutForm';
+import NewOrderSummary from '@/components/Checkout/newCheckoutSummary';
 
 const CheckoutPage: React.FC = () => {
-  const { items } = useCart();
+  const { items, clearCart } = useCart();
   const router = useRouter();
-  const checkout = useCheckout(); // Теперь включает логику заказов
   const [isLoading, setIsLoading] = useState(true);
+  
+  // ✅ ОБЩЕЕ СОСТОЯНИЕ ДЛЯ СИНХРОНИЗАЦИИ КОМПОНЕНТОВ
+  const [selectedDelivery, setSelectedDelivery] = useState('store_pickup');
+  const [selectedPayment, setSelectedPayment] = useState('card');
 
-  // Даем время на загрузку корзины и настроек доставки
+  // Загрузка данных
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -24,22 +25,54 @@ const CheckoutPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Редирект только после загрузки
+  // Редирект если корзина пуста
   useEffect(() => {
     if (!isLoading && items.length === 0) {
       router.push('/');
     }
   }, [items, router, isLoading]);
 
-  // Показываем лоадер пока идет загрузка корзины или настроек
-  if (isLoading || checkout.loading) {
+  // ✅ ПРОСТОЙ ОБРАБОТЧИК ОТПРАВКИ ЗАКАЗА
+  const handleOrderSubmit = async (orderData: any) => {
+    try {
+      console.log('📦 Отправка заказа:', orderData);
+      
+      // Здесь будет API запрос к вашему серверу
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...orderData,
+          deliveryMethod: selectedDelivery,
+          paymentMethod: selectedPayment,
+          cartItems: items,
+          timestamp: new Date().toISOString()
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Заказ создан:', result);
+        
+        // Очищаем корзину и перенаправляем на страницу успеха
+        clearCart();
+        router.push(`/checkout/success?orderId=${result.orderId}`);
+      } else {
+        throw new Error('Ошибка при создании заказа');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка заказа:', error);
+      alert('Произошла ошибка при оформлении заказа. Попробуйте еще раз.');
+    }
+  };
+
+  // Показываем загрузчик
+  if (isLoading) {
     return (
       <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-xl">
-            {checkout.loading ? 'Загрузка настроек доставки...' : 'Загрузка...'}
-          </div>
-        </div>
+        <div className="text-xl">Загрузка...</div>
       </div>
     );
   }
@@ -62,6 +95,18 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
+  // Преобразуем товары корзины в нужный формат
+  const cartItems = items.map(item => ({
+    id: item.id || item.article || '',
+    name: item.name || item.title || '',
+    price: item.price || 0,
+    quantity: item.quantity || 1,
+    image: item.image || item.photo || item.images?.[0] || '',
+    photo: item.photo || item.image || '',
+    size: item.size || '',
+    article: item.article || item.id || ''
+  }));
+
   return (
     <div className="min-h-screen lg:bg-[#E5DDD4] bg-white">
       {/* Основной контент */}
@@ -71,12 +116,26 @@ const CheckoutPage: React.FC = () => {
           <div className="grid grid-cols-2 min-h-screen">
             {/* Левая колонка - Форма */}
             <div className="bg-[#E5DDD4] pl-[70px] pr-[20px] pt-8 pb-16">
-              <CheckoutForm checkout={checkout} />
+              <NewCheckoutForm
+                cartItems={cartItems}
+                onSubmit={handleOrderSubmit}
+                selectedDelivery={selectedDelivery}
+                selectedPayment={selectedPayment}
+                onDeliveryChange={setSelectedDelivery}
+                onPaymentChange={setSelectedPayment}
+                isMobile={false}
+              />
             </div>
                      
             {/* Правая колонка - Сводка заказа */}
             <div className="bg-white pl-[20px] pr-[70px] py-8">
-              <OrderSummary checkout={checkout} />
+              <NewOrderSummary
+                cartItems={cartItems}
+                onSubmit={handleOrderSubmit}
+                selectedDelivery={selectedDelivery}
+                selectedPayment={selectedPayment}
+                isMobile={false}
+              />
             </div>
           </div>
         </div>
@@ -85,12 +144,26 @@ const CheckoutPage: React.FC = () => {
         <div className="lg:hidden bg-white min-h-screen">
           {/* Форма сверху */}
           <div className="px-[10px] py-6 space-y-6">
-            <CheckoutForm checkout={checkout} isMobile={true} />
+            <NewCheckoutForm
+              cartItems={cartItems}
+              onSubmit={handleOrderSubmit}
+              selectedDelivery={selectedDelivery}
+              selectedPayment={selectedPayment}
+              onDeliveryChange={setSelectedDelivery}
+              onPaymentChange={setSelectedPayment}
+              isMobile={true}
+            />
           </div>
                    
           {/* Белый блок снизу */}
           <div className="bg-white px-[10px] py-6">
-            <OrderSummary checkout={checkout} isMobile={true} />
+            <NewOrderSummary
+              cartItems={cartItems}
+              onSubmit={handleOrderSubmit}
+              selectedDelivery={selectedDelivery}
+              selectedPayment={selectedPayment}
+              isMobile={true}
+            />
           </div>
         </div>
       </main>
