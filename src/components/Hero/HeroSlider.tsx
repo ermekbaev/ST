@@ -11,7 +11,7 @@ const HeroSlider = () => {
       id: 1,
       title: "ШИРОКИЙ АССОРТИМЕНТ ОРИГИНАЛЬНЫХ БРЕНДОВ",
       imageDesktop: "/banners/Banner1-1.jpg", 
-      imageMobile: "/banners/Banner1-2.jpg",  
+      imageMobile: "/banners/Banner1-2.webp",  
       link: "/catalog", 
       alt: "Широкий ассортимент оригинальных брендов"
     },
@@ -43,7 +43,7 @@ const HeroSlider = () => {
       id: 5,
       title: "ОПТОВЫЙ ЗАКАЗ",
       imageDesktop: "/banners/Banner5-1.jpg", 
-      imageMobile: "/banners/Banner5  -2.webp",  
+      imageMobile: "/banners/Banner5-2.webp",  
       link: "https://t.me/TIGRSHOPsupport", 
       alt: "Индивидуальный заказ"
     }

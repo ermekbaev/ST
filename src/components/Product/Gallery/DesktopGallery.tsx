@@ -43,7 +43,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {!hasError && currentImage ? (
+      {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
           <img
             src={currentImage.url}
             alt={currentImage.alt || productName}
@@ -150,7 +150,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
                   }`}
                   aria-label={`Показать изображение ${index + 1}`}
                 >
-                  {!thumbHasError ? (
+                {!thumbHasError && image.url && image.url.trim() !== '' ? (
                     <img
                       src={image.url}
                       alt={image.alt || `${productName} - фото ${index + 1}`}

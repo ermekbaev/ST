@@ -30,7 +30,7 @@ const cleanString = (str: string): string => {
 
 // Функция для проверки, является ли строка корректными данными товара
 const isValidProductRow = (values: string[]): boolean => {
-  if (values.length < 7) return false;
+  if (values.length < 8) return false;
   
   const article: string = cleanString(values[0]);
   const brand: string = cleanString(values[1]);
@@ -47,51 +47,52 @@ const isValidProductRow = (values: string[]): boolean => {
 
 // Функция для парсинга фото
 const parsePhotoField = (photoField: string): string => {
-  if (!photoField || !photoField.trim()) return '';
+  if (!photoField || !photoField.trim()) {
+    console.log('⚠️ Пустое поле фото');
+    return '';
+  }
   
-  console.log('🔍 Парсинг фото в каталоге:', photoField.substring(0, 100));
+  console.log('🔍 Сырое поле фото:', photoField);
   
   let photos: string[] = [];
   
-  // ПРИОРИТЕТ: Сначала пробуем точку с запятой как разделитель
+  // Разделяем по разным разделителям
   if (photoField.includes(';')) {
     photos = photoField.split(';');
-    console.log('Разделение по ";" найдено:', photos.length, 'частей');
-  }
-  // Затем пробуем переносы строк
-  else if (photoField.includes('\n') || photoField.includes('\r')) {
+  } else if (photoField.includes('\n') || photoField.includes('\r')) {
     photos = photoField.split(/[\r\n]+/);
-    console.log('Разделение по переносам строк:', photos.length, 'частей');
-  }
-  // Потом запятые
-  else if (photoField.includes(',')) {
+  } else if (photoField.includes(',')) {
     photos = photoField.split(',');
-    console.log('Разделение по запятым:', photos.length, 'частей');
-  }
-  // Пробуем regex для поиска всех HTTP ссылок
-  else {
-    const urlRegex: RegExp = /https?:\/\/[^\s,;"'\n\r\t]+/g;
-    const foundUrls: RegExpMatchArray | null = photoField.match(urlRegex);
-    if (foundUrls && foundUrls.length > 0) {
-      photos = foundUrls;
-      console.log('Найдено через regex:', photos.length, 'URL');
-    } else {
-      // Возвращаем всю строку как один URL
-      photos = [photoField];
-      console.log('Используем всю строку как один URL');
-    }
+  } else {
+    photos = [photoField];
   }
   
-  console.log('Сырые части:', photos);
-  
-  // Очищаем результат и берем первое изображение
+  // НОВАЯ ЛОГИКА: Очищаем URL от префиксов
   const cleanPhotos: string[] = photos
-    .map((url: string) => url.trim().replace(/^["']+|["']+$/g, '')) // Убираем кавычки и пробелы
-    .filter((url: string) => url.length > 0) // Убираем пустые строки
-    .filter((url: string) => url.startsWith('http') || url.includes('cdn') || url.includes('imgur') || url.includes('image')); // Только URL
+    .map((url: string) => {
+      // Убираем пробелы и кавычки
+      let cleanUrl = url.trim().replace(/^["']+|["']+$/g, '');
+      
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убираем префиксы типа "200_m_pad."
+      // Ищем https:// после любого префикса
+      const httpsMatch = cleanUrl.match(/https:\/\/.+/);
+      if (httpsMatch) {
+        cleanUrl = httpsMatch[0];
+        console.log('🧹 Очищен URL:', cleanUrl.substring(0, 50) + '...');
+      }
+      
+      return cleanUrl;
+    })
+    .filter((url: string) => url.length > 0)
+    .filter((url: string) => url.startsWith('https://') || url.startsWith('http://'));
   
   const firstPhoto: string = cleanPhotos.length > 0 ? cleanPhotos[0] : '';
-  console.log('✅ Первое фото для каталога:', firstPhoto);
+  
+  if (firstPhoto) {
+    console.log('✅ Финальное изображение:', firstPhoto.substring(0, 80) + '...');
+  } else {
+    console.log('❌ Не найдено валидных URL в:', photoField.substring(0, 50));
+  }
   
   return firstPhoto;
 };
@@ -177,7 +178,7 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
           const category: string = cleanString(values[4]);
           const gender: string = cleanString(values[5]);
           const priceString: string = cleanString(values[6]);
-          const photoField: string = cleanString(values[7] || '');
+          const photoField: string = cleanString(values[8] || '');
           
           // Обработка цен с запятыми (российский формат)
           const price: number = parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.'));

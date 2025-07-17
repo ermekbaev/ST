@@ -39,20 +39,18 @@ interface ApiResponse {
   error?: string;
 }
 
-// Функция для обработки множественных изображений
 const parsePhotos = (photoString: string): string[] => {
   if (!photoString || photoString.trim() === '') {
     return [];
   }
   
   console.log('=== ОТЛАДКА ПАРСИНГА ФОТОГРАФИЙ ===');
-  console.log('Исходная строка:', JSON.stringify(photoString));
+  console.log('Исходная строка:', JSON.stringify(photoString.substring(0, 200)));
   console.log('Длина строки:', photoString.length);
-  console.log('Первые 200 символов:', photoString.substring(0, 200));
   
-  // ПРИОРИТЕТ: Сначала пробуем точку с запятой как разделитель
   let photos: string[] = [];
   
+  // ПРИОРИТЕТ: Сначала пробуем точку с запятой как разделитель
   if (photoString.includes(';')) {
     photos = photoString.split(';');
     console.log('Разделение по ";" найдено:', photos.length, 'частей');
@@ -81,16 +79,32 @@ const parsePhotos = (photoString: string): string[] => {
     }
   }
   
-  console.log('Сырые части:', photos);
+  console.log('Сырые части:', photos.map(p => p.substring(0, 50) + '...'));
   
-  // Очищаем результат
+  // КРИТИЧЕСКОЕ УЛУЧШЕНИЕ: Очищаем результат от префиксов
   const cleanPhotos = photos
-    .map(url => url.trim().replace(/^["']+|["']+$/g, '')) // Убираем кавычки и пробелы
+    .map(url => {
+      let cleanUrl = url.trim().replace(/^["']+|["']+$/g, ''); // Убираем кавычки и пробелы
+      
+      // ГЛАВНОЕ ИСПРАВЛЕНИЕ: Извлекаем https:// из строк типа "200_m_pad.https://..."
+      const httpsMatch = cleanUrl.match(/https:\/\/.+/);
+      if (httpsMatch) {
+        const originalUrl = cleanUrl;
+        cleanUrl = httpsMatch[0];
+        console.log('🧹 Очищен URL от префикса:');
+        console.log('   Было:', originalUrl.substring(0, 60) + '...');
+        console.log('   Стало:', cleanUrl.substring(0, 60) + '...');
+      }
+      
+      return cleanUrl;
+    })
     .filter(url => url.length > 0) // Убираем пустые строки
-    .filter(url => url.startsWith('http') || url.includes('cdn') || url.includes('imgur') || url.includes('image')); // Только URL
+    .filter(url => url.startsWith('https://') || url.startsWith('http://')); // Только валидные HTTP URL
   
-  console.log('Очищенные URL:', cleanPhotos);
-  console.log('Финальное количество изображений:', cleanPhotos.length);
+  console.log('Очищенные URL:', cleanPhotos.length);
+  cleanPhotos.forEach((url, i) => {
+    console.log(`  ${i + 1}: ${url.substring(0, 80)}...`);
+  });
   console.log('=== КОНЕЦ ОТЛАДКИ ===');
   
   return cleanPhotos;
@@ -156,7 +170,7 @@ export async function GET(
       try {
         const values: string[] = parseCSVLine(line);
         
-        if (values.length >= 7) {
+        if (values.length >= 8) {
           const product: Product = {
             id: `product_${i}`,
             article: values[0] || `ART${i}`,
@@ -166,7 +180,7 @@ export async function GET(
             category: values[4] || 'Прочее',
             gender: values[5] || 'Унисекс',
             price: parseFloat(values[6]) || 0,
-            photo: values[7] || '' // Это может содержать несколько URL через \n
+            photo: values[8] || '' // Это может содержать несколько URL через \n
           };
           
           if (product.name && product.name !== 'Товар без названия') {
