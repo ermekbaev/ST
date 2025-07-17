@@ -926,7 +926,7 @@ h6 {
   left: 0;
   width: 100%;
   background-color: var(--brand-beige);
-  z-index: 50;
+  z-index: 60;
   animation: slideDown 0.3s ease-out;
   margin-top: -1px;
   overflow-x: hidden; /* Предотвращаем горизонтальный скролл */
@@ -3542,7 +3542,7 @@ select {
 
 /* Заголовок страницы истории заказов */
 .order-history-page-title {
-  font-family: var(--font-druk-wide), Arial, sans-serif;
+  font-family: var(--font-druk-wide);
   font-weight: 900;
   font-size: 35px;
   line-height: 30px;
