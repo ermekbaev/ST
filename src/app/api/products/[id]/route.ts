@@ -1,4 +1,4 @@
-// src/app/api/products/[id]/route.ts - ИСПРАВЛЕНО для Next.js 15
+// src/app/api/products/[id]/route.ts - ПОЛНЫЙ ИСПРАВЛЕННЫЙ ФАЙЛ
 import { NextRequest, NextResponse } from 'next/server';
 import { parse } from 'csv-parse/sync';
 
@@ -118,32 +118,49 @@ const extractAndCleanUrls = (line: string): string[] => {
   return [...new Set(cleanUrls)];
 };
 
-// Поиск фото в соседних строках с улучшенной очисткой URL
-const findPhotoInAdjacentLines = (lines: string[], currentIndex: number): string => {
-  console.log(`🔍 Ищем фото для строки ${currentIndex + 1}...`);
+// 🔧 ИСПРАВЛЕНО: Получение фото ТОЛЬКО из правильных столбцов
+const getPhotoFromCorrectColumn = (values: string[]): string => {
+  const photoColumns = [8, 9, 10, 7]; // I, J, K, H
   
-  const searchRange = 5;
-  const startIndex = Math.max(0, currentIndex - searchRange);
-  const endIndex = Math.min(lines.length - 1, currentIndex + searchRange);
-  
-  for (let i = startIndex; i <= endIndex; i++) {
-    const line = lines[i];
-    if (line.includes('cdn-img.thepoizon.ru') || 
-        line.includes('cdn.poizon.com') || 
-        line.includes('https://')) {
-      
-      console.log(`✅ Найдено фото в строке ${i + 1}:`, line.substring(0, 100) + '...');
-      
-      const cleanUrls = extractAndCleanUrls(line);
+  for (const colIndex of photoColumns) {
+    const columnValue = values[colIndex] || '';
+    const letter = String.fromCharCode(65 + colIndex);
+    
+    console.log(`📸 Проверяем столбец ${letter} (${colIndex}): "${columnValue.substring(0, 60)}${columnValue.length > 60 ? '...' : ''}"`);
+    
+    if (columnValue && columnValue.trim()) {
+      const cleanUrls = extractAndCleanUrls(columnValue);
       if (cleanUrls.length > 0) {
-        console.log(`✅ Извлечено ${cleanUrls.length} URL:`, cleanUrls[0].substring(0, 80) + '...');
-        return cleanUrls.join(';');
+        console.log(`✅ Найдено фото в столбце ${letter}: ${cleanUrls[0].substring(0, 60)}...`);
+        return cleanUrls[0];
       }
     }
   }
   
-  console.log(`❌ Фото не найдено для строки ${currentIndex + 1}`);
+  console.log(`❌ Фото не найдено ни в одном столбце`);
   return '';
+};
+
+// 🔧 ИСПРАВЛЕНО: Очистка размера
+const cleanSize = (sizeString: string): string => {
+  if (!sizeString) return '';
+  
+  let cleaned = sizeString.trim();
+  cleaned = cleaned.replace(/^["']+|["']+$/g, '');
+  cleaned = cleaned.replace(/\s+/g, ' ');
+  cleaned = cleaned.replace(/^(размер|size|р\.?|s\.?)\s*/i, '');
+  
+  const numberMatch = cleaned.match(/^\d+(\.\d+)?$/);
+  if (numberMatch) {
+    return numberMatch[0];
+  }
+  
+  const sizeMatch = cleaned.match(/^(\d+(\.\d+)?)\s/);
+  if (sizeMatch) {
+    return sizeMatch[1];
+  }
+  
+  return cleaned.substring(0, 10);
 };
 
 // Парсинг массива фото из строки с ';'
@@ -231,6 +248,7 @@ const parseMultiLineCSV = (csvText: string): Product[] => {
   console.log(`📊 [ID] Всего строк: ${records.length}`);
   
   const products: Product[] = [];
+  const usedIds = new Set<string>();
   
   for (let i = 1; i < records.length; i++) {
     const row = records[i];
@@ -241,15 +259,28 @@ const parseMultiLineCSV = (csvText: string): Product[] => {
     
     if (!isValidProductData(values)) continue;
     
-    const linesForPhotoSearch = records.map(r => r.join(','));
-    const photoUrl = findPhotoInAdjacentLines(linesForPhotoSearch, i);
+    // 🔧 ИСПРАВЛЕНО: Получаем фото из правильных столбцов
+    const photoUrl = getPhotoFromCorrectColumn(values);
+    
+    // 🔧 ИСПРАВЛЕНО: Очищаем размер
+    const cleanedSize = cleanSize(values[3]);
+    
+    // Создаем стабильный ID
+    let productId = cleanString(values[0]);
+    let counter = 1;
+    let originalId = productId;
+    while (usedIds.has(productId)) {
+      productId = `${originalId}_${counter}`;
+      counter++;
+    }
+    usedIds.add(productId);
     
     const product: Product = {
-      id: `product_${i}`,
+      id: productId,
       article: values[0],
       brand: values[1],
       name: values[2],
-      size: values[3],
+      size: cleanedSize,
       category: values[4],
       gender: values[5],
       price: parseFloat(values[6]) || 0,
@@ -271,7 +302,20 @@ export async function GET(
   try {
     // ✅ ИСПРАВЛЕНО: Ожидаем Promise параметров
     const { id } = await context.params;
-    console.log(`🔍 [ID] Поиск товара с ID: ${id}`);
+    
+    // ========================================================================
+    // 🔧 ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ПОИСКА
+    // ========================================================================
+    console.group(`🔍 [ID] API /products/${id}`);
+    console.log('⏰ Request time:', new Date().toISOString());
+    console.log('🎯 Searching for ID:', id);
+    console.log('📊 ID analysis:', {
+      length: id.length,
+      isArticleFormat: id.startsWith('TS-'),
+      isProductFormat: id.startsWith('product_'),
+      isNumeric: /^\d+$/.test(id),
+      originalValue: id
+    });
     
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
     
@@ -290,13 +334,38 @@ export async function GET(
     console.log(`📄 [ID] Загружен CSV размером: ${csvText.length.toLocaleString()} символов`);
     
     const allProducts = parseMultiLineCSV(csvText);
+    console.log(`📦 [ID] Total products loaded: ${allProducts.length}`);
     
-    const targetProduct = allProducts.find(product => 
-      product.id === id || product.article === id
-    );
+    // ========================================================================
+    // 🔧 ИСПРАВЛЕНО: ТОЧНАЯ ЛОГИКА ПОИСКА
+    // ========================================================================
+    console.log('🔍 Starting precise search...');
+    
+    // 1. Поиск по точному ID (приоритет #1)
+    let targetProduct = allProducts.find(product => product.id === id);
+    console.log(`🆔 Found by exact ID: ${targetProduct ? '✅' : '❌'}`);
+    
+    // 2. Если не найден по ID, ищем по точному артикулу (приоритет #2)
+    if (!targetProduct) {
+      targetProduct = allProducts.find(product => product.article === id);
+      console.log(`📝 Found by exact article: ${targetProduct ? '✅' : '❌'}`);
+    }
     
     if (!targetProduct) {
       console.log(`❌ [ID] Товар с ID "${id}" не найден`);
+      
+      // Для отладки показываем похожие товары (но НЕ используем их)
+      const similar = allProducts.filter(p => 
+        p.id.toLowerCase().includes(id.toLowerCase()) || 
+        p.article.toLowerCase().includes(id.toLowerCase())
+      ).slice(0, 5);
+      
+      console.log('🔍 Similar products (for debugging only):', similar.length);
+      similar.forEach(p => {
+        console.log(`  - ID: ${p.id} | Article: ${p.article} | Name: ${p.name.substring(0, 30)}...`);
+      });
+      
+      console.groupEnd();
       return NextResponse.json<ApiResponse>({
         success: false,
         data: null,
@@ -304,8 +373,16 @@ export async function GET(
       }, { status: 404 });
     }
     
-    console.log(`✅ [ID] Найден товар:`, targetProduct.name);
+    console.log(`✅ [ID] Selected product:`, {
+      id: targetProduct.id,
+      article: targetProduct.article,
+      name: targetProduct.name.substring(0, 40) + '...',
+      brand: targetProduct.brand,
+      category: targetProduct.category,
+      hasPhoto: !!targetProduct.photo
+    });
     
+    // Собираем все размеры этого товара
     const relatedProducts = allProducts.filter(product => 
       product.name === targetProduct.name && 
       product.brand === targetProduct.brand
@@ -313,15 +390,39 @@ export async function GET(
     
     console.log(`🔍 [ID] Найдено размеров для товара: ${relatedProducts.length}`);
     
-    const uniqueSizes = relatedProducts.map(product => ({
-      size: product.size,
-      price: product.price,
-      available: true
-    }));
+    // Создаем уникальные размеры
+    const uniqueSizes = relatedProducts
+      .map(product => ({
+        size: product.size,
+        price: product.price,
+        available: true
+      }))
+      .filter((size, index, self) => index === self.findIndex(s => s.size === size.size))
+      .sort((a, b) => {
+        const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
+        const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
+        return aNum - bNum;
+      });
     
+    console.log(`📏 [ID] Уникальные размеры (${uniqueSizes.length}):`, uniqueSizes.map(s => s.size));
+    
+    // Парсим фотографии
     console.log(`📸 [ID] Исходные фото товара: "${targetProduct.photo}"`);
     const allPhotos = parsePhotosArray(targetProduct.photo || '');
     console.log(`📸 [ID] Обработанные фото (${allPhotos.length}):`, allPhotos);
+    
+    // Собираем фото из связанных товаров
+    const relatedPhotos: string[] = [];
+    for (const product of relatedProducts) {
+      if (product.photo && product.photo !== targetProduct.photo) {
+        const additionalPhotos = parsePhotosArray(product.photo);
+        relatedPhotos.push(...additionalPhotos);
+      }
+    }
+    
+    // Объединяем все фото и убираем дубликаты
+    const finalPhotos = [...new Set([...allPhotos, ...relatedPhotos])].slice(0, 10);
+    console.log(`📸 [ID] Итого фото с учетом связанных товаров: ${finalPhotos.length}`);
     
     const productWithSizes: ProductWithSizes = {
       id: targetProduct.id,
@@ -330,15 +431,15 @@ export async function GET(
       name: targetProduct.name,
       category: targetProduct.category,
       gender: targetProduct.gender,
-      description: `${targetProduct.name} от ${targetProduct.brand}. ${targetProduct.category}. 
-        Высокое качество и стиль в одном товаре.`,
-      photos: allPhotos,
+      description: `${targetProduct.name} от ${targetProduct.brand}. ${targetProduct.category}. Высокое качество и стиль в одном товаре.`,
+      photos: finalPhotos,
       sizes: uniqueSizes,
       inStock: uniqueSizes.some(s => s.available),
       deliveryInfo: 'Среднее время стандартной доставки: 15-20 рабочих дней.'
     };
     
-    console.log(`✅ [ID] Возвращаем товар с ${allPhotos.length} фото и ${uniqueSizes.length} размерами`);
+    console.log(`✅ [ID] Возвращаем товар с ${finalPhotos.length} фото и ${uniqueSizes.length} размерами`);
+    console.groupEnd();
     
     return NextResponse.json<ApiResponse>({
       success: true,

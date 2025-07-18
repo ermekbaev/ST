@@ -1,5 +1,6 @@
+// src/app/api/products/route.ts - ПОЛНЫЙ ИСПРАВЛЕННЫЙ ФАЙЛ
 import { NextRequest, NextResponse } from 'next/server';
-import { parse } from 'csv-parse/sync'; // 👈 Импорт csv-parse
+import { parse } from 'csv-parse/sync';
 
 // Интерфейс для товара
 interface Product {
@@ -116,24 +117,55 @@ const extractAndCleanUrls = (line: string): string[] => {
   return [...new Set(cleanUrls)];
 };
 
-// Поиск фото в соседних строках с улучшенной очисткой URL
-const findPhotoInAdjacentLines = (lines: string[], currentIndex: number): string => {
-  const searchRange = 3;
-  const startIndex = Math.max(0, currentIndex - searchRange);
-  const endIndex = Math.min(lines.length - 1, currentIndex + searchRange);
+// 🔧 НОВАЯ ФУНКЦИЯ: Получение фото ТОЛЬКО из правильного столбца
+const getPhotoFromCorrectColumn = (values: string[]): string => {
+  // Проверяем разные столбцы по очереди
+  const photoColumns = [8, 9, 10, 7]; // I, J, K, H
   
-  for (let i = startIndex; i <= endIndex; i++) {
-    const line = lines[i];
-    if (line.includes('cdn-img.thepoizon.ru') || line.includes('cdn.poizon.com') || line.includes('https://')) {
-      const cleanUrls = extractAndCleanUrls(line);
+  for (const colIndex of photoColumns) {
+    const columnValue = values[colIndex] || '';
+    const letter = String.fromCharCode(65 + colIndex);
+    
+    console.log(`📸 Проверяем столбец ${letter} (${colIndex}): "${columnValue.substring(0, 60)}${columnValue.length > 60 ? '...' : ''}"`);
+    
+    if (columnValue && columnValue.trim()) {
+      const cleanUrls = extractAndCleanUrls(columnValue);
       if (cleanUrls.length > 0) {
-        console.log(`✅ Найдено фото в строке ${i + 1}: ${cleanUrls[0]}`);
+        console.log(`✅ Найдено фото в столбце ${letter}: ${cleanUrls[0].substring(0, 60)}...`);
         return cleanUrls[0];
       }
     }
   }
   
+  console.log(`❌ Фото не найдено ни в одном столбце`);
   return '';
+};
+
+// 🔧 НОВАЯ ФУНКЦИЯ: Очистка размера от лишних символов
+const cleanSize = (sizeString: string): string => {
+  if (!sizeString) return '';
+  
+  let cleaned = sizeString.trim();
+  
+  // Убираем лишние символы и префиксы
+  cleaned = cleaned.replace(/^["']+|["']+$/g, ''); // Кавычки
+  cleaned = cleaned.replace(/\s+/g, ' '); // Множественные пробелы
+  cleaned = cleaned.replace(/^(размер|size|р\.?|s\.?)\s*/i, ''); // Префиксы "размер", "size" и т.д.
+  
+  // Если остался только номер, возвращаем его
+  const numberMatch = cleaned.match(/^\d+(\.\d+)?$/);
+  if (numberMatch) {
+    return numberMatch[0];
+  }
+  
+  // Если есть размер + что-то еще, берем только размерную часть
+  const sizeMatch = cleaned.match(/^(\d+(\.\d+)?)\s/);
+  if (sizeMatch) {
+    return sizeMatch[1];
+  }
+  
+  // Возвращаем очищенную строку (максимум 10 символов)
+  return cleaned.substring(0, 10);
 };
 
 // Проверка валидности данных товара
@@ -166,59 +198,154 @@ const isValidProductData = (values: string[]): boolean => {
   return isValid;
 };
 
-// 🔧 НОВАЯ ФУНКЦИЯ: Парсинг CSV с помощью csv-parse
+// 🔍 ДИАГНОСТИЧЕСКАЯ ФУНКЦИЯ: Анализ структуры столбцов
+const diagnoseColumns = (records: any[]): void => {
+  console.log('🔍 === ДИАГНОСТИКА СТОЛБЦОВ ===');
+  
+  if (records.length < 2) {
+    console.log('❌ Недостаточно данных для диагностики');
+    return;
+  }
+  
+  // Анализируем заголовки
+  const headers = records[0] || [];
+  console.log('📋 Заголовки столбцов:');
+  headers.forEach((header: any, index: number) => {
+    const letter = String.fromCharCode(65 + index); // A, B, C, D...
+    console.log(`  ${letter} (${index}): "${header}"`);
+  });
+  
+  // Анализируем первые 3 строки данных
+  console.log('\n📊 Первые 3 строки данных:');
+  for (let i = 1; i <= Math.min(3, records.length - 1); i++) {
+    const row = records[i] || [];
+    console.log(`\nСтрока ${i}:`);
+    row.forEach((value: any, index: number) => {
+      const letter = String.fromCharCode(65 + index);
+      const displayValue = String(value || '').substring(0, 50);
+      console.log(`  ${letter} (${index}): "${displayValue}${String(value || '').length > 50 ? '...' : ''}"`);
+    });
+  }
+  
+  // Ищем столбцы с фотографиями
+  console.log('\n📸 Поиск столбцов с фотографиями:');
+  for (let colIndex = 0; colIndex < Math.max(...records.map(r => r.length)); colIndex++) {
+    const letter = String.fromCharCode(65 + colIndex);
+    let photoCount = 0;
+    
+    for (let rowIndex = 1; rowIndex < Math.min(10, records.length); rowIndex++) {
+      const value = String(records[rowIndex][colIndex] || '');
+      if (value.includes('https://') || value.includes('cdn')) {
+        photoCount++;
+      }
+    }
+    
+    if (photoCount > 0) {
+      console.log(`  Столбец ${letter} (${colIndex}): найдено ${photoCount} строк с URL`);
+    }
+  }
+  
+  console.log('=== КОНЕЦ ДИАГНОСТИКИ ===\n');
+};
+
+// 🔧 ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ФУНКЦИЯ: Парсинг CSV с правильными фото и размерами
 const parseMultiLineCSV = (csvText: string): Product[] => {
   console.log('🚀 Начинаем надёжный парсинг CSV через csv-parse');
   
-  // Используем csv-parse для корректного парсинга многострочных полей
   const records: any[] = parse(csvText, {
-    skip_empty_lines: true,   // Пропускаем пустые строки
-    relax_quotes: true,       // Более гибкая обработка кавычек
-    relax_column_count: true, // Позволяем разное количество колонок
-    trim: true,              // Автоматически обрезаем пробелы
-    quote: '"',              // Символ кавычек
-    delimiter: ',',          // Разделитель
-    escape: '"'              // Символ экранирования
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+    trim: true,
+    quote: '"',
+    delimiter: ',',
+    escape: '"'
   });
   
   console.log(`📊 Всего строк: ${records.length}`);
   
+  // 🔍 ДОБАВЛЯЕМ ДИАГНОСТИКУ
+  diagnoseColumns(records);
+  
   const products: Product[] = [];
+  const usedIds = new Set<string>();
   
   // Проходим по всем записям (пропускаем заголовок)
   for (let i = 1; i < records.length; i++) {
     const row = records[i];
     
-    // Проверяем, что строка содержит достаточно данных
     if (!row || row.length < 7) continue;
     
-    // Преобразуем каждое значение в строку и очищаем
     const values = row.map((val: any) => cleanString(String(val || '')));
     
-    // Проверяем валидность данных
     if (!isValidProductData(values)) continue;
     
-    // Ищем фото в соседних строках
-    // Преобразуем records обратно в строки для поиска фото
-    const linesForPhotoSearch = records.map(r => r.join(','));
-    const photoUrl = findPhotoInAdjacentLines(linesForPhotoSearch, i);
+    // ========================================================================
+    // 🔧 ИСПРАВЛЕНО: Получаем фото ТОЛЬКО из правильных столбцов
+    // ========================================================================
+    console.log(`🔍 Анализ фото для строки ${i}:`);
+    const photoUrl = getPhotoFromCorrectColumn(values);
+    
+    // ========================================================================
+    // 🔧 ИСПРАВЛЕНО: Очищаем размер от лишних данных
+    // ========================================================================
+    console.log(`📏 Анализ размера:`);
+    console.log(`  Столбец D (3): "${values[3]}"`);
+    const cleanedSize = cleanSize(values[3]);
+    console.log(`  Очищенный размер: "${cleanedSize}"`);
+    
+    // Создаем стабильный ID на основе артикула
+    let productId = cleanString(values[0]);
+    let counter = 1;
+    let originalId = productId;
+    while (usedIds.has(productId)) {
+      productId = `${originalId}_${counter}`;
+      counter++;
+    }
+    usedIds.add(productId);
     
     const product: Product = {
-      id: `product_${i}`,
-      article: values[0],       // A: Артикул
-      brand: values[1],         // B: Бренд
-      name: values[2],          // C: Название  
-      size: values[3],          // D: Размер
-      category: values[4],      // E: Категория
-      gender: values[5],        // F: Пол
-      price: parseFloat(values[6]) || 0, // G: Цена
-      photo: photoUrl
+      id: productId,            // 🎯 Артикул как ID
+      article: values[0],       // A: Артикул ✅
+      brand: values[1],         // B: Бренд ✅  
+      name: values[2],          // C: Название ✅
+      size: cleanedSize,        // D: Размер 🔧 ИСПРАВЛЕНО
+      category: values[4],      // E: Категория ✅
+      gender: values[5],        // F: Пол ✅
+      price: parseFloat(values[6]) || 0, // G: Цена ✅
+      photo: photoUrl           // H-K: Фото 🔧 ИСПРАВЛЕНО
     };
     
     products.push(product);
+    
+    // Подробное логирование каждого товара
+    console.log(`📦 Создан товар ${products.length}:`);
+    console.log(`  ID: ${product.id}`);
+    console.log(`  Артикул: ${product.article}`);
+    console.log(`  Название: ${product.name.substring(0, 40)}...`);
+    console.log(`  Бренд: ${product.brand}`);
+    console.log(`  Размер: "${product.size}"`);
+    console.log(`  Категория: ${product.category}`);
+    console.log(`  Цена: ${product.price}`);
+    console.log(`  Фото: ${product.photo ? product.photo.substring(0, 60) + '...' : 'НЕТ'}`);
+    console.log(`  ---`);
   }
   
   console.log(`✅ Готово: найдено ${products.length} валидных товаров`);
+  
+  // Проверка на дубликаты ID
+  const idCounts = new Map<string, number>();
+  products.forEach(p => {
+    idCounts.set(p.id, (idCounts.get(p.id) || 0) + 1);
+  });
+  
+  const duplicates = Array.from(idCounts.entries()).filter(([_, count]) => count > 1);
+  if (duplicates.length > 0) {
+    console.warn('⚠️ Найдены дубликаты ID:', duplicates);
+  } else {
+    console.log('✅ Все ID уникальны');
+  }
+  
   return products;
 };
 
@@ -242,10 +369,25 @@ export async function GET(request: NextRequest) {
 
     const csvText = await response.text();
     
-    // 🎯 ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ПАРСИНГА
+    // 🎯 ИСПОЛЬЗУЕМ ИСПРАВЛЕННУЮ ФУНКЦИЮ ПАРСИНГА
     const products = parseMultiLineCSV(csvText);
     
     console.log(`🎉 Возвращаем ${products.length} товаров`);
+    
+    // Статистика для отладки
+    const withPhotos = products.filter(p => p.photo && p.photo.trim()).length;
+    const withoutPhotos = products.length - withPhotos;
+    
+    console.log(`📊 Статистика товаров:`);
+    console.log(`  - Всего: ${products.length}`);
+    console.log(`  - С фото: ${withPhotos}`);
+    console.log(`  - Без фото: ${withoutPhotos}`);
+    
+    // Показываем первые 3 товара для проверки
+    console.log(`📋 Первые 3 товара:`);
+    products.slice(0, 3).forEach((p, i) => {
+      console.log(`  ${i + 1}. ID: ${p.id} | Article: ${p.article} | Name: ${p.name.substring(0, 30)}... | Size: ${p.size} | Photo: ${p.photo ? 'Есть' : 'Нет'}`);
+    });
     
     return NextResponse.json<ApiResponse>({
       success: true,

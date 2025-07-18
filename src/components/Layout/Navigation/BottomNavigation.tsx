@@ -1,7 +1,10 @@
+// src/components/Layout/Navigation/BottomNavigation.tsx - ПРОСТОЕ ДОБАВЛЕНИЕ АВТОРИЗАЦИИ
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../../../contexts/CartContext';
+import AuthModal from '../../Auth/AuthModal'; // ДОБАВИЛИ: импорт модального окна
 
 interface BottomNavigationProps {
   onSupportClick?: () => void;
@@ -10,12 +13,11 @@ interface BottomNavigationProps {
 const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) => {
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false); // ДОБАВИЛИ: состояние модального окна
   const { totalItems, toggleCart } = useCart();
 
   useEffect(() => {
     setMounted(true);
-    
-    // Проверяем авторизацию при загрузке компонента
     checkAuthStatus();
   }, []);
 
@@ -26,10 +28,10 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
     }
   };
 
+  // ИЗМЕНИЛИ: простая логика обработки клика по профилю
   const handleProfileClick = () => {
     console.log('Клик по иконке профиля в мобильной навигации');
     
-    // Проверяем авторизацию
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
@@ -37,69 +39,96 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
         console.log('👤 Пользователь авторизован, переход в профиль');
         window.location.href = '/profile';
       } else {
-        // Пользователь не авторизован - показываем сообщение с инструкцией
-        alert(
-          '🔐 Для доступа к профилю необходимо авторизоваться.\n\n' +
-          '👆 Нажмите кнопку "Войти" в верхней части сайта для регистрации или входа.'
-        );
+        // Пользователь не авторизован - показываем модальное окно
+        console.log('🔐 Показываем модальное окно авторизации');
+        setShowAuthModal(true);
       }
     }
   };
 
-  const handleCartClick = () => {
-    console.log('Открытие корзины');
-    toggleCart();
+  // ДОБАВИЛИ: обработчик закрытия модального окна
+  const handleCloseAuthModal = () => {
+    setShowAuthModal(false);
+    // Перепроверяем статус авторизации после закрытия модального окна
+    checkAuthStatus();
   };
 
   const handleSupportClick = () => {
-    console.log('Активация виджета поддержки');
+    console.log('Клик по иконке поддержки');
     if (onSupportClick) {
       onSupportClick();
     }
   };
 
+  const handleCartClick = () => {
+    console.log('Клик по корзине в нижней навигации');
+    toggleCart();
+  };
+
+  const handleHomeClick = () => {
+    console.log('Клик по домой');
+    window.location.href = '/';
+  };
+
+  // Не показываем до монтирования
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
-      <div className="flex items-center justify-around h-[70px] px-4">
-        
-        {/* Профиль */}
-        <button
-          onClick={handleProfileClick}
-          className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity relative"
-        >
-          <img src="/icons/profile.svg" alt="Профиль" className="w-8 h-8" />
-          {/* Показываем зеленую точку если пользователь авторизован */}
-          {mounted && isAuthenticated && (
-            <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-          )}
-        </button>
+    <>
+      {/* Основная нижняя навигация (МИНИМАЛЬНЫЕ ИЗМЕНЕНИЯ) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 lg:hidden">
+        <div className="flex items-center justify-around h-[70px] px-4">
 
-        {/* Корзина */}
-        <button
-          onClick={handleCartClick}
-          className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity relative"
-        >
-          <div className="relative">
-            <img src="/icons/cart.svg" alt="Корзина" className="w-8 h-8" />
-            {/* Счетчик товаров */}
-            {mounted && totalItems > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px]">
-                {totalItems > 99 ? '99+' : totalItems}
-              </span>
-            )}
-          </div>
-        </button>
+          {/* ИЗМЕНИЛИ: Кнопка профиля с простой логикой */}
+          <button
+            onClick={handleProfileClick}
+            className="flex flex-col items-center justify-center p-2 hover:opacity-70 transition-opacity"
+          >
+            <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-6 mb-1" />
+            <span className="text-xs text-gray-600 font-product">
+              {isAuthenticated ? 'Профиль' : 'Войти'}
+            </span>
+          </button>
 
-        {/* Поддержка */}
-        <button
-          onClick={handleSupportClick}
-          className="flex items-center justify-center p-4 hover:opacity-70 transition-opacity"
-        >
-          <img src="/supportIcons/Support2.svg" alt="Поддержка" className="w-8 h-8" />
-        </button>
-        
+          
+          {/* Кнопка корзины */}
+          <button
+            onClick={handleCartClick}
+            className="flex flex-col items-center justify-center p-2 hover:opacity-70 transition-opacity relative"
+          >
+            <div className="relative">
+              <img src="/icons/cart.svg" alt="Корзина" className="w-6 h-6 mb-1" />
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-gray-600 font-product">Корзина</span>
+          </button>
+
+          {/* Кнопка поддержки */}
+          <button
+            onClick={handleSupportClick}
+            className="flex flex-col items-center justify-center p-2 hover:opacity-70 transition-opacity"
+          >
+            <img src="/supportIcons/Support2.svg" alt="Поддержка" className="w-6 h-6 mb-1" />
+            <span className="text-xs text-gray-600 font-product">Поддержка</span>
+          </button>
+          
+        </div>
       </div>
-    </div>
+
+      {/* ДОБАВИЛИ: Модальное окно авторизации */}
+      {showAuthModal && (
+        <AuthModal onClose={handleCloseAuthModal} />
+      )}
+
+      {/* Отступ для контента, чтобы он не перекрывался нижней навигацией */}
+      <div className="h-[70px] lg:hidden" />
+    </>
   );
 };
 

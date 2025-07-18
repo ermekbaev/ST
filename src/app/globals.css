@@ -3480,17 +3480,6 @@ select {
   line-height: 18px;
 }
 /* ============================================
-   ШРИФТЫ И ПЕРЕМЕННЫЕ
-   ============================================ */
-
-:root {
-  --font-random-grotesque: "Random Grotesque", Arial, sans-serif;
-  --font-random-grotesque-spacious: "Random Grotesque Spacious Black", Arial,
-    sans-serif;
-  --font-druk-wide: "Druk Wide", Arial, sans-serif;
-}
-
-/* ============================================
    ФОНЫ С РАДИАЛЬНЫМИ ГРАДИЕНТАМИ
    ============================================ */
 

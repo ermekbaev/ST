@@ -296,11 +296,11 @@ export default function ProductPage({ params }: ProductPageProps) {
       />
 
       {/* Уведомление о добавлении в корзину */}
-      <CartNotification
+      {/* <CartNotification
         isVisible={showNotification}
         productName={notificationProduct}
         onHide={() => setShowNotification(false)}
-      />
+      /> */}
     </div>
   );
 }
