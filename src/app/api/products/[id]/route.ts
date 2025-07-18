@@ -1,6 +1,6 @@
-// src/app/api/products/[id]/route.ts - ОБНОВЛЕНО с csv-parse и очисткой URL
-import { NextResponse } from 'next/server';
-import { parse } from 'csv-parse/sync'; // 👈 Импорт csv-parse
+// src/app/api/products/[id]/route.ts - ИСПРАВЛЕНО для Next.js 15
+import { NextRequest, NextResponse } from 'next/server';
+import { parse } from 'csv-parse/sync';
 
 const SHEET_ID = '1naTkxDrQFfj_d7Q2U46GOj24hSqTAqrt_Yz1ImaKyVc';
 
@@ -24,7 +24,7 @@ interface ProductWithSizes {
   category: string;
   gender: string;
   description: string;
-  photos: string[]; // Массив изображений
+  photos: string[];
   sizes: Array<{
     size: string;
     price: number;
@@ -46,20 +46,17 @@ const cleanString = (str: string): string => {
   return str.trim().replace(/^["']+|["']+$/g, '').replace(/\s+/g, ' ');
 };
 
-// 🔧 ИСПРАВЛЕННАЯ ФУНКЦИЯ: Очистка одного URL от мусора и проблемных параметров
+// Очистка URL от мусора и проблемных параметров
 const cleanImageUrl = (url: string): string => {
   console.log(`🧽 Очищаем URL: ${url.substring(0, 100)}...`);
   
-  // 1. Убираем кавычки, запятые и прочие символы в начале и конце
   let cleanUrl = url.replace(/^[",;}\]\)\s]+/, '').replace(/[",;}\]\)\s]+$/, '').trim();
   
-  // 2. Извлекаем только https:// часть (убираем префиксы типа "200_m_pad.")
   const httpsMatch = cleanUrl.match(/https:\/\/.+/);
   if (httpsMatch) {
     cleanUrl = httpsMatch[0];
   }
   
-  // 3. Обрабатываем query параметры после ?
   const queryIndex = cleanUrl.indexOf('?');
   if (queryIndex !== -1) {
     const baseUrl = cleanUrl.substring(0, queryIndex);
@@ -67,26 +64,21 @@ const cleanImageUrl = (url: string): string => {
     
     console.log(`🔍 Найдены query параметры: ${queryPart}`);
     
-    // Проверяем, содержит ли query только валидные символы для URL
     if (/^[a-zA-Z0-9=&_\-%.]+$/.test(queryPart)) {
-      // Query параметры выглядят нормально, оставляем
       cleanUrl = baseUrl + '?' + queryPart;
       console.log(`✅ Query параметры валидные, оставляем`);
     } else {
-      // Query содержит странные символы, пытаемся извлечь валидную часть
       const validQueryMatch = queryPart.match(/^[a-zA-Z0-9=&_\-%.]+/);
       if (validQueryMatch && validQueryMatch[0].length > 5) {
         cleanUrl = baseUrl + '?' + validQueryMatch[0];
         console.log(`⚠️ Частично валидные параметры`);
       } else {
-        // Убираем query полностью, оставляем только базовый URL
         cleanUrl = baseUrl;
         console.log(`❌ Убираем невалидные параметры`);
       }
     }
   }
   
-  // 4. ИСПРАВЛЕНО: Убираем trailing символы, используя правильное регулярное выражение
   cleanUrl = cleanUrl.replace(/[^\w\-._~:\/?#@!$&'()*+,;=%]+$/, '');
   
   console.log(`✅ Финальный URL: ${cleanUrl}`);
@@ -95,7 +87,6 @@ const cleanImageUrl = (url: string): string => {
 
 // Функция для извлечения и очистки URL от параметров
 const extractAndCleanUrls = (line: string): string[] => {
-  // Поиск всех URL в строке
   const urlPatterns = [
     /https:\/\/cdn\.poizon\.com\/[^\s,;"'\n\r\t]+/g,
     /https:\/\/cdn-img\.thepoizon\.ru\/[^\s,;"'\n\r\t]+/g,
@@ -105,13 +96,11 @@ const extractAndCleanUrls = (line: string): string[] => {
   
   let allUrls: string[] = [];
   
-  // Применяем все паттерны
   for (const pattern of urlPatterns) {
     const matches = line.match(pattern) || [];
     allUrls = allUrls.concat(matches);
   }
   
-  // Также проверяем разделители
   if (line.includes(';')) {
     const parts = line.split(';');
     for (const part of parts) {
@@ -121,13 +110,11 @@ const extractAndCleanUrls = (line: string): string[] => {
     }
   }
   
-  // Очищаем каждый URL
   const cleanUrls = allUrls
     .map(url => cleanImageUrl(url))
-    .filter(url => url.length > 20) // Минимальная длина URL
+    .filter(url => url.length > 20)
     .filter(url => url.startsWith('https://'));
   
-  // Удаляем дубликаты
   return [...new Set(cleanUrls)];
 };
 
@@ -150,7 +137,7 @@ const findPhotoInAdjacentLines = (lines: string[], currentIndex: number): string
       const cleanUrls = extractAndCleanUrls(line);
       if (cleanUrls.length > 0) {
         console.log(`✅ Извлечено ${cleanUrls.length} URL:`, cleanUrls[0].substring(0, 80) + '...');
-        return cleanUrls.join(';'); // ВАЖНО: возвращаем ВСЕ URL через ';'
+        return cleanUrls.join(';');
       }
     }
   }
@@ -159,7 +146,7 @@ const findPhotoInAdjacentLines = (lines: string[], currentIndex: number): string
   return '';
 };
 
-// НОВАЯ ФУНКЦИЯ: Парсинг массива фото из строки с ';'
+// Парсинг массива фото из строки с ';'
 const parsePhotosArray = (photoString: string): string[] => {
   if (!photoString || photoString.trim() === '') {
     console.log('❌ Пустая строка фотографий');
@@ -171,28 +158,23 @@ const parsePhotosArray = (photoString: string): string[] => {
   
   let photos: string[] = [];
   
-  // ПРИОРИТЕТ: Разделяем по точке с запятой
   if (photoString.includes(';')) {
     photos = photoString.split(';');
     console.log(`✂️ Разделение по ";" - найдено ${photos.length} частей`);
   }
-  // Затем пробуем переносы строк
   else if (photoString.includes('\n') || photoString.includes('\r')) {
     photos = photoString.split(/[\r\n]+/);
     console.log(`✂️ Разделение по переносам строк - найдено ${photos.length} частей`);
   }
-  // Потом запятые
   else if (photoString.includes(',')) {
     photos = photoString.split(',');
     console.log(`✂️ Разделение по запятым - найдено ${photos.length} частей`);
   }
-  // Если разделителей нет, используем всю строку
   else {
     photos = [photoString];
     console.log('📦 Используем всю строку как один URL');
   }
   
-  // Очищаем каждый URL
   const cleanPhotos = photos
     .map((url: string, index: number) => {
       console.log(`🧽 Очищаем URL ${index + 1}:`);
@@ -203,11 +185,11 @@ const parsePhotosArray = (photoString: string): string[] => {
       
       return cleanUrl;
     })
-    .filter((url: string) => url.length > 20) // Минимальная длина URL
+    .filter((url: string) => url.length > 20)
     .filter((url: string) => url.startsWith('https://'));
   
   console.log(`✅ Итого очищенных URL: ${cleanPhotos.length}`);
-  return [...new Set(cleanPhotos)]; // Удаляем дубликаты
+  return [...new Set(cleanPhotos)];
 };
 
 // Проверка валидности данных товара
@@ -232,52 +214,45 @@ const isValidProductData = (values: string[]): boolean => {
   return hasRealArticle && hasRealBrand && hasRealName && hasRealCategory && hasValidPrice && !isHeaderRow;
 };
 
-// 🔧 НОВАЯ ФУНКЦИЯ: Парсинг CSV с помощью csv-parse
+// Парсинг CSV с помощью csv-parse
 const parseMultiLineCSV = (csvText: string): Product[] => {
   console.log('🚀 [ID] Начинаем надёжный парсинг CSV через csv-parse');
   
-  // Используем csv-parse для корректного парсинга многострочных полей
   const records: any[] = parse(csvText, {
-    skip_empty_lines: true,   // Пропускаем пустые строки
-    relax_quotes: true,       // Более гибкая обработка кавычек
-    relax_column_count: true, // Позволяем разное количество колонок
-    trim: true,              // Автоматически обрезаем пробелы
-    quote: '"',              // Символ кавычек
-    delimiter: ',',          // Разделитель
-    escape: '"'              // Символ экранирования
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+    trim: true,
+    quote: '"',
+    delimiter: ',',
+    escape: '"'
   });
   
   console.log(`📊 [ID] Всего строк: ${records.length}`);
   
   const products: Product[] = [];
   
-  // Проходим по всем записям (пропускаем заголовок)
   for (let i = 1; i < records.length; i++) {
     const row = records[i];
     
-    // Проверяем, что строка содержит достаточно данных
     if (!row || row.length < 7) continue;
     
-    // Преобразуем каждое значение в строку и очищаем
     const values = row.map((val: any) => cleanString(String(val || '')));
     
-    // Проверяем валидность данных
     if (!isValidProductData(values)) continue;
     
-    // Ищем фото в соседних строках
-    // Преобразуем records обратно в строки для поиска фото
     const linesForPhotoSearch = records.map(r => r.join(','));
     const photoUrl = findPhotoInAdjacentLines(linesForPhotoSearch, i);
     
     const product: Product = {
       id: `product_${i}`,
-      article: values[0],       // A: Артикул
-      brand: values[1],         // B: Бренд
-      name: values[2],          // C: Название  
-      size: values[3],          // D: Размер
-      category: values[4],      // E: Категория
-      gender: values[5],        // F: Пол
-      price: parseFloat(values[6]) || 0, // G: Цена
+      article: values[0],
+      brand: values[1],
+      name: values[2],
+      size: values[3],
+      category: values[4],
+      gender: values[5],
+      price: parseFloat(values[6]) || 0,
       photo: photoUrl
     };
     
@@ -288,12 +263,14 @@ const parseMultiLineCSV = (csvText: string): Product[] => {
   return products;
 };
 
+// ✅ ИСПРАВЛЕНО: Правильный синтаксис для Next.js 15
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    // ✅ ИСПРАВЛЕНО: Ожидаем Promise параметров
+    const { id } = await context.params;
     console.log(`🔍 [ID] Поиск товара с ID: ${id}`);
     
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -312,10 +289,8 @@ export async function GET(
     const csvText: string = await response.text();
     console.log(`📄 [ID] Загружен CSV размером: ${csvText.length.toLocaleString()} символов`);
     
-    // 🎯 ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ПАРСИНГА
     const allProducts = parseMultiLineCSV(csvText);
     
-    // Ищем конкретный товар
     const targetProduct = allProducts.find(product => 
       product.id === id || product.article === id
     );
@@ -331,7 +306,6 @@ export async function GET(
     
     console.log(`✅ [ID] Найден товар:`, targetProduct.name);
     
-    // Ищем все размеры для этого товара (товары с тем же названием и брендом)
     const relatedProducts = allProducts.filter(product => 
       product.name === targetProduct.name && 
       product.brand === targetProduct.brand
@@ -339,19 +313,16 @@ export async function GET(
     
     console.log(`🔍 [ID] Найдено размеров для товара: ${relatedProducts.length}`);
     
-    // Создаем массив размеров
     const uniqueSizes = relatedProducts.map(product => ({
       size: product.size,
       price: product.price,
-      available: true // Предполагаем, что все размеры доступны
+      available: true
     }));
     
-    // Собираем все фотографии из найденного товара
     console.log(`📸 [ID] Исходные фото товара: "${targetProduct.photo}"`);
     const allPhotos = parsePhotosArray(targetProduct.photo || '');
     console.log(`📸 [ID] Обработанные фото (${allPhotos.length}):`, allPhotos);
     
-    // Формируем расширенную информацию о товаре
     const productWithSizes: ProductWithSizes = {
       id: targetProduct.id,
       article: targetProduct.article,
@@ -361,7 +332,7 @@ export async function GET(
       gender: targetProduct.gender,
       description: `${targetProduct.name} от ${targetProduct.brand}. ${targetProduct.category}. 
         Высокое качество и стиль в одном товаре.`,
-      photos: allPhotos, // Массив всех найденных и очищенных изображений
+      photos: allPhotos,
       sizes: uniqueSizes,
       inStock: uniqueSizes.some(s => s.available),
       deliveryInfo: 'Среднее время стандартной доставки: 15-20 рабочих дней.'
