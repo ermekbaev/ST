@@ -45,7 +45,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
       >
       {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
           <img
-            src={currentImage.url}
+            src={currentImage.url || undefined}
             alt={currentImage.alt || productName}
             className="w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-105"
             onError={() => handleImageError(currentImage.id)}
@@ -152,7 +152,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
                 >
                 {!thumbHasError && image.url && image.url.trim() !== '' ? (
                     <img
-                      src={image.url}
+                      src={image.url || undefined}
                       alt={image.alt || `${productName} - фото ${index + 1}`}
                       className="w-full h-full object-contain object-center"
                       onError={() => handleImageError(image.id)}

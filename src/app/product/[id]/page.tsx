@@ -1,3 +1,4 @@
+// src/app/product/[id]/page.tsx - ОТЛАДОЧНАЯ ВЕРСИЯ
 'use client';
 
 import React, { useState, useEffect, use } from 'react';
@@ -16,30 +17,6 @@ interface ProductPageProps {
     id: string;
   }>;
 }
-
-// Моковые данные для fallback
-const mockImages: GalleryImage[] = [
-  {
-    id: '1',
-    url: 'https://via.placeholder.com/800x600/E5DDD4/8C8072?text=Photo+1',
-    alt: 'Товар - основное фото'
-  },
-  {
-    id: '2', 
-    url: 'https://via.placeholder.com/800x600/E5DDD4/8C8072?text=Photo+2',
-    alt: 'Товар - вид сбоку'
-  },
-  {
-    id: '3',
-    url: 'https://via.placeholder.com/800x600/E5DDD4/8C8072?text=Photo+3', 
-    alt: 'Товар - вид сзади'
-  },
-  {
-    id: '4',
-    url: 'https://via.placeholder.com/800x600/E5DDD4/8C8072?text=Photo+4',
-    alt: 'Товар - подошва'
-  }
-];
 
 export default function ProductPage({ params }: ProductPageProps) {
   const [mounted, setMounted] = useState(false);
@@ -66,11 +43,26 @@ export default function ProductPage({ params }: ProductPageProps) {
         try {
           setLoading(true);
           
+          console.log('🚀 Загружаем товар с ID:', resolvedParams.id);
+          
           // Реальный API запрос
           const response = await fetch(`/api/products/${resolvedParams.id}`);
           const result = await response.json();
           
+          console.log('📦 Получен ответ от API:', {
+            success: result.success,
+            hasData: !!result.data,
+            error: result.error
+          });
+          
           if (result.success && result.data) {
+            console.log('✅ Данные товара получены:', {
+              name: result.data.name,
+              photosCount: result.data.photos?.length || 0,
+              photos: result.data.photos,
+              sizesCount: result.data.sizes?.length || 0
+            });
+            
             // Преобразуем данные в нужный формат
             const productData: ProductInfoType = {
               id: result.data.id,
@@ -93,34 +85,44 @@ export default function ProductPage({ params }: ProductPageProps) {
             if (result.data.photos && result.data.photos.length > 0) {
               // Используем ТОЛЬКО реальные изображения из таблицы
               result.data.photos.forEach((photoUrl: string, index: number) => {
-                productImages.push({
-                  id: `photo_${index + 1}`,
-                  url: photoUrl,
-                  alt: `${result.data.name} - фото ${index + 1}`
-                });
+                // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: убеждаемся что URL валидный
+                if (photoUrl && photoUrl.trim() && (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'))) {
+                  productImages.push({
+                    id: `photo_${index + 1}`,
+                    url: photoUrl.trim(),
+                    alt: `${result.data.name} - фото ${index + 1}`
+                  });
+                  console.log(`📸 Добавлено изображение ${index + 1}:`, photoUrl.substring(0, 80) + '...');
+                } else {
+                  console.warn(`⚠️ Пропущен невалидный URL изображения ${index + 1}:`, photoUrl);
+                }
               });
             }
             
-            // Если нет изображений вообще, используем fallback
+            // Если НЕТ валидных изображений, добавляем placeholder
             if (productImages.length === 0) {
+              console.log('📷 Нет валидных изображений, добавляем placeholder');
               productImages.push({
-                id: 'fallback_1',
-                url: '',
+                id: 'placeholder_1',
+                url: '', // Пустой URL вызовет показ placeholder в галерее
                 alt: `${result.data.name} - изображение скоро появится`
               });
             }
             
             setImages(productImages);
             
-            console.log(`Загружено ${result.data.photos?.length || 0} реальных изображений для товара ${result.data.name}`);
+            console.log(`📸 Итого изображений для отображения: ${productImages.length}`);
+            productImages.forEach((img, i) => {
+              console.log(`  ${i + 1}: ${img.id} - ${img.url ? img.url.substring(0, 60) + '...' : 'PLACEHOLDER'}`);
+            });
             
           } else {
-            console.error('Товар не найден:', result.error);
+            console.error('❌ Товар не найден:', result.error);
             setProduct(null);
           }
           
         } catch (error) {
-          console.error('Ошибка загрузки товара:', error);
+          console.error('❌ Ошибка загрузки товара:', error);
           setProduct(null);
         } finally {
           setLoading(false);
@@ -163,9 +165,6 @@ export default function ProductPage({ params }: ProductPageProps) {
     
     // Логируем в консоль
     console.log(`Товар добавлен в корзину: ${product.name}, размер: ${size}, цена: ${price.toLocaleString()} ₽`);
-    
-    // Опционально: можно открыть корзину автоматически
-    // openCart();
   };
 
   const handleContinueShopping = () => {
@@ -188,8 +187,11 @@ export default function ProductPage({ params }: ProductPageProps) {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="flex justify-center items-center h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mb-4"></div>
+            <p className="text-gray-600">Инициализация...</p>
+          </div>
         </div>
       </div>
     );
@@ -198,38 +200,11 @@ export default function ProductPage({ params }: ProductPageProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        {/* Обертка со отступами для загрузки */}
-        <div className="px-5 lg:px-0 lg:pl-[139px] lg:pr-[20px]">
-          <div className="py-8">
-            <div className="animate-pulse space-y-8">
-              {/* Хлебные крошки */}
-              <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-              
-              {/* Основной контент */}
-              <div className="flex flex-col lg:flex-row lg:gap-12">
-                {/* Галерея */}
-                <div className="w-full lg:flex-1 lg:max-w-[60%]">
-                  <div className="space-y-4">
-                    <div className="w-full aspect-[16/10] bg-gray-200 rounded"></div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[...Array(4)].map((_, i) => (
-                        <div key={i} className="aspect-[16/10] bg-gray-200 rounded"></div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Информация */}
-                <div className="w-full lg:w-auto lg:flex-shrink-0 mt-8 lg:mt-0">
-                  <div className="space-y-6 lg:w-[500px]">
-                    <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-10 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-16 bg-gray-200 rounded w-full"></div>
-                    <div className="h-12 bg-gray-200 rounded w-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mb-4"></div>
+            <p className="text-gray-600">Загружаем товар...</p>
+            <p className="text-gray-400 text-sm mt-2">ID: {resolvedParams.id}</p>
           </div>
         </div>
       </div>
@@ -238,20 +213,28 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Товар не найден</h1>
-          <p className="text-gray-600 mb-8">Товар с ID {resolvedParams.id} не существует</p>
-          <button 
-            onClick={handleBackToStore}
-            className="bg-black text-white px-6 py-3 hover:bg-gray-800 transition-colors"
-          >
-            Вернуться в магазин
-          </button>
+      <div className="min-h-screen bg-white">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">Товар не найден</h1>
+            <p className="text-gray-600 mb-8">Товар с ID {resolvedParams.id} не существует</p>
+            <button 
+              onClick={handleBackToStore}
+              className="bg-black text-white px-6 py-3 hover:bg-gray-800 transition-colors"
+            >
+              Вернуться в магазин
+            </button>
+          </div>
         </div>
       </div>
     );
   }
+
+  console.log('🎨 Рендерим страницу товара:', {
+    productName: product.name,
+    imagesCount: images.length,
+    images: images.map(img => ({ id: img.id, hasUrl: !!img.url, url: img.url?.substring(0, 50) }))
+  });
 
   return (
     <div className="min-h-screen bg-white">
