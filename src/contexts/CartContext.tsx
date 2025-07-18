@@ -17,6 +17,9 @@ interface Product {
 
 // Интерфейс для элемента корзины
 interface CartItem extends Product {
+  image: any;
+  title: string;
+  images: any;
   quantity: number;
 }
 
@@ -91,6 +94,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // Добавить товар в корзину
   const addToCart = (product: Product) => {
+    //@ts-ignore
     setItems(currentItems => {
       const productId = product.id || product.article;
       const existingItem = currentItems.find(item => (item.id || item.article) === productId);

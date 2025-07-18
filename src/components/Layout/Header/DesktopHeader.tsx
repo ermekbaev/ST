@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, JSX } from 'react';
 import { useCart } from '../../../contexts/CartContext';
 import AuthModal from '../../Auth/AuthModal';
+import SmartProfileIcon from '@/components/Auth/SmartProfileicon';
 
 interface MegaMenuData {
   title: string;
@@ -215,9 +216,10 @@ const DesktopHeader: React.FC = () => {
     toggleCart();
   }, [toggleCart]);
 
-  const handleProfileClick = useCallback((): void => {
-    setShowAuthModal(true);
-  }, []);
+const handleAuthIconClick = () => {
+  console.log('Клик по иконке профиля - показываем модальное окно');
+  setShowAuthModal(true);
+};
 
   const handleCloseAuthModal = useCallback((): void => {
     setShowAuthModal(false);
@@ -413,12 +415,7 @@ const DesktopHeader: React.FC = () => {
               </span>
             )}
           </div>
-          <div 
-            className="cursor-pointer hover:opacity-70 transition-opacity duration-200 hover-lift"
-            onClick={handleProfileClick}
-          >
-            <img src="/icons/profile.svg" alt="Профиль" className="w-6 h-8" />
-          </div>
+          <SmartProfileIcon onAuthClick={handleAuthIconClick} />
         </div>
       </div>
 

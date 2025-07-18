@@ -2,18 +2,15 @@
 
 import { useState } from 'react';
 
-// 🆕 Интерфейс для пропсов
 interface AuthModalProps {
   onClose: () => void;
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
-  const [isLogin, setIsLogin] = useState(false); // Начинаем с регистрации как на скриншоте
+  const [isLogin, setIsLogin] = useState(false);
   const [formData, setFormData] = useState({
     phone: '',
     email: '',
-    name: '',
-    password: '',
     agreeToMarketing: false
   });
   const [loading, setLoading] = useState(false);
@@ -31,13 +28,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
+  
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.phone.trim()) {
@@ -54,22 +52,79 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     }
 
     setLoading(true);
-    setTimeout(() => {
+    
+    try {
+      console.log('📤 Отправка данных регистрации...');
+      
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: formData.phone,
+          email: formData.email,
+          agreeToMarketing: formData.agreeToMarketing
+        })
+      });
+
+      const data = await response.json();
+      console.log('📥 Ответ сервера:', data);
+
+      if (data.success) {
+        // Сохраняем пользователя в localStorage
+        if (typeof window !== 'undefined') {
+          const userToSave = {
+            id: data.user.id,
+            name: data.user.email.split('@')[0], // Временно используем часть email как имя
+            phone: data.user.phone,
+            email: data.user.email
+          };
+          localStorage.setItem('currentUser', JSON.stringify(userToSave));
+          console.log('💾 Пользователь сохранен в localStorage');
+        }
+        
+        // Показываем успешное сообщение с деталями
+        const sheetsMessage = data.savedToSheets 
+          ? '📊 Данные сохранены в Google Таблицы!' 
+          : '💾 Данные сохранены локально.';
+        
+        const goToProfile = confirm(
+          `✅ Регистрация прошла успешно!\n\n${sheetsMessage}\n\n` +
+          '👤 Хотите перейти в личный кабинет?\n\n' +
+          'Нажмите "ОК" для перехода или "Отмена" чтобы остаться на странице.'
+        );
+        
+        onClose();
+        
+        // Переход на существующую страницу профиля
+        if (goToProfile) {
+          window.location.href = '/profile';
+        } else {
+          // Обновляем страницу, чтобы обновить состояние авторизации
+          window.location.reload();
+        }
+      } else {
+        if (data.field) {
+          setErrors({ [data.field]: data.error });
+        } else {
+          setErrors({ general: data.error });
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Ошибка регистрации:', error);
+      setErrors({ general: 'Ошибка подключения к серверу. Попробуйте еще раз.' });
+    } finally {
       setLoading(false);
-      alert('Регистрация успешна!');
-      onClose(); // 🆕 Закрываем модальное окно после успеха
-    }, 1500);
+    }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!validateEmail(formData.email)) {
       newErrors.email = 'Введите корректный email';
-    }
-
-    if (!formData.password.trim()) {
-      newErrors.password = 'Введите пароль';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -78,64 +133,119 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     }
 
     setLoading(true);
-    setTimeout(() => {
+    
+    try {
+      console.log('📤 Отправка данных входа...');
+      
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email
+        })
+      });
+
+      const data = await response.json();
+      console.log('📥 Ответ сервера:', data);
+
+      if (data.success) {
+        // Сохраняем пользователя в localStorage в формате, совместимом с существующим профилем
+        if (typeof window !== 'undefined') {
+          const userToSave = {
+            id: data.user.id,
+            name: data.user.email.split('@')[0], // Временно используем часть email как имя
+            phone: data.user.phone,
+            email: data.user.email
+          };
+          localStorage.setItem('currentUser', JSON.stringify(userToSave));
+          console.log('💾 Пользователь сохранен в localStorage');
+        }
+        
+        const goToProfile = confirm(
+          '✅ Вход выполнен успешно!\n\n' +
+          `Добро пожаловать, ${data.user.email}!\n\n` +
+          '👤 Хотите перейти в личный кабинет?\n\n' +
+          'Нажмите "ОК" для перехода или "Отмена" чтобы остаться на странице.'
+        );
+        
+        onClose();
+        
+        // Переход на существующую страницу профиля
+        if (goToProfile) {
+          window.location.href = '/profile';
+        } else {
+          // Обновляем страницу, чтобы обновить состояние авторизации
+          window.location.reload();
+        }
+      } else {
+        if (data.field) {
+          setErrors({ [data.field]: data.error });
+        } else {
+          setErrors({ general: data.error });
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Ошибка входа:', error);
+      setErrors({ general: 'Ошибка подключения к серверу. Попробуйте еще раз.' });
+    } finally {
       setLoading(false);
-      alert('Вход выполнен!');
-      onClose(); // 🆕 Закрываем модальное окно после успеха
-    }, 1500);
+    }
   };
 
-  // 🆕 Обработчик клика по бэкдропу
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
+  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Запрещаем ввод символа +
+  if (e.key === '+') {
+    e.preventDefault();
+  }
+};
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      onClick={handleBackdropClick} // 🆕 Закрытие по клику на фон
+      onClick={handleBackdropClick}
     >
       
-      {/* Модальное окно - точные размеры из Figma */}
       <div className="relative bg-white w-full max-w-[520px] rounded-lg shadow-2xl">
         
-        {/* Кнопка закрытия */}
         <button 
           className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 text-xl"
-          onClick={onClose} // 🆕 Используем проп onClose
+          onClick={onClose}
         >
           ×
         </button>
 
-        {/* Контент модального окна */}
         <div className="p-8 pt-10">
           
           {!isLogin ? (
-            // ФОРМА РЕГИСТРАЦИИ - как на скриншоте
+            // ФОРМА РЕГИСТРАЦИИ
             <>
-              {/* Заголовок */}
               <h2 className="font-product text-[22px] leading-[28px] font-normal text-black mb-3">
                 Зарегистрируйтесь на сайте
               </h2>
               
-              {/* Подзаголовок */}
               <p className="font-product text-[14px] leading-[18px] text-gray-600 mb-8">
                 Зарегистрированным пользователям доступен личный кабинет с<br />
                 историей заказов, возможностью сохранения адресов
               </p>
 
-              {/* Поля ввода */}
               <div className="space-y-4 mb-6">
                 
-                {/* Номер телефона */}
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="номер телефона"
+                  onKeyDown={handlePhoneKeyDown}
                   className={`w-full h-12 px-4 font-product text-[14px] rounded-sm
                              bg-[#E5DDD4] border-none outline-none placeholder-gray-600
                              ${errors.phone ? 'ring-2 ring-red-500' : ''}`}
@@ -144,7 +254,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                   <p className="text-red-500 text-xs font-product">{errors.phone}</p>
                 )}
 
-                {/* Email */}
                 <input
                   type="email"
                   name="email"
@@ -161,7 +270,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
               </div>
 
-              {/* Чекбокс согласия */}
               <div className="mb-8">
                 <label className="flex items-start space-x-3 cursor-pointer">
                   <input
@@ -184,7 +292,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 </p>
               </div>
 
-              {/* Кнопка регистрации */}
+              {errors.general && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-sm">
+                  <p className="text-red-600 text-sm font-product">{errors.general}</p>
+                </div>
+              )}
+
               <button
                 onClick={handleRegister}
                 disabled={loading}
@@ -195,7 +308,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 {loading ? 'РЕГИСТРАЦИЯ...' : 'ЗАРЕГИСТРИРОВАТЬСЯ'}
               </button>
 
-              {/* Переключение на вход */}
               <div className="text-center mt-6">
                 <button
                   onClick={() => setIsLogin(true)}
@@ -208,20 +320,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           ) : (
             // ФОРМА ВХОДА
             <>
-              {/* Заголовок */}
               <h2 className="font-product text-[22px] leading-[28px] font-normal text-black mb-3">
                 Вход в личный кабинет
               </h2>
               
-              {/* Подзаголовок */}
               <p className="font-product text-[14px] leading-[18px] text-gray-600 mb-8">
-                Введите свои данные для входа в систему
+                Введите свой email для входа в систему
               </p>
 
-              {/* Поля ввода */}
               <div className="space-y-4 mb-8">
                 
-                {/* Email */}
                 <input
                   type="email"
                   name="email"
@@ -238,7 +346,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
               </div>
 
-              {/* Кнопка входа */}
+              {errors.general && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-sm">
+                  <p className="text-red-600 text-sm font-product">{errors.general}</p>
+                </div>
+              )}
+
               <button
                 onClick={handleLogin}
                 disabled={loading}
@@ -249,7 +362,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 {loading ? 'ВХОД...' : 'ВОЙТИ'}
               </button>
 
-              {/* Переключение на регистрацию */}
               <div className="text-center mt-6">
                 <button
                   onClick={() => setIsLogin(false)}
@@ -262,7 +374,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           )}
 
         </div>
-
       </div>
     </div>
   );
