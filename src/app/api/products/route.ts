@@ -1,8 +1,7 @@
-// src/app/api/products/route.ts - ИСПРАВЛЕНО СОПОСТАВЛЕНИЕ СТОЛБЦОВ
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { parse } from 'csv-parse/sync'; // 👈 Импорт csv-parse
 
-const SHEET_ID = '1naTkxDrQFfj_d7Q2U46GOj24hSqTAqrt_Yz1ImaKyVc';
-
+// Интерфейс для товара
 interface Product {
   id: string;
   article: string;
@@ -12,7 +11,7 @@ interface Product {
   category: string;
   gender: string;
   price: number;
-  photo: string;
+  photo?: string;
 }
 
 interface ApiResponse {
@@ -22,51 +21,82 @@ interface ApiResponse {
   error?: string;
 }
 
-// Функция для очистки строки
+// ID и лист Google Sheets
+const SHEET_ID = '1naTkxDrQFfj_d7Q2U46GOj24hSqTAqrt_Yz1ImaKyVc';
+const SHEET_GID = 0;
+
+// Очистка строки от лишних символов
 const cleanString = (str: string): string => {
   if (!str) return '';
   return str.trim().replace(/^["']+|["']+$/g, '').replace(/\s+/g, ' ');
 };
 
-// Функция для поиска URL изображений в соседних строках
-const findPhotoInAdjacentLines = (lines: string[], currentIndex: number): string => {
-  // Проверяем предыдущие 5 строк (где обычно находятся URL)
-  for (let i = Math.max(0, currentIndex - 5); i < currentIndex; i++) {
-    const line = lines[i];
-    if (line.includes('https://cdn.poizon.com/') || 
-        line.includes('https://cdn-img.thepoizon.ru/') ||
-        line.includes('cdn.poizon.com') ||
-        line.includes('https://')) {
-      
-      // Извлекаем URL из строки
-      const urls = extractUrlsFromLine(line);
-      if (urls.length > 0) {
-        return urls[0];
+// 🔧 ИСПРАВЛЕННАЯ ФУНКЦИЯ: Очистка одного URL от мусора и проблемных параметров
+const cleanImageUrl = (url: string): string => {
+  console.log(`🧽 Очищаем URL: ${url.substring(0, 100)}...`);
+  
+  // 1. Убираем кавычки, запятые и прочие символы в начале и конце
+  let cleanUrl = url.replace(/^[",;}\]\)\s]+/, '').replace(/[",;}\]\)\s]+$/, '').trim();
+  
+  // 2. Извлекаем только https:// часть (убираем префиксы типа "200_m_pad.")
+  const httpsMatch = cleanUrl.match(/https:\/\/.+/);
+  if (httpsMatch) {
+    cleanUrl = httpsMatch[0];
+  }
+  
+  // 3. Обрабатываем query параметры после ?
+  const queryIndex = cleanUrl.indexOf('?');
+  if (queryIndex !== -1) {
+    const baseUrl = cleanUrl.substring(0, queryIndex);
+    const queryPart = cleanUrl.substring(queryIndex + 1);
+    
+    console.log(`🔍 Найдены query параметры: ${queryPart}`);
+    
+    // Проверяем, содержит ли query только валидные символы для URL
+    if (/^[a-zA-Z0-9=&_\-%.]+$/.test(queryPart)) {
+      // Query параметры выглядят нормально, оставляем
+      cleanUrl = baseUrl + '?' + queryPart;
+      console.log(`✅ Query параметры валидные, оставляем`);
+    } else {
+      // Query содержит странные символы, пытаемся извлечь валидную часть
+      const validQueryMatch = queryPart.match(/^[a-zA-Z0-9=&_\-%.]+/);
+      if (validQueryMatch && validQueryMatch[0].length > 5) {
+        cleanUrl = baseUrl + '?' + validQueryMatch[0];
+        console.log(`⚠️ Частично валидные параметры`);
+      } else {
+        // Убираем query полностью, оставляем только базовый URL
+        cleanUrl = baseUrl;
+        console.log(`❌ Убираем невалидные параметры`);
       }
     }
   }
   
-  return '';
+  // 4. ИСПРАВЛЕНО: Убираем trailing символы, используя правильное регулярное выражение
+  cleanUrl = cleanUrl.replace(/[^\w\-._~:\/?#@!$&'()*+,;=%]+$/, '');
+  
+  console.log(`✅ Финальный URL: ${cleanUrl}`);
+  return cleanUrl;
 };
 
-// Функция для извлечения URL из строки
-const extractUrlsFromLine = (line: string): string[] => {
+// Функция для извлечения и очистки URL от параметров
+const extractAndCleanUrls = (line: string): string[] => {
+  // Поиск всех URL в строке
   const urlPatterns = [
     /https:\/\/cdn\.poizon\.com\/[^\s,;"'\n\r\t]+/g,
     /https:\/\/cdn-img\.thepoizon\.ru\/[^\s,;"'\n\r\t]+/g,
-    /https:\/\/[^\s,;"'\n\r\t]*\.jpg[^\s,;"'\n\r\t]*/g,
-    /https:\/\/[^\s,;"'\n\r\t]*\.png[^\s,;"'\n\r\t]*/g,
-    /https:\/\/[^\s,;"'\n\r\t]*\.jpeg[^\s,;"'\n\r\t]*/g,
+    /https:\/\/[^\s,;"'\n\r\t]*\.(jpg|jpeg|png|gif|webp)[^\s,;"'\n\r\t]*/gi,
     /https:\/\/[^\s,;"'\n\r\t]+/g
   ];
   
   let allUrls: string[] = [];
   
+  // Применяем все паттерны
   for (const pattern of urlPatterns) {
     const matches = line.match(pattern) || [];
     allUrls = allUrls.concat(matches);
   }
   
+  // Также проверяем разделители
   if (line.includes(';')) {
     const parts = line.split(';');
     for (const part of parts) {
@@ -76,83 +106,54 @@ const extractUrlsFromLine = (line: string): string[] => {
     }
   }
   
+  // Очищаем каждый URL
   const cleanUrls = allUrls
-    .map(url => {
-      let cleanUrl = url.replace(/^[",;}\]\)\s]+/, '').trim();
-      
-      const httpsMatch = cleanUrl.match(/https:\/\/.+/);
-      if (httpsMatch) {
-        cleanUrl = httpsMatch[0];
-      }
-      
-      cleanUrl = cleanUrl.replace(/[",;}\]\)\s]+$/, '');
-      
-      const queryIndex = cleanUrl.indexOf('?');
-      if (queryIndex !== -1) {
-        const baseUrl = cleanUrl.substring(0, queryIndex);
-        const queryPart = cleanUrl.substring(queryIndex + 1);
-        
-        if (/^[a-zA-Z0-9=&_\-%.]+$/.test(queryPart)) {
-          cleanUrl = baseUrl + '?' + queryPart;
-        } else {
-          const validQueryMatch = queryPart.match(/^[a-zA-Z0-9=&_\-%.]+/);
-          if (validQueryMatch) {
-            cleanUrl = baseUrl + '?' + validQueryMatch[0];
-          } else {
-            cleanUrl = baseUrl;
-          }
-        }
-      }
-      
-      return cleanUrl;
-    })
-    .filter(url => url.length > 20)
+    .map(url => cleanImageUrl(url))
+    .filter(url => url.length > 20) // Минимальная длина URL
     .filter(url => url.startsWith('https://'));
   
+  // Удаляем дубликаты
   return [...new Set(cleanUrls)];
 };
 
-// ИСПРАВЛЕННАЯ функция проверки валидности данных
+// Поиск фото в соседних строках с улучшенной очисткой URL
+const findPhotoInAdjacentLines = (lines: string[], currentIndex: number): string => {
+  const searchRange = 3;
+  const startIndex = Math.max(0, currentIndex - searchRange);
+  const endIndex = Math.min(lines.length - 1, currentIndex + searchRange);
+  
+  for (let i = startIndex; i <= endIndex; i++) {
+    const line = lines[i];
+    if (line.includes('cdn-img.thepoizon.ru') || line.includes('cdn.poizon.com') || line.includes('https://')) {
+      const cleanUrls = extractAndCleanUrls(line);
+      if (cleanUrls.length > 0) {
+        console.log(`✅ Найдено фото в строке ${i + 1}: ${cleanUrls[0]}`);
+        return cleanUrls[0];
+      }
+    }
+  }
+  
+  return '';
+};
+
+// Проверка валидности данных товара
 const isValidProductData = (values: string[]): boolean => {
   if (values.length < 7) return false;
   
-  const article = cleanString(values[0]); // Столбец A
-  const brand = cleanString(values[1]);   // Столбец B
-  const name = cleanString(values[2]);    // Столбец C
-  const size = cleanString(values[3]);    // Столбец D  
-  const category = cleanString(values[4]); // Столбец E
-  const gender = cleanString(values[5]);  // Столбец F
-  const price = cleanString(values[6]);   // Столбец G
+  const article = cleanString(values[0]);
+  const brand = cleanString(values[1]);
+  const name = cleanString(values[2]);
+  const category = cleanString(values[4]);
+  const price = cleanString(values[6]);
   
-  console.log(`🔍 Проверяем строку:`, {
-    article: article.substring(0, 20),
-    brand: brand.substring(0, 20),
-    name: name.substring(0, 30),
-    category: category.substring(0, 20),
-    price: price
-  });
-  
-  // Проверяем, что это НЕ служебные данные (номера телефонов, коды и т.д.)
-  const isPhoneNumber = /^\d{8,}$/.test(article) || /^\d{8,}$/.test(brand);
-  const isServiceCode = /^\d+$/.test(brand) && brand.length > 5;
+  const hasRealArticle = article.length > 0 && article.startsWith('TS-');
+  const hasRealBrand = brand.length > 0 && brand !== 'Бренд';
+  const hasRealName = name.length > 5 && name !== 'Название товара';
+  const hasRealCategory = category.length > 0 && category !== 'Категория';
+  const hasValidPrice = !isNaN(parseFloat(price)) && parseFloat(price) > 0;
   const isHeaderRow = name.toLowerCase().includes('название') || 
-                     article.toLowerCase().includes('артикул');
-  
-  // Проверяем, что это валидный товар
-  const hasRealArticle = article.length > 0 && !isPhoneNumber;
-  const hasRealBrand = brand.length > 0 && 
-                      !isServiceCode && 
-                      !/^\d+$/.test(brand) && // Не только цифры
-                      /[a-zA-Zа-яА-Я]/.test(brand); // Содержит буквы
-  const hasRealName = name.length > 3 && 
-                     /[a-zA-Zа-яА-Я]/.test(name) &&
-                     !name.toLowerCase().includes('товар');
-  const hasRealCategory = category.length > 0 && 
-                         /[a-zA-Zа-яА-Я]/.test(category) &&
-                         !category.toLowerCase().includes('категория');
-  const hasValidPrice = price.length > 0 && 
-                       !isNaN(parseFloat(price)) && 
-                       parseFloat(price) > 0;
+                      brand.toLowerCase().includes('бренд') || 
+                      category.toLowerCase().includes('категория');
   
   const isValid = hasRealArticle && hasRealBrand && hasRealName && hasRealCategory && hasValidPrice && !isHeaderRow;
   
@@ -165,137 +166,73 @@ const isValidProductData = (values: string[]): boolean => {
   return isValid;
 };
 
-// Функция для парсинга многострочного CSV
+// 🔧 НОВАЯ ФУНКЦИЯ: Парсинг CSV с помощью csv-parse
 const parseMultiLineCSV = (csvText: string): Product[] => {
-  console.log('🚀 Начинаем многострочный парсинг CSV');
+  console.log('🚀 Начинаем надёжный парсинг CSV через csv-parse');
   
-  const lines = csvText.split('\n');
+  // Используем csv-parse для корректного парсинга многострочных полей
+  const records: any[] = parse(csvText, {
+    skip_empty_lines: true,   // Пропускаем пустые строки
+    relax_quotes: true,       // Более гибкая обработка кавычек
+    relax_column_count: true, // Позволяем разное количество колонок
+    trim: true,              // Автоматически обрезаем пробелы
+    quote: '"',              // Символ кавычек
+    delimiter: ',',          // Разделитель
+    escape: '"'              // Символ экранирования
+  });
+  
+  console.log(`📊 Всего строк: ${records.length}`);
+  
   const products: Product[] = [];
   
-  // Простой парсер CSV строки
-  const parseCSVLine = (line: string): string[] => {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
+  // Проходим по всем записям (пропускаем заголовок)
+  for (let i = 1; i < records.length; i++) {
+    const row = records[i];
     
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        result.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    result.push(current.trim());
-    return result;
-  };
-  
-  console.log(`📊 Всего строк для анализа: ${lines.length}`);
-  
-  // Проходим по всем строкам
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+    // Проверяем, что строка содержит достаточно данных
+    if (!row || row.length < 7) continue;
     
-    try {
-      const values = parseCSVLine(line);
-      
-      // ПРАВИЛЬНОЕ СОПОСТАВЛЕНИЕ СТОЛБЦОВ
-      if (values.length >= 7 && isValidProductData(values)) {
-        
-        // Ищем фото в предыдущих строках
-        const photoUrl = findPhotoInAdjacentLines(lines, i);
-        
-        const product: Product = {
-          id: `product_${i}`,
-          article: cleanString(values[0]),  // A: Артикул
-          brand: cleanString(values[1]),    // B: Бренд
-          name: cleanString(values[2]),     // C: Название  
-          size: cleanString(values[3]),     // D: Размер
-          category: cleanString(values[4]), // E: Категория
-          gender: cleanString(values[5]),   // F: Пол
-          price: parseFloat(cleanString(values[6])) || 0, // G: Цена
-          photo: photoUrl
-        };
-        
-        products.push(product);
-        
-        const photoStatus = photoUrl ? '✅ с фото' : '❌ без фото';
-        console.log(`📦 Товар ${products.length}: [${product.category}] ${product.brand} - ${product.name.substring(0, 30)}... ${photoStatus}`);
-      }
-    } catch (error) {
-      continue;
-    }
+    // Преобразуем каждое значение в строку и очищаем
+    const values = row.map((val: any) => cleanString(String(val || '')));
+    
+    // Проверяем валидность данных
+    if (!isValidProductData(values)) continue;
+    
+    // Ищем фото в соседних строках
+    // Преобразуем records обратно в строки для поиска фото
+    const linesForPhotoSearch = records.map(r => r.join(','));
+    const photoUrl = findPhotoInAdjacentLines(linesForPhotoSearch, i);
+    
+    const product: Product = {
+      id: `product_${i}`,
+      article: values[0],       // A: Артикул
+      brand: values[1],         // B: Бренд
+      name: values[2],          // C: Название  
+      size: values[3],          // D: Размер
+      category: values[4],      // E: Категория
+      gender: values[5],        // F: Пол
+      price: parseFloat(values[6]) || 0, // G: Цена
+      photo: photoUrl
+    };
+    
+    products.push(product);
   }
   
-  console.log(`🎉 Найдено товаров: ${products.length}`);
-  console.log(`📸 Товаров с фото: ${products.filter(p => p.photo).length}`);
-  
-  // Статистика по ПРАВИЛЬНЫМ категориям и брендам
-  const categoryStats = products.reduce((acc, product) => {
-    acc[product.category] = (acc[product.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const brandStats = products.reduce((acc, product) => {
-    acc[product.brand] = (acc[product.brand] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  console.log('📊 Статистика по КАТЕГОРИЯМ:');
-  Object.entries(categoryStats)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 10)
-    .forEach(([category, count]) => {
-      console.log(`  ${category}: ${count} товаров`);
-    });
-  
-  console.log('📊 Статистика по БРЕНДАМ:');
-  Object.entries(brandStats)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 10)
-    .forEach(([brand, count]) => {
-      console.log(`  ${brand}: ${count} товаров`);
-    });
-  
+  console.log(`✅ Готово: найдено ${products.length} валидных товаров`);
   return products;
 };
 
-// Функция для проверки валидности товара (итоговая)
-const isValidProductRow = (values: string[]): boolean => {
-  if (values.length < 7) return false;
-  
-  const article: string = cleanString(values[0]);
-  const brand: string = cleanString(values[1]);
-  const name: string = cleanString(values[2]);
-  const category: string = cleanString(values[4]); // Правильный столбец для категории
-  const priceString: string = cleanString(values[6]);
-  
-  const hasValidArticle: boolean = Boolean(article && article.length > 0 && !/^\d{8,}$/.test(article));
-  const hasValidBrand: boolean = Boolean(brand && brand.length > 0 && !/^\d+$/.test(brand) && /[a-zA-Zа-яА-Я]/.test(brand));
-  const hasValidName: boolean = Boolean(name && name.length > 3 && /[a-zA-Zа-яА-Я]/.test(name));
-  const hasValidCategory: boolean = Boolean(category && category.length > 0 && /[a-zA-Zа-яА-Я]/.test(category));
-  const hasValidPrice: boolean = Boolean(priceString && !isNaN(parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.'))) && parseFloat(priceString.replace(/[^\d.,]/g, '').replace(',', '.')) > 0);
-  
-  return hasValidArticle && hasValidBrand && hasValidName && hasValidCategory && hasValidPrice;
-};
-
-export async function GET(): Promise<NextResponse<ApiResponse>> {
+// GET метод для получения всех товаров
+export async function GET(request: NextRequest) {
   try {
-    console.log('🚀 Начало обработки API /products с правильным сопоставлением столбцов');
+    console.log('🔍 Получаем список товаров...');
     
-    const csvUrl: string = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
     
     const response = await fetch(csvUrl, {
       cache: 'no-store',
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
       }
     });
 
@@ -303,48 +240,29 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const csvText: string = await response.text();
+    const csvText = await response.text();
     
-    console.log(`📄 Загружен CSV размером: ${csvText.length.toLocaleString()} символов`);
+    // 🎯 ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ ПАРСИНГА
+    const products = parseMultiLineCSV(csvText);
     
-    const multiLineProducts = parseMultiLineCSV(csvText);
-    
-    // Фильтруем валидные товары
-    const validProducts = multiLineProducts.filter(product => {
-      const values = [
-        product.article,
-        product.brand,
-        product.name,
-        product.size,
-        product.category,
-        product.gender,
-        product.price.toString()
-      ];
-      return isValidProductRow(values);
-    });
-    
-    // Ограничиваем количество товаров
-    const limitedProducts = validProducts.slice(0, 1000);
-    
-    console.log(`✅ Валидных товаров: ${validProducts.length}`);
-    console.log(`📦 Возвращаем товаров: ${limitedProducts.length}`);
-    console.log(`📸 С фотографиями: ${limitedProducts.filter(p => p.photo).length}`);
+    console.log(`🎉 Возвращаем ${products.length} товаров`);
     
     return NextResponse.json<ApiResponse>({
       success: true,
-      count: limitedProducts.length,
-      data: limitedProducts
+      data: products,
+      count: products.length
     });
 
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    console.error('❌ Ошибка при получении товаров:', errorMessage);
-    
-    return NextResponse.json<ApiResponse>({
-      success: false,
-      count: 0,
-      data: [],
-      error: errorMessage
-    }, { status: 500 });
+  } catch (error) {
+    console.error('❌ Ошибка при получении товаров:', error);
+    return NextResponse.json<ApiResponse>(
+      { 
+        success: false,
+        count: 0,
+        data: [],
+        error: 'Не удалось получить данные товаров'
+      }, 
+      { status: 500 }
+    );
   }
 }
