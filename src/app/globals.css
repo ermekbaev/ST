@@ -3571,3 +3571,46 @@ select {
     display: block;
   }
 }
+
+/* ============================================
+   АНИМАЦИИ МОБИЛЬНОГО ВИДЖЕТА ПОДДЕРЖКИ
+   ============================================ */
+
+/* Анимация появления кнопок снизу вверх с масштабированием */
+@keyframes mobile-support-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Класс для применения анимации */
+.mobile-support-animate {
+  animation: mobile-support-fade-in-up 0.4s ease-out forwards;
+}
+
+/* Hover эффекты для кнопок мобильного виджета */
+.mobile-support-button {
+  transition: all 0.2s ease;
+}
+
+.mobile-support-button:hover {
+  transform: scale(1.1);
+}
+
+.mobile-support-button:active {
+  transform: scale(0.95);
+}
+
+/* Тени для кнопок */
+.mobile-support-shadow {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-support-shadow:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}

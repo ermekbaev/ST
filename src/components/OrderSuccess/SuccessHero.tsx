@@ -90,7 +90,7 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
                 </button>
                 
                 <button
-                  onClick={() => window.open('https://wa.me/79962814667')}
+                  onClick={() => window.open('https://wa.me/79958714667')}
                   className="bg-transparent rounded cursor-pointer flex items-center justify-center transition-all hover:scale-110"
                   title="WhatsApp"
                 >
@@ -166,7 +166,7 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
                   </button>
                   
                   <button
-                    onClick={() => window.open('https://wa.me/79962814667')}
+                    onClick={() => window.open('https://wa.me/79958714667')}
                     className="bg-transparent rounded cursor-pointer flex items-center justify-center transition-all hover:scale-110"
                     title="WhatsApp"
                   >

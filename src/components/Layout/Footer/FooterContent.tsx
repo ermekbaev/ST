@@ -11,32 +11,32 @@ const FooterContent = () => {
         </h3>
         <ul className="space-y-3">
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
               sale
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
               обувь
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
               одежда
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
               аксессуары
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
               коллекции
             </a>
           </li>
           <li>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
               другое
             </a>
           </li>
@@ -89,8 +89,8 @@ const FooterContent = () => {
         </h3>
         <div className="space-y-3">
           <div className="text-gray-300 text-sm">
-            <a href="tel:+79962814667" className="hover:text-white transition-colors">
-              +7 (996) 281-46-67
+            <a href="tel:+79958714667" className="hover:text-white transition-colors">
+              +7 (995) 871-46-67
             </a>
           </div>
           <div className="text-gray-300 text-sm">
@@ -104,8 +104,8 @@ const FooterContent = () => {
             </a>
           </div>
           <div className="text-gray-300 text-sm">
-            <a href="https://wa.me/79962814667" className="hover:text-white transition-colors">
-              wa: +79962814667
+            <a href="https://wa.me/79958714667" className="hover:text-white transition-colors">
+              wa: +79958714667
             </a>
           </div>
         </div>
@@ -115,19 +115,7 @@ const FooterContent = () => {
       <div className="lg:col-span-2 lg:col-start-11 space-y-4">
         <div className="flex justify-start lg:justify-end space-x-3">
           <a 
-            href="#" 
-            className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
-            aria-label="VKontakte"
-          >
-            <img 
-              src="/social/vk.svg" 
-              alt="VK" 
-              className="w-6 h-6"
-            />
-          </a>
-
-          <a 
-            href="#" 
+            href="https://www.instagram.com/tigrshop.ru?" 
             className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
             aria-label="Instagram"
           >
@@ -151,7 +139,7 @@ const FooterContent = () => {
           </a>
 
           <a 
-            href="https://wa.me/79962814667" 
+            href="https://wa.me/79958714667" 
             className="w-10 h-10 hover:bg-gray-700 rounded-lg flex items-center justify-center transition-colors"
             aria-label="WhatsApp"
           >

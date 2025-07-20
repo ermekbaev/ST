@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Header from './Header/Header';
 import Footer from './Footer/Footer';
 import SupportWidget from '../UI/Support/SupportWidget';
+import MobileSupportWidget from '../UI/Support/MobileSupportWidget';
 import BottomNavigation from './Navigation/BottomNavigation';
 import CartSidebar from '../Cart/CartSidebar';
 import { CartProvider } from '../../contexts/CartContext';
@@ -14,30 +15,34 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [supportForceVisible, setSupportForceVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileWidgetVisible, setMobileWidgetVisible] = useState(false);
+
+  // Определяем мобильное устройство
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleSupportToggle = () => {
-    if (supportForceVisible) {
-      // Если виджет уже показан, скрываем его
-      setSupportForceVisible(false);
-    } else {
-      // Если виджет скрыт, показываем его
-      setSupportForceVisible(true);
+  const handleSupportClick = () => {
+    if (isMobile) {
+      // На мобилке показываем/скрываем мобильный виджет
+      setMobileWidgetVisible(!mobileWidgetVisible);
     }
   };
 
-  const handleSupportWidgetToggle = (isExpanded: boolean) => {
-    // Если виджет закрыт пользователем в принудительном режиме, убираем принудительную видимость
-    if (!isExpanded && supportForceVisible) {
-      // Добавляем задержку для плавного скрытия основной кнопки
-      setTimeout(() => {
-        setSupportForceVisible(false);
-      }, 600); // Увеличена задержка для плавности
-    }
+  const handleMobileWidgetClose = () => {
+    setMobileWidgetVisible(false);
   };
 
   return (
@@ -55,14 +60,21 @@ export default function ClientLayout({
           <Footer />
         </div>
         
-        {/* SupportWidget - показывается на десктопе всегда, на мобильном по требованию */}
-        <SupportWidget 
-          forceVisible={supportForceVisible}
-          onToggle={handleSupportWidgetToggle}
-        />
+        {/* Десктопный виджет - только на больших экранах */}
+        {mounted && !isMobile && (
+          <SupportWidget />
+        )}
+        
+        {/* Мобильный виджет - только на мобилке */}
+        {mounted && isMobile && (
+          <MobileSupportWidget
+            isVisible={mobileWidgetVisible}
+            onClose={handleMobileWidgetClose}
+          />
+        )}
         
         {/* BottomNavigation - только на мобильном */}
-        <BottomNavigation onSupportClick={handleSupportToggle} />
+        <BottomNavigation onSupportClick={handleSupportClick} />
         
         {/* CartSidebar - корзина */}
         <CartSidebar />

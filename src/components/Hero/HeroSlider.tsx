@@ -20,7 +20,7 @@ const HeroSlider = () => {
       title: "ДОЛЯМИ",
       imageDesktop: "/banners/Banner2-1.jpg", 
       imageMobile: "/banners/Banner2-2.webp",  
-      link: "/catalog/sneakers", 
+      link: "/catalog", 
       alt: "Ассортимент кроссовок"
     },
     {
@@ -28,7 +28,7 @@ const HeroSlider = () => {
       title: "100500",
       imageDesktop: "/banners/Banner3-1.jpg", 
       imageMobile: "/banners/Banner3-2.webp",  
-      link: "https://t.me/TIGRSHOPsupport", 
+      link: "/catalog", 
       alt: "Индивидуальный заказ"
     },
     {
@@ -57,12 +57,16 @@ const HeroSlider = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  // Автосмена слайдов раз в 10 секунд
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  // Автосмена слайдов раз в 7 секунд
   useEffect(() => {
     if (!isPaused) {
       const timer = setInterval(() => {
         nextSlide();
-      }, 10000); 
+      }, 7000); 
 
       return () => clearInterval(timer);
     }
@@ -84,15 +88,14 @@ const HeroSlider = () => {
 
   // Обработчик клика по баннеру
   const handleBannerClick = (link: string) => {
-    // Заглушка
     console.log(`Клик по баннеру: ${link}`);
-    // Позже заменить на: window.location.href = link;
+    window.location.href = link;
   };
 
   return (
     <section 
       id="hero-slider"
-      className="relative w-full overflow-hidden"
+      className="relative w-full overflow-hidden group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -135,45 +138,27 @@ const HeroSlider = () => {
         ))}
       </div>
 
-      {/* Невидимые области для ручного переключения - только на десктопе */}
-      <div 
-        className="hidden md:block absolute left-0 top-0 w-20 h-full z-10 cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          prevSlide();
-        }}
-        title="Предыдущий слайд"
-      ></div>
-      <div 
-        className="hidden md:block absolute right-0 top-0 w-20 h-full z-10 cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          nextSlide();
-        }}
-        title="Следующий слайд"
-      ></div>
-
-      {/* Стрелки навигации - только на десктопе при ховере */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          prevSlide();
-        }}
-        className="hidden md:flex absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20"
-        aria-label="Предыдущий слайд"
-      >
-        ←
-      </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          nextSlide();
-        }}
-        className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20"
-        aria-label="Следующий слайд"
-      >
-        →
-      </button>
+      {/* Кнопки навигации слайдера */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 z-20">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation();
+              goToSlide(index);
+            }}
+            className={`transition-all duration-300 bg-white rounded-sm hover:opacity-80 ${
+              currentSlide === index 
+                ? 'w-[100px] h-[10px]' // Активный слайд - полоска
+                : 'w-[10px] h-[10px]'  // Неактивные слайды - точки
+            }`}
+            style={{
+              opacity: currentSlide === index ? 1 : 0.6
+            }}
+            aria-label={`Перейти к слайду ${index + 1}`}
+          />
+        ))}
+      </div>
     </section>
   );
 };

@@ -1,20 +1,47 @@
+'use client'
 import React from 'react';
 
 const ReturnsPage = () => {
+  // Функция для скачивания файлов
+  const handleDownload = (fileType: 'shoes' | 'clothes') => {
+    const fileUrls = {
+      shoes: '/downloads/return-form-shoes.doc', // Путь к файлу заявления на обувь
+      clothes: '/downloads/return-form-clothes.doc' // Путь к файлу заявления на одежду
+    };
+
+    const fileNames = {
+      shoes: 'Заявление_на_возврат_обуви.pdf',
+      clothes: 'Заявление_на_возврат_одежды.pdf'
+    };
+
+    // Создаем ссылку для скачивания
+    const link = document.createElement('a');
+    link.href = fileUrls[fileType];
+    link.download = fileNames[fileType];
+    link.style.display = 'none';
+    
+    // Добавляем в DOM, кликаем и удаляем
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-white pb-16">
-      {/* Page Title with Line - используем ту же структуру что и в других страницах */}
+      {/* Page Title with Line */}
       <div className="px-5 pt-8 lg:pt-12">
         <div className="flex items-center mb-8 lg:mb-12">
-          <h1 className="returns-page-title">ВОЗВРАТ</h1>
-          <div className="returns-page-line"></div>
+          <h1 className="font-black italic text-[28px] leading-[24px] lg:text-[40px] lg:leading-[48px] text-black uppercase w-[180px] lg:w-[260px] min-w-[180px] lg:min-w-[260px]">
+            ВОЗВРАТ
+          </h1>
+          <div className="hidden lg:block bg-black h-[2px] flex-1 ml-[71px]"></div>
         </div>
 
-        {/* Main Content - используем ту же структуру контента */}
-        <div className="returns-page-content text-[20px] lg:text-[30px] leading-[30px] lg:leading-[45px]">
+        {/* Main Content */}
+        <div className="text-[20px] lg:text-[30px] leading-[30px] lg:leading-[45px]">
           
           {/* Main Title */}
-          <div className="mb-8 lg:mb-12">
+          <div className="mb-8 lg:mb-12 font-black text-black">
             УСЛОВИЯ ВОЗВРАТА И ОБМЕНА
           </div>
 
@@ -22,10 +49,10 @@ const ReturnsPage = () => {
           <div className="space-y-4 lg:space-y-6">
             
             {/* Defective Products Section */}
-            <div className="returns-section-content text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px]">
+            <div className="text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px] text-black">
               <p className="mb-4 lg:mb-6">
                 *Если вы считаете, что вам пришел товар с браком или товар ненадлежащего качества, 
-                свяжитесь с нами по почте <a href="mailto:contact@tigrshop.ru" className="underline hover:text-gray-600 transition-colors">tigran200615@gmail.com</a>
+                свяжитесь с нами по почте <a href="mailto:support@tigrshop.ru" className="underline hover:text-gray-600 transition-colors">support@tigrshop.ru</a>
               </p>
               <p className="mb-4 lg:mb-6">
                 Приложите к обращению фото и подробное описание вашей проблемы, наша команда свяжется 
@@ -37,7 +64,7 @@ const ReturnsPage = () => {
             </div>
 
             {/* Step-by-step Instructions */}
-            <div className="returns-section-content text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px]">
+            <div className="text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px] text-black">
               <p className="mb-4 lg:mb-6">
                 Для возврата Товара надлежащего качества покупатель обязан произвести следующие 
                 действия согласно пошаговой инструкции:
@@ -50,8 +77,18 @@ const ReturnsPage = () => {
                 </p>
                 <p className="mb-2 lg:mb-3">Бланк возврата можно скачать тут:</p>
                 <div className="ml-4 space-y-1 lg:space-y-2">
-                  <p>- <a href="#" className="underline hover:text-gray-600 transition-colors">Заявление на обувь</a></p>
-                  <p>- <a href="#" className="underline hover:text-gray-600 transition-colors">Заявление на одежду</a></p>
+                  <p>- <button 
+                      onClick={() => handleDownload('shoes')} 
+                      className="underline hover:text-gray-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-inherit font-inherit"
+                    >
+                      Заявление на обувь
+                    </button></p>
+                  <p>- <button 
+                      onClick={() => handleDownload('clothes')} 
+                      className="underline hover:text-gray-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-inherit font-inherit"
+                    >
+                      Заявление на одежду
+                    </button></p>
                 </div>
               </div>
 
@@ -95,9 +132,9 @@ const ReturnsPage = () => {
             </div>
 
             {/* Pickup Location */}
-            <div className="returns-section-content text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px]">
+            <div className="text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px] text-black">
               <p className="mb-3 lg:mb-4">
-                Товар также может быть возвращен в <a href="#" className="underline hover:text-gray-600 transition-colors">пункте самовывоза</a> по адресу:
+                Товар также может быть возвращен в <a href="/contacts" className="underline hover:text-gray-600 transition-colors">пункте самовывоза</a> по адресу:
               </p>
               <div className="ml-4 mb-3 lg:mb-4">
                 <p>г.Владивосток ул. 1-я пригородная 15</p>
@@ -107,7 +144,12 @@ const ReturnsPage = () => {
                 сотруднику магазина.
               </p>
               <p className="mb-4 lg:mb-6">
-                <a href="#" className="underline hover:text-gray-600 transition-colors">Бланк возврата можно скачать тут</a>
+                <button 
+                  onClick={() => handleDownload('shoes')} 
+                  className="underline hover:text-gray-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-inherit font-inherit"
+                >
+                  Бланк возврата можно скачать тут
+                </button>
               </p>
               <p>
                 Спасибо за доверие! Будем рады видеть вас снова
@@ -115,8 +157,8 @@ const ReturnsPage = () => {
             </div>
 
             {/* Additional Terms */}
-            <div className="returns-section-content text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px]">
-              <div className="text-[18px] lg:text-[24px] leading-[27px] lg:leading-[36px] mb-6 lg:mb-8">
+            <div className="text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px] text-black">
+              <div className="text-[18px] lg:text-[24px] leading-[27px] lg:leading-[36px] mb-6 lg:mb-8 font-black">
                 Дополнительно приложения к процессу возврата товара в TIGR SHOP
               </div>
 

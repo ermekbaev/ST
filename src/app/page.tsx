@@ -211,7 +211,7 @@ export default function Home() {
             {title}
           </h2>
           <a 
-            href="#" 
+            href="/catalog" 
             className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
           >
             {/* Десктопная версия */}

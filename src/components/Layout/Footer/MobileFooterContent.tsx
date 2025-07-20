@@ -40,10 +40,10 @@ const MobileFooterContent = () => {
       title: 'КОНТАКТЫ',
       key: 'contacts',
       items: [
-        { label: '+7 (996) 281-46-67', href: 'tel:+79962814667' },
-        { label: 'em: tigran200615@gmail.com', href: 'mailto:tigran200615@gmail.com' },
-        { label: 'tg: @PadvdH', href: '#' },
-        { label: 'wa: +79962814667', href: 'https://wa.me/79962814667' }
+        { label: '+7 (995) 871-46-67', href: 'tel:+79958714667' },
+        { label: 'em: contact@tigrshop.ru', href: 'mailto:contact@tigrshop.ru' },
+        { label: 'tg: @TIGRSHOPsupport', href: 'https://t.me/TIGRSHOPsupport' },
+        { label: 'wa: +79958714667', href: 'https://wa.me/79958714667' }
       ]
     },
   ];
@@ -99,19 +99,7 @@ const MobileFooterContent = () => {
       {/* Социальные сети */}
       <div className="footer-social">
         <a 
-          href="#" 
-          className="footer-social-btn"
-          aria-label="VKontakte"
-        >
-          <img 
-            src="/social/vk.svg" 
-            alt="VK" 
-            className="w-7 h-7"
-          />
-        </a>
-
-        <a 
-          href="#" 
+          href="https://www.instagram.com/tigrshop.ru?" 
           className="footer-social-btn"
           aria-label="Instagram"
         >
@@ -135,7 +123,7 @@ const MobileFooterContent = () => {
         </a>
 
         <a 
-          href="https://wa.me/79962814667" 
+          href="https://wa.me/79958714667" 
           className="footer-social-btn"
           aria-label="WhatsApp"
         >

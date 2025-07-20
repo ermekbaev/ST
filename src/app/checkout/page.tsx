@@ -33,40 +33,62 @@ const CheckoutPage: React.FC = () => {
   }, [items, router, isLoading]);
 
   // ✅ ПРОСТОЙ ОБРАБОТЧИК ОТПРАВКИ ЗАКАЗА
-  const handleOrderSubmit = async (orderData: any) => {
-    try {
-      console.log('📦 Отправка заказа:', orderData);
+  // const handleOrderSubmit = async (orderData: any) => {
+  //   try {
+  //     console.log('📦 Отправка заказа:', orderData);
       
-      // Здесь будет API запрос к вашему серверу
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...orderData,
-          deliveryMethod: selectedDelivery,
-          paymentMethod: selectedPayment,
-          cartItems: items,
-          timestamp: new Date().toISOString()
-        }),
-      });
+  //     // Здесь будет API запрос к вашему серверу
+  //     const response = await fetch('/api/orders', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         ...orderData,
+  //         deliveryMethod: selectedDelivery,
+  //         paymentMethod: selectedPayment,
+  //         cartItems: items,
+  //         timestamp: new Date().toISOString()
+  //       }),
+  //     });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Заказ создан:', result);
+  //     if (response.ok) {
+  //       const result = await response.json();
+  //       console.log('✅ Заказ создан:', result);
         
-        // Очищаем корзину и перенаправляем на страницу успеха
-        clearCart();
-        router.push(`/checkout/success?orderId=${result.orderId}`);
-      } else {
-        throw new Error('Ошибка при создании заказа');
-      }
-    } catch (error) {
-      console.error('❌ Ошибка заказа:', error);
-      alert('Произошла ошибка при оформлении заказа. Попробуйте еще раз.');
-    }
-  };
+  //       // Очищаем корзину и перенаправляем на страницу успеха
+  //       clearCart();
+  //       router.push(`/checkout/success?orderId=${result.orderId}`);
+  //     } else {
+  //       throw new Error('Ошибка при создании заказа');
+  //     }
+  //   } catch (error) {
+  //     console.error('❌ Ошибка заказа:', error);
+  //     alert('Произошла ошибка при оформлении заказа. Попробуйте еще раз.');
+  //   }
+  // };
+
+  const handleOrderSubmit = async (orderData: any) => {
+  try {
+    console.log('📦 Данные заказа:', orderData);
+    console.log('🛒 Товары в корзине:', items);
+    console.log('🚚 Способ доставки:', selectedDelivery);
+    console.log('💳 Способ оплаты:', selectedPayment);
+    
+    // Генерируем уникальный ID заказа
+    const orderId = 'TS-' + Date.now();
+    
+    // Очищаем корзину
+    clearCart();
+    
+    // Перенаправляем на страницу успеха
+    router.push(`/order-success?orderId=${orderId}`);
+    
+  } catch (error) {
+    console.error('❌ Ошибка:', error);
+    alert('Произошла ошибка. Попробуйте еще раз.');
+  }
+};
 
   // Показываем загрузчик
   if (isLoading) {

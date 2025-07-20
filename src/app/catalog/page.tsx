@@ -2,6 +2,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import DesktopFilters from '../../components/Catalog/DesktopFilters';
 import MobileFilters from '../../components/Catalog/MobileFilters';
 import MobileFilterButton from '../../components/Catalog/MobileFilterButton';
@@ -35,6 +36,8 @@ interface FilterState {
 }
 
 const CatalogPage: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -43,6 +46,7 @@ const CatalogPage: React.FC = () => {
   const [sortBy, setSortBy] = useState('popularity');
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const itemsPerPage = 36;
 
   // Состояние фильтров
@@ -65,6 +69,93 @@ const CatalogPage: React.FC = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Читаем фильтры из URL при загрузке
+  useEffect(() => {
+    if (mounted && isInitialLoad) {
+      const urlFilters = readFiltersFromURL();
+      setFilters(urlFilters);
+      setIsInitialLoad(false);
+    }
+  }, [mounted, isInitialLoad]);
+
+  // Функция для чтения фильтров из URL
+  const readFiltersFromURL = (): FilterState => {
+    const newFilters: FilterState = {
+      brands: [],
+      genders: [],
+      categories: [],
+      sizes: [],
+      priceRange: { min: '', max: '' }
+    };
+
+    // Читаем параметры из URL
+    const category = searchParams.get('category');
+    const brand = searchParams.get('brand');
+    const gender = searchParams.get('gender');
+    const size = searchParams.get('size');
+    const search = searchParams.get('search');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const sale = searchParams.get('sale');
+
+    // Заполняем фильтры из URL
+    if (category) {
+      newFilters.categories = category.split(',').filter(Boolean);
+    }
+    if (brand) {
+      newFilters.brands = brand.split(',').filter(Boolean);
+    }
+    if (gender) {
+      newFilters.genders = gender.split(',').filter(Boolean);
+    }
+    if (size) {
+      newFilters.sizes = size.split(',').filter(Boolean);
+    }
+    if (search) {
+      setSearchQuery(search);
+    }
+    if (minPrice || maxPrice) {
+      newFilters.priceRange = {
+        min: minPrice || '',
+        max: maxPrice || ''
+      };
+    }
+
+    return newFilters;
+  };
+
+  // Функция для обновления URL
+  const updateURL = (newFilters: FilterState, newSearchQuery?: string) => {
+    const params = new URLSearchParams();
+
+    // Добавляем активные фильтры в URL
+    if (newFilters.categories.length > 0) {
+      params.set('category', newFilters.categories.join(','));
+    }
+    if (newFilters.brands.length > 0) {
+      params.set('brand', newFilters.brands.join(','));
+    }
+    if (newFilters.genders.length > 0) {
+      params.set('gender', newFilters.genders.join(','));
+    }
+    if (newFilters.sizes.length > 0) {
+      params.set('size', newFilters.sizes.join(','));
+    }
+    if (newFilters.priceRange.min) {
+      params.set('minPrice', newFilters.priceRange.min);
+    }
+    if (newFilters.priceRange.max) {
+      params.set('maxPrice', newFilters.priceRange.max);
+    }
+    if (newSearchQuery && newSearchQuery.trim()) {
+      params.set('search', newSearchQuery.trim());
+    }
+
+    // Обновляем URL без перезагрузки страницы
+    const newURL = `/catalog${params.toString() ? '?' + params.toString() : ''}`;
+    router.replace(newURL, { scroll: false });
+  };
 
   // Загрузка товаров
   useEffect(() => {
@@ -89,43 +180,160 @@ const CatalogPage: React.FC = () => {
     }
   }, [products]);
 
-  // Применение фильтров
+  // Применение фильтров и обновление URL
   useEffect(() => {
+    if (!isInitialLoad) {
+      updateURL(filters, searchQuery);
+      applyFilters();
+      setCurrentPage(1); // Сбрасываем страницу при изменении фильтров
+    }
+  }, [filters, searchQuery, isInitialLoad]);
+
+  // Применение фильтров к товарам
+  useEffect(() => {
+    applyFilters();
+  }, [products, filters, searchQuery, sortBy]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/csv/products.csv');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const csvText = await response.text();
+      const rows = csvText.split('\n').slice(1); // Пропускаем заголовок
+      
+      const parsedProducts: Product[] = [];
+      
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i].trim();
+        if (!row) continue;
+        
+        try {
+          const values = parseCSVLine(row);
+          
+          if (values.length >= 8) {
+            const photoField = values[8] || '';
+            const firstPhoto = extractFirstPhoto(photoField);
+            
+            const product: Product = {
+              article: values[0] || '',
+              brand: values[1] || '',
+              name: values[2] || '',
+              size: values[3] || '',
+              category: values[4] || '',
+              gender: values[5] || '',
+              price: parseFloat(values[6]) || 0,
+              photo: firstPhoto
+            };
+            
+            if (product.name && product.price > 0) {
+              parsedProducts.push(product);
+            }
+          }
+        } catch (error) {
+          console.warn(`Ошибка парсинга строки ${i + 1}:`, error);
+        }
+      }
+      
+      setProducts(parsedProducts);
+    } catch (error) {
+      console.error('Ошибка загрузки товаров:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const parseCSVLine = (line: string): string[] => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    result.push(current);
+    return result;
+  };
+
+  const extractFirstPhoto = (photoField: string): string => {
+    if (!photoField) return '';
+    
+    const urls = photoField
+      .split(',')
+      .map(url => url.trim().replace(/^["']|["']$/g, ''))
+      .filter(url => url.length > 0);
+    
+    return urls[0] || '';
+  };
+
+  const applyFilters = () => {
     let filtered = [...products];
 
-    // Поиск по названию
+    // Поиск
     if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.brand.toLowerCase().includes(searchQuery.toLowerCase())
+        product.name.toLowerCase().includes(query) ||
+        product.brand.toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query)
       );
     }
 
     // Фильтр по брендам
     if (filters.brands.length > 0) {
-      filtered = filtered.filter(product => filters.brands.includes(product.brand));
+      filtered = filtered.filter(product =>
+        filters.brands.includes(product.brand)
+      );
     }
 
     // Фильтр по полу
     if (filters.genders.length > 0) {
-      filtered = filtered.filter(product => filters.genders.includes(product.gender));
+      filtered = filtered.filter(product =>
+        filters.genders.includes(product.gender)
+      );
     }
 
     // Фильтр по категориям
     if (filters.categories.length > 0) {
-      filtered = filtered.filter(product => filters.categories.includes(product.category));
+      filtered = filtered.filter(product =>
+        filters.categories.includes(product.category)
+      );
     }
 
     // Фильтр по размерам
     if (filters.sizes.length > 0) {
-      filtered = filtered.filter(product => filters.sizes.includes(product.size));
+      filtered = filtered.filter(product =>
+        filters.sizes.includes(product.size)
+      );
     }
 
     // Фильтр по цене
-    if (filters.priceRange.min || filters.priceRange.max) {
-      const min = parseFloat(filters.priceRange.min) || 0;
-      const max = parseFloat(filters.priceRange.max) || Infinity;
-      filtered = filtered.filter(product => product.price >= min && product.price <= max);
+    const minPrice = filters.priceRange.min ? parseFloat(filters.priceRange.min) : 0;
+    const maxPrice = filters.priceRange.max ? parseFloat(filters.priceRange.max) : Infinity;
+    
+    if (minPrice > 0 || maxPrice < Infinity) {
+      filtered = filtered.filter(product =>
+        product.price >= minPrice && product.price <= maxPrice
+      );
     }
 
     // Сортировка
@@ -136,51 +344,21 @@ const CatalogPage: React.FC = () => {
       case 'price-desc':
         filtered.sort((a, b) => b.price - a.price);
         break;
-      case 'name':
+      case 'name-asc':
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      default: // popularity
-        // Оставляем порядок как есть
+      case 'name-desc':
+        filtered.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      default:
+        // popularity - без сортировки (естественный порядок)
         break;
     }
 
     setFilteredProducts(filtered);
-    setCurrentPage(1); // Сбрасываем на первую страницу при изменении фильтров
-  }, [products, searchQuery, filters, sortBy]);
+  };
 
-const fetchProducts = async () => {
-  try {
-    setLoading(true);    
-    const response = await fetch('/api/products');
-    const result = await response.json();
-    
-    if (result.success) {
-      // Перемешиваем товары только для каталога
-      //@ts-ignore
-      const shuffleArray = (array) => {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-      };
-      
-      const shuffledProducts = shuffleArray(result.data || []);
-      setProducts(shuffledProducts);
-      console.log('🎲 Товары перемешаны для каталога');
-    } else {
-      throw new Error(result.error || 'Ошибка загрузки данных');
-    }
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
-    console.error('Ошибка загрузки товаров:', errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Обработчики фильтров
+  // Обработчики фильтров с обновлением URL
   const handleFilterChange = (filterType: keyof FilterState, value: string | string[] | { min: string; max: string }) => {
     setFilters(prev => {
       if (filterType === 'priceRange') {
@@ -198,6 +376,10 @@ const fetchProducts = async () => {
       
       return { ...prev, [filterType]: newValues };
     });
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
   };
 
   const handleRemoveFilter = (filterType: keyof FilterState, value?: string) => {
@@ -279,7 +461,7 @@ const fetchProducts = async () => {
         {/* Десктопные фильтры */}
         <DesktopFilters
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearchChange}
           filters={filters}
           filterOptions={filterOptions}
           onFilterChange={handleFilterChange}

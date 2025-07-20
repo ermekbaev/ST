@@ -6,6 +6,7 @@ const MobileHeader: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
   // Блокировка скролла при открытом мобильном меню
   useEffect(() => {
@@ -31,6 +32,44 @@ const MobileHeader: React.FC = () => {
     'информация'
   ];
 
+  // Данные для подменю как в десктопной версии
+  const menuData: Record<string, any> = {
+    'обувь': {
+      categories: ['все', 'кроссовки', 'ботинки', 'сандалии', 'туфли', 'угги'],
+      subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
+    },
+    'одежда': {
+      categories: ['все', 'футболки', 'толстовки', 'куртки', 'джинсы', 'шорты'],
+      subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
+    },
+    'аксессуары': {
+      categories: ['все', 'сумки', 'шапки', 'очки', 'часы', 'украшения'],
+      subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
+    },
+    'коллекции': {
+      categories: ['все', 'другие аксессуары', 'фигурки', 'предметы интерьера', 'другое всё'],
+      subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
+    },
+    'другое': {
+      categories: ['все', 'электроника', 'товары для дома', 'спорт и отдых', 'красота и здоровье'],
+      subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
+    },
+    'бренды': {
+      categories: ['все', 'nike', 'adidas', 'puma', 'reebok'],
+      subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
+    },
+    'информация': {
+      links: [
+        { name: 'контакты', href: '/contacts' },
+        { name: 'доставка', href: '/delivery' },
+        { name: 'возврат', href: '/returns' },
+        { name: 'оплата', href: '/payment' },
+        { name: 'FAQ', href: '/faq' },
+        { name: 'о нас', href: '/about' }
+      ]
+    }
+  };
+
   const handleSearchToggle = useCallback((): void => {
     setIsSearchOpen(!isSearchOpen);
     setIsMobileMenuOpen(false);
@@ -50,6 +89,7 @@ const MobileHeader: React.FC = () => {
   const handleMobileMenuToggle = useCallback((): void => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
     setIsSearchOpen(false);
+    setOpenSection(null); // Сбрасываем открытые секции
   }, [isMobileMenuOpen]);
 
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
@@ -62,6 +102,27 @@ const MobileHeader: React.FC = () => {
       setIsSearchOpen(false);
       setSearchQuery('');
     }
+  }, []);
+
+  const handleMenuItemClick = useCallback((item: string): void => {
+    if (item === 'sale') {
+      // Для sale переходим сразу в каталог
+      window.location.href = '/catalog';
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    // Для остальных разделов переключаем раскрытие
+    if (openSection === item) {
+      setOpenSection(null);
+    } else {
+      setOpenSection(item);
+    }
+  }, [openSection]);
+
+  const handleLinkClick = useCallback((href: string): void => {
+    window.location.href = href;
+    setIsMobileMenuOpen(false);
   }, []);
 
   return (
@@ -154,6 +215,7 @@ const MobileHeader: React.FC = () => {
         className={`fixed top-0 right-0 w-full h-full z-50 transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? 'transform translate-x-0' : 'transform translate-x-full'
         }`}
+
       >
         {/* Фон меню */}
         <div className="w-full h-full bg-white">
@@ -178,32 +240,122 @@ const MobileHeader: React.FC = () => {
             </div>
           </div>
 
-          {/* Список меню */}
-          <div className="pt-0">
-            {mobileMenuItems.map((item: string, index: number) => (
-              <div key={index} className="border-b border-gray-100">
-                <a 
-                  href="#" 
-                  className="flex items-center justify-between px-6 py-4 text-brand-dark hover:bg-gray-50 transition-colors"
-                  style={{
-                    fontFamily: 'Random Grotesque, Arial, sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 400
-                  }}
-                  onClick={() => {
-                    console.log(`Клик по ${item}`);
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <span>{item}</span>
-                  <div className="w-2 h-2">
-                    <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1.5 1L6.5 6L1.5 11" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+          {/* Скроллируемый контент */}
+          <div className="h-[calc(100vh-80px)] overflow-y-auto">
+            {/* Список меню */}
+            <div className="pt-0">
+              {mobileMenuItems.map((item: string, index: number) => (
+                <div key={index}>
+                  {/* Основной пункт меню */}
+                  <div className="border-b border-gray-100">
+                    <button 
+                      className="w-full flex items-center justify-between px-6 py-4 text-black hover:bg-gray-50 transition-colors text-left"
+                      style={{
+                        fontFamily: 'Random Grotesque, Arial, sans-serif',
+                        fontSize: '16px',
+                        fontWeight: 500,
+                        textTransform: 'uppercase'
+                      }}
+                      onClick={() => handleMenuItemClick(item)}
+                    >
+                      <span>{item}</span>
+                      {item !== 'sale' && (
+                        <div className={`w-4 h-4 transition-transform duration-300 ${
+                          openSection === item ? 'rotate-90' : ''
+                        }`}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 18L15 12L9 6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      )}
+                    </button>
                   </div>
-                </a>
-              </div>
-            ))}
+
+                  {/* Раскрывающаяся секция */}
+                  {item !== 'sale' && openSection === item && (
+                    <div className="bg-gray-50 border-b border-gray-100 animate-in slide-in-from-top duration-300">
+                      {item === 'информация' ? (
+                        // Для информации показываем ссылки
+                        <div className="px-6 py-4 space-y-3">
+                          {menuData[item]?.links?.map((link: any, linkIndex: number) => (
+                            <button
+                              key={linkIndex}
+                              onClick={() => handleLinkClick(link.href)}
+                              className="block w-full text-left py-2 px-4 text-black hover:bg-gray-100 rounded transition-colors"
+                              style={{
+                                fontFamily: 'Random Grotesque, Arial, sans-serif',
+                                fontSize: '14px',
+                                fontWeight: 400,
+                                textTransform: 'capitalize'
+                              }}
+                            >
+                              {link.name}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        // Для остальных показываем категории
+                        <div className="px-6 py-4">
+                          {/* Основные товары */}
+                          <div className="mb-6">
+                            <h4 
+                              className="text-black font-bold mb-3 text-sm uppercase"
+                              style={{ fontFamily: 'Random Grotesque, Arial, sans-serif' }}
+                            >
+                              Все товары
+                            </h4>
+                            <div className="space-y-2">
+                              {menuData[item]?.categories?.map((category: string, catIndex: number) => (
+                                <button
+                                  key={catIndex}
+                                  onClick={() => handleLinkClick('#')}
+                                  className="block w-full text-left py-2 px-4 text-black hover:bg-gray-100 rounded transition-colors"
+                                  style={{
+                                    fontFamily: 'Random Grotesque, Arial, sans-serif',
+                                    fontSize: '14px',
+                                    fontWeight: 400,
+                                    textTransform: 'capitalize'
+                                  }}
+                                >
+                                  {category}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Категории */}
+                          <div>
+                            <h4 
+                              className="text-black font-bold mb-3 text-sm uppercase"
+                              style={{ fontFamily: 'Random Grotesque, Arial, sans-serif' }}
+                            >
+                              Категории
+                            </h4>
+                            <div className="space-y-2">
+                              {menuData[item]?.subcategories?.map((subcategory: string, subIndex: number) => (
+                                <button
+                                  key={subIndex}
+                                  onClick={() => handleLinkClick('#')}
+                                  className="block w-full text-left py-2 px-4 text-black hover:bg-gray-100 rounded transition-colors"
+                                  style={{
+                                    fontFamily: 'Random Grotesque, Arial, sans-serif',
+                                    fontSize: '14px',
+                                    fontWeight: 400,
+                                    textTransform: 'capitalize'
+                                  }}
+                                >
+                                  {subcategory}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
