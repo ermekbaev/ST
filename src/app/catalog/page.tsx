@@ -212,7 +212,7 @@ function CatalogContent() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/csv/products.csv');
+      const response = await fetch('/api/products');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
