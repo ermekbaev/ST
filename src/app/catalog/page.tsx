@@ -1,7 +1,7 @@
 // src/app/catalog/page.tsx
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import DesktopFilters from '../../components/Catalog/DesktopFilters';
 import MobileFilters from '../../components/Catalog/MobileFilters';
@@ -35,7 +35,22 @@ interface FilterState {
   };
 }
 
-const CatalogPage: React.FC = () => {
+// Компонент загрузки
+function CatalogLoading() {
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка каталога...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Основной компонент каталога
+function CatalogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
@@ -432,13 +447,7 @@ const CatalogPage: React.FC = () => {
   };
 
   if (!mounted) {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="flex justify-center items-center h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
+    return <CatalogLoading />;
   }
 
   return (
@@ -511,6 +520,13 @@ const CatalogPage: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
-export default CatalogPage;
+// Главный экспортируемый компонент с Suspense
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<CatalogLoading />}>
+      <CatalogContent />
+    </Suspense>
+  );
+}
