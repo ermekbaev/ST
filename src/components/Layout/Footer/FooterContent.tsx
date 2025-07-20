@@ -16,17 +16,17 @@ const FooterContent = () => {
             </a>
           </li>
           <li>
-            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?category=Кроссовки+и+кеды" className="text-gray-300 hover:text-white transition-colors text-sm">
               обувь
             </a>
           </li>
           <li>
-            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?category=Толстовки+и+свитшоты" className="text-gray-300 hover:text-white transition-colors text-sm">
               одежда
             </a>
           </li>
           <li>
-            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?category=Аксессуары" className="text-gray-300 hover:text-white transition-colors text-sm">
               аксессуары
             </a>
           </li>
