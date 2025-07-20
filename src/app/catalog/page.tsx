@@ -1,4 +1,4 @@
-// src/app/catalog/page.tsx
+// src/app/catalog/page.tsx - ВАШ КОД С ДОБАВЛЕННЫМ ПЕРЕМЕШИВАНИЕМ
 'use client'
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -85,6 +85,16 @@ function CatalogContent() {
     setMounted(true);
   }, []);
 
+  // ✅ ДОБАВЛЯЕМ ФУНКЦИЮ ПЕРЕМЕШИВАНИЯ (без генериков)
+  const shuffleArray = (array: Product[]): Product[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   // Читаем фильтры из URL при загрузке
   useEffect(() => {
     if (mounted && isInitialLoad) {
@@ -112,7 +122,6 @@ function CatalogContent() {
     const search = searchParams.get('search');
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
-    const sale = searchParams.get('sale');
 
     // Заполняем фильтры из URL
     if (category) {
@@ -172,6 +181,137 @@ function CatalogContent() {
     router.replace(newURL, { scroll: false });
   };
 
+  // ✅ ОБНОВЛЯЕМ ФУНКЦИЮ ГРУППИРОВКИ С ПЕРЕМЕШИВАНИЕМ
+  const groupProductsByName = (products: Product[]): Product[] => {
+    console.log('🔄 [CATALOG] Группируем товары по названию...');
+    console.log('📊 [CATALOG] Исходное количество записей:', products.length);
+    
+    // Группируем по уникальной комбинации: бренд + название
+    const grouped = products.reduce((acc, product) => {
+      const key = `${product.brand.toLowerCase()}_${product.name.toLowerCase()}`;
+      
+      if (!acc[key]) {
+        // Первый товар в группе
+        acc[key] = {
+          ...product,
+          allSizes: [{ size: product.size, price: product.price }]
+        };
+      } else {
+        // Добавляем размер к существующему товару
+        acc[key].allSizes.push({ size: product.size, price: product.price });
+        
+        // Берем лучшее фото (самый длинный URL)
+        if (product.photo && product.photo.length > acc[key].photo.length) {
+          acc[key].photo = product.photo;
+        }
+      }
+      
+      return acc;
+    }, {} as Record<string, Product & { allSizes: Array<{size: string, price: number}> }>);
+    
+    // Преобразуем в массив уникальных товаров
+    const uniqueProducts = Object.values(grouped).map(product => {
+      // Сортируем размеры
+      const sortedSizes = (product.allSizes || []).sort((a, b) => {
+        const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
+        const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
+        return aNum - bNum;
+      });
+      
+      // Берем минимальный размер и цену для отображения
+      const minSize = sortedSizes[0] || { size: product.size, price: product.price };
+      
+      return {
+        id: product.id,
+        article: product.article,
+        brand: product.brand,
+        name: product.name,
+        size: minSize.size,
+        category: product.category,
+        gender: product.gender,
+        price: minSize.price,
+        photo: product.photo
+      };
+    });
+    
+    console.log('📊 [CATALOG] Уникальных товаров после группировки:', uniqueProducts.length);
+    
+    // ✅ ДОБАВЛЯЕМ ПЕРЕМЕШИВАНИЕ для разнообразия
+    const shuffledProducts = shuffleArray(uniqueProducts);
+    console.log('🎲 [CATALOG] Товары перемешаны для разнообразия');
+    
+    return shuffledProducts;
+  };
+
+  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ТОВАРОВ
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      
+      console.log('🔍 [CATALOG] Загружаем товары через API...');
+      
+      const response = await fetch('/api/products', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      console.log('📡 [CATALOG] Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // ✅ Обрабатываем JSON ответ от API
+      const result = await response.json();
+      console.log('📦 [CATALOG] API Result:', {
+        success: result.success,
+        count: result.count,
+        dataLength: result.data?.length || 0
+      });
+      
+      if (result.success && result.data) {
+        // Обеспечиваем ID и базовые поля
+        const productsWithId = result.data.map((product: any, index: number) => ({
+          ...product,
+          id: product.id || product.article || `product_${index}`,
+          article: product.article || '',
+          brand: product.brand || '',
+          name: product.name || '',
+          size: product.size || '',
+          category: product.category || '',
+          gender: product.gender || '',
+          price: Number(product.price) || 0,
+          photo: product.photo || ''
+        }));
+        
+        // ✅ ГРУППИРУЕМ И ПЕРЕМЕШИВАЕМ ТОВАРЫ ПО НАЗВАНИЮ
+        const groupedAndShuffledProducts = groupProductsByName(productsWithId);
+        setProducts(groupedAndShuffledProducts);
+        
+        console.log('✅ [CATALOG] Финальное количество товаров в каталоге:', groupedAndShuffledProducts.length);
+        
+        // Показываем примеры
+        if (groupedAndShuffledProducts.length > 0) {
+          console.log('📋 [CATALOG] Примеры товаров в каталоге:');
+          groupedAndShuffledProducts.slice(0, 3).forEach((p: any, i: number) => {
+            console.log(`  ${i + 1}. ${p.brand} - ${p.name} (размер: ${p.size}, цена: ${p.price}₽)`);
+          });
+        }
+        
+      } else {
+        console.error('❌ [CATALOG] API вернул ошибку:', result);
+        throw new Error(result.error || 'API вернул пустые данные');
+      }
+      
+    } catch (error) {
+      console.error('❌ [CATALOG] Ошибка загрузки товаров:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Загрузка товаров
   useEffect(() => {
     if (mounted) {
@@ -209,97 +349,7 @@ function CatalogContent() {
     applyFilters();
   }, [products, filters, searchQuery, sortBy]);
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/products');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const csvText = await response.text();
-      const rows = csvText.split('\n').slice(1); // Пропускаем заголовок
-      
-      const parsedProducts: Product[] = [];
-      
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i].trim();
-        if (!row) continue;
-        
-        try {
-          const values = parseCSVLine(row);
-          
-          if (values.length >= 8) {
-            const photoField = values[8] || '';
-            const firstPhoto = extractFirstPhoto(photoField);
-            
-            const product: Product = {
-              article: values[0] || '',
-              brand: values[1] || '',
-              name: values[2] || '',
-              size: values[3] || '',
-              category: values[4] || '',
-              gender: values[5] || '',
-              price: parseFloat(values[6]) || 0,
-              photo: firstPhoto
-            };
-            
-            if (product.name && product.price > 0) {
-              parsedProducts.push(product);
-            }
-          }
-        } catch (error) {
-          console.warn(`Ошибка парсинга строки ${i + 1}:`, error);
-        }
-      }
-      
-      setProducts(parsedProducts);
-    } catch (error) {
-      console.error('Ошибка загрузки товаров:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const parseCSVLine = (line: string): string[] => {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    
-    result.push(current);
-    return result;
-  };
-
-  const extractFirstPhoto = (photoField: string): string => {
-    if (!photoField) return '';
-    
-    const urls = photoField
-      .split(',')
-      .map(url => url.trim().replace(/^["']|["']$/g, ''))
-      .filter(url => url.length > 0);
-    
-    return urls[0] || '';
-  };
-
+  // ✅ ОБНОВЛЯЕМ ФУНКЦИЮ ФИЛЬТРОВ С ПОДДЕРЖКОЙ СЛУЧАЙНОЙ СОРТИРОВКИ
   const applyFilters = () => {
     let filtered = [...products];
 
@@ -351,7 +401,7 @@ function CatalogContent() {
       );
     }
 
-    // Сортировка
+    // ✅ ОБНОВЛЯЕМ СОРТИРОВКУ С ПОДДЕРЖКОЙ СЛУЧАЙНОГО ПОРЯДКА
     switch (sortBy) {
       case 'price-asc':
         filtered.sort((a, b) => a.price - b.price);
@@ -365,8 +415,13 @@ function CatalogContent() {
       case 'name-desc':
         filtered.sort((a, b) => b.name.localeCompare(a.name));
         break;
+      case 'random':
+        // ✅ ДОБАВЛЯЕМ ОПЦИЮ: случайная сортировка
+        filtered = shuffleArray(filtered);
+        console.log('🎲 [CATALOG] Применена случайная сортировка');
+        break;
       default:
-        // popularity - без сортировки (естественный порядок)
+        // popularity - оставляем перемешанный порядок из группировки
         break;
     }
 
