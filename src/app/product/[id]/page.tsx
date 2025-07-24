@@ -1,4 +1,4 @@
-// src/app/product/[id]/page.tsx - ОТЛАДОЧНАЯ ВЕРСИЯ
+// src/app/product/[id]/page.tsx - ИСПРАВЛЕННАЯ ВЕРСИЯ для Strapi API
 'use client';
 
 import React, { useState, useEffect, use } from 'react';
@@ -45,56 +45,88 @@ export default function ProductPage({ params }: ProductPageProps) {
           
           console.log('🚀 Загружаем товар с ID:', resolvedParams.id);
           
-          // Реальный API запрос
+          // API запрос к новому Strapi API
           const response = await fetch(`/api/products/${resolvedParams.id}`);
+          
+          if (!response.ok) {
+            if (response.status === 404) {
+              console.warn('⚠️ Товар не найден (404)');
+              setProduct(null);
+              return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
           const result = await response.json();
           
-          console.log('📦 Получен ответ от API:', {
-            success: result.success,
-            hasData: !!result.data,
+          console.log('📦 Получен ответ от Strapi API:', {
+            hasProduct: !!result.product,
             error: result.error
           });
           
-          if (result.success && result.data) {
+          // ИСПРАВЛЕНО: новый формат API - result.product вместо result.data
+          if (result.product) {
+            const productData = result.product;
+            
             console.log('✅ Данные товара получены:', {
-              name: result.data.name,
-              photosCount: result.data.photos?.length || 0,
-              photos: result.data.photos,
-              sizesCount: result.data.sizes?.length || 0
+              name: productData.name,
+              price: productData.price,
+              sizes: productData.sizes,
+              mainPhoto: productData.mainPhoto,
+              additionalPhotos: productData.additionalPhotos
             });
             
-            // Преобразуем данные в нужный формат
-            const productData: ProductInfoType = {
-              id: result.data.id,
-              name: result.data.name,
-              brand: result.data.brand,
-              price: result.data.sizes[0]?.price || 0, // Базовая цена из первого размера
-              category: result.data.category,
-              article: result.data.article,
-              description: result.data.description,
-              sizes: result.data.sizes,
-              inStock: result.data.inStock,
-              deliveryInfo: result.data.deliveryInfo
+            // Создаем размеры в правильном формате
+            const productSizes: ProductSize[] = productData.sizes?.map((sizeValue: string) => ({
+              size: sizeValue,
+              price: productData.price, // Пока одна цена для всех размеров
+              available: true
+            })) || [
+              // Если размеров нет, создаем дефолтный
+              { size: productData.size || '41', price: productData.price, available: true }
+            ];
+            
+            // Преобразуем данные в нужный формат для компонента
+            const productInfo: ProductInfoType = {
+              id: productData.id,
+              name: productData.name,
+              brand: productData.brand,
+              price: productData.price,
+              category: productData.category,
+              article: productData.article,
+              description: `${productData.brand} ${productData.name} - ${productData.category}`,
+              sizes: productSizes,
+              inStock: productData.availableStock > 0,
+              deliveryInfo: 'Доставка 1-3 дня по России'
             };
             
-            setProduct(productData);
+            setProduct(productInfo);
             
-            // Создаем изображения из массива photos
+            // Создаем изображения для галереи
             const productImages: GalleryImage[] = [];
             
-            if (result.data.photos && result.data.photos.length > 0) {
-              // Используем ТОЛЬКО реальные изображения из таблицы
-              result.data.photos.forEach((photoUrl: string, index: number) => {
-                // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: убеждаемся что URL валидный
+            // Добавляем главное фото
+            if (productData.mainPhoto && productData.mainPhoto.trim()) {
+              productImages.push({
+                id: 'main_photo',
+                url: productData.mainPhoto.trim(),
+                alt: `${productData.name} - главное фото`
+              });
+              console.log('📸 Добавлено главное фото:', productData.mainPhoto.substring(0, 80) + '...');
+            }
+            
+            // Добавляем дополнительные фото
+            if (productData.additionalPhotos && Array.isArray(productData.additionalPhotos)) {
+              productData.additionalPhotos.forEach((photoUrl: string, index: number) => {
                 if (photoUrl && photoUrl.trim() && (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'))) {
                   productImages.push({
-                    id: `photo_${index + 1}`,
+                    id: `additional_photo_${index + 1}`,
                     url: photoUrl.trim(),
-                    alt: `${result.data.name} - фото ${index + 1}`
+                    alt: `${productData.name} - дополнительное фото ${index + 1}`
                   });
-                  console.log(`📸 Добавлено изображение ${index + 1}:`, photoUrl.substring(0, 80) + '...');
+                  console.log(`📸 Добавлено дополнительное фото ${index + 1}:`, photoUrl.substring(0, 80) + '...');
                 } else {
-                  console.warn(`⚠️ Пропущен невалидный URL изображения ${index + 1}:`, photoUrl);
+                  console.warn(`⚠️ Пропущен невалидный URL дополнительного фото ${index + 1}:`, photoUrl);
                 }
               });
             }
@@ -104,8 +136,8 @@ export default function ProductPage({ params }: ProductPageProps) {
               console.log('📷 Нет валидных изображений, добавляем placeholder');
               productImages.push({
                 id: 'placeholder_1',
-                url: '', // Пустой URL вызовет показ placeholder в галерее
-                alt: `${result.data.name} - изображение скоро появится`
+                url: '/images/placeholder.jpg', // Placeholder изображение
+                alt: `${productData.name} - изображение скоро появится`
               });
             }
             
@@ -117,7 +149,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             });
             
           } else {
-            console.error('❌ Товар не найден:', result.error);
+            console.error('❌ Товар не найден в ответе API:', result.error);
             setProduct(null);
           }
           
@@ -153,7 +185,7 @@ export default function ProductPage({ params }: ProductPageProps) {
       category: product.category,
       gender: 'Унисекс',
       price: price,
-      photo: images[0]?.url || ''
+      photo: images[0]?.url || '/images/placeholder.jpg'
     };
     
     // Добавляем в корзину без alert
@@ -169,7 +201,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   const handleContinueShopping = () => {
     console.log('Переход в каталог');
-    window.location.href = '/';
+    window.location.href = '/catalog';
   };
 
   const handleBackToStore = () => {
@@ -296,11 +328,11 @@ export default function ProductPage({ params }: ProductPageProps) {
       />
 
       {/* Уведомление о добавлении в корзину */}
-      {/* <CartNotification
+      <CartNotification
         isVisible={showNotification}
         productName={notificationProduct}
         onHide={() => setShowNotification(false)}
-      /> */}
+      />
     </div>
   );
 }

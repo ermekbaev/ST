@@ -1,4 +1,4 @@
-// src/components/Product/ProductCard.tsx
+// src/components/Product/ProductCard.tsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,6 +14,7 @@ interface Product {
   gender: string;
   price: number;
   photo: string;
+  slug?: string; // Добавляем поддержку slug
 }
 
 interface ProductCardProps {
@@ -28,21 +29,35 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   useEffect(() => {
     console.log('🎯 ProductCard создан для товара:', {
       name: product.name.substring(0, 30),
+      id: product.id,
+      slug: product.slug,
       photo: product.photo,
       photoLength: product.photo?.length || 0,
       photoStartsWithHttp: product.photo?.startsWith('http'),
-      photoTrimmed: product.photo?.trim(),
       hasValidPhoto: isValidImageUrl(product.photo)
     });
   }, [product]);
 
   const handleCardClick = () => {
-    // Используем ID товара или article как fallback
-    const productId = product.id || product.article;
-    console.log('Переход на страницу товара:', productId);
+    // ИСПРАВЛЕНО: Используем slug, documentId или ID в порядке приоритета
+    let productIdentifier: string;
+    
+    if (product.slug && product.slug.trim()) {
+      // Приоритет - slug для SEO
+      productIdentifier = product.slug;
+      console.log('🔗 Переход по slug:', productIdentifier);
+    } else if (product.id) {
+      // Если нет slug, используем ID
+      productIdentifier = product.id;
+      console.log('🔗 Переход по ID:', productIdentifier);
+    } else {
+      // Fallback на article
+      productIdentifier = product.article;
+      console.log('🔗 Переход по article:', productIdentifier);
+    }
     
     // Переход на страницу товара
-    router.push(`/product/${productId}`);
+    router.push(`/product/${productIdentifier}`);
   };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -70,13 +85,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     // Проверяем, что URL содержит домен
     const hasDomain = trimmedUrl.includes('.') && trimmedUrl.length > 10;
-    
-    // Дополнительная проверка на популярные домены изображений
-    const hasImageDomain = trimmedUrl.includes('imgur') || 
-                          trimmedUrl.includes('cdn') || 
-                          trimmedUrl.includes('image') ||
-                          trimmedUrl.includes('photo') ||
-                          trimmedUrl.includes('pic');
     
     return isHttp && hasDomain;
   };

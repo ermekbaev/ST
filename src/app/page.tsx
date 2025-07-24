@@ -1,3 +1,4 @@
+// src/app/page.tsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -36,19 +37,36 @@ export default function Home() {
       setLoading(true);
       setError(null); // Сбрасываем ошибку при новой попытке
       
-      const response = await fetch('/api/products');
-      const result = await response.json();
+      console.log('🔄 Загружаем товары с главной страницы...');
       
-      if (result.success) {
-        const productsData = Array.isArray(result.data) ? result.data : [];
-        setProducts(productsData);
-        console.log('Загружено товаров:', result.count);
-      } else {
-        throw new Error(result.error || 'Ошибка загрузки данных');
+      const response = await fetch('/api/products');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const result = await response.json();
+      console.log('📦 Ответ API на главной:', result);
+      
+      // ИСПРАВЛЕНО: новый формат API
+      if (result.products && Array.isArray(result.products)) {
+        setProducts(result.products);
+        console.log('✅ Загружено товаров на главной:', result.products.length);
+      } else {
+        // Если нет поля products, пробуем старый формат для совместимости
+        if (result.success && Array.isArray(result.data)) {
+          setProducts(result.data);
+          console.log('✅ Загружено товаров (старый формат):', result.data.length);
+        } else {
+          console.warn('⚠️ Неожиданный формат ответа:', result);
+          setProducts([]);
+        }
+      }
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      console.error('Ошибка:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+      setError(errorMessage);
+      console.error('❌ Ошибка загрузки товаров на главной:', err);
     } finally {
       setLoading(false);
     }
@@ -124,48 +142,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Скелетон для секции ОДЕЖДА */}
-      <section className="mb-16">
-        <div className="flex justify-between items-center mb-6 lg:mb-8">
-          <div className="h-8 lg:h-12 bg-gray-200 rounded w-32 lg:w-40 animate-pulse"></div>
-          <div className="h-6 lg:h-8 bg-gray-200 rounded w-20 lg:w-24 animate-pulse"></div>
-        </div>
-        
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className="bg-white w-full">
-              <div className="w-full h-[150px] lg:h-[200px] bg-gray-200 animate-pulse rounded"></div>
-              <div className="w-full h-px bg-gray-200 animate-pulse"></div>
-              <div className="py-2 space-y-2">
-                <div className="h-5 lg:h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                <div className="h-4 lg:h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Скелетон для секции АКСЕССУАРЫ */}
-      <section className="mb-16">
-        <div className="flex justify-between items-center mb-6 lg:mb-8">
-          <div className="h-8 lg:h-12 bg-gray-200 rounded w-36 lg:w-44 animate-pulse"></div>
-          <div className="h-6 lg:h-8 bg-gray-200 rounded w-20 lg:w-24 animate-pulse"></div>
-        </div>
-        
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className="bg-white w-full">
-              <div className="w-full h-[150px] lg:h-[200px] bg-gray-200 animate-pulse rounded"></div>
-              <div className="w-full h-px bg-gray-200 animate-pulse"></div>
-              <div className="py-2 space-y-2">
-                <div className="h-5 lg:h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                <div className="h-4 lg:h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Центральный индикатор загрузки - минималистичный */}
       <div className="flex justify-center items-center py-8">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-300"></div>
@@ -173,7 +149,7 @@ export default function Home() {
     </>
   );
 
-    // Красивое состояние загрузки с Hero слайдером
+  // Красивое состояние загрузки с Hero слайдером
   if (loading) {
     return (  
       <div className="min-h-screen bg-white">

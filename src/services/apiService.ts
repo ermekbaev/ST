@@ -1,37 +1,24 @@
-// src/services/googleSheetsService.ts
-// ОБНОВЛЕНО: работает с Strapi через Next.js API routes
-// ПОЛНАЯ СОВМЕСТИМОСТЬ с существующими компонентами
-
-// ==================== ИНТЕРФЕЙСЫ (совместимые с существующим кодом) ====================
+// ==================== ИНТЕРФЕЙСЫ ====================
 
 export interface Product {
-  id?: string; // Опционально для совместимости
+  id: string;
   article: string;
   brand: string;
   name: string;
-  
-  // ДЛЯ СОВМЕСТИМОСТИ - оба формата:
-  size: string;         // Первый размер (старый формат)
-  sizes: string[];      // Массив размеров (новый формат)
-  
+  sizes: string[];
   category: string;
   gender: string;
   price: number;
-  
-  // ДЛЯ СОВМЕСТИМОСТИ - оба формата фото:
-  photo: string;        // Основное фото (старый формат)
-  mainPhoto: string;    // Основное фото (новый формат)
-  additionalPhotos: string[];
-  
   stockQuantity: number;
   availableStock: number;
+  mainPhoto: string;
+  additionalPhotos: string[];
   isActive: boolean;
   slug: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-// Дополнительные интерфейсы
 export interface OrderItem {
   productId: string;
   size: string;
@@ -62,7 +49,7 @@ export interface CreateOrderResponse {
 // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
 
 /**
- * Получить все товары (теперь из Strapi через API)
+ * Получить все товары
  */
 export const getProducts = async (filters?: {
   category?: string;
@@ -71,9 +58,9 @@ export const getProducts = async (filters?: {
   limit?: number;
 }): Promise<Product[]> => {
   try {
-    console.log('🔄 Загружаем товары через Next.js API...');
+    console.log('🔄 Загружаем товары через API...');
     
-    // Строим URL с параметрами (если нужны фильтры)
+    // Строим URL с параметрами
     const params = new URLSearchParams();
     if (filters?.category) params.append('category', filters.category);
     if (filters?.brand) params.append('brand', filters.brand);
@@ -86,54 +73,22 @@ export const getProducts = async (filters?: {
       headers: {
         'Content-Type': 'application/json',
       },
-      cache: 'no-store' // Всегда свежие данные
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('❌ API ошибка:', errorData);
-      // Для совместимости возвращаем пустой массив вместо throw
-      return [];
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
-    const strapiProducts = data.products || [];
+    const products = data.products || [];
     
-    // ВАЖНО: Преобразуем в формат, совместимый с существующими компонентами
-    const products: Product[] = strapiProducts.map((product: any) => ({
-      id: product.id,
-      article: product.article,
-      brand: product.brand,
-      name: product.name,
-      
-      // Совместимость размеров:
-      size: product.sizes?.[0] || '',  // Первый размер для старых компонентов
-      sizes: product.sizes || [],      // Полный массив для новых компонентов
-      
-      category: product.category,
-      gender: product.gender,
-      price: product.price,
-      
-      // Совместимость фото:
-      photo: product.mainPhoto || '/images/placeholder.jpg',  // Для старых компонентов
-      mainPhoto: product.mainPhoto || '/images/placeholder.jpg', // Для новых компонентов
-      additionalPhotos: product.additionalPhotos || [],
-      
-      stockQuantity: product.stockQuantity || 0,
-      availableStock: product.availableStock || 0,
-      isActive: product.isActive !== false,
-      slug: product.slug || '',
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt
-    }));
-    
-    console.log(`✅ Загружено ${products.length} товаров из Strapi`);
+    console.log(`✅ Загружено ${products.length} товаров через API`);
     return products;
 
   } catch (error) {
-    console.error('❌ Ошибка загрузки товаров:', error);
-    // Для совместимости возвращаем пустой массив
-    return [];
+    console.error('❌ Ошибка загрузки товаров через API:', error);
+    throw error;
   }
 };
 
@@ -157,48 +112,17 @@ export const getProductById = async (id: string): Promise<Product | null> => {
       }
       
       const errorData = await response.json();
-      console.error('❌ API ошибка:', errorData);
-      return null;
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
-    const strapiProduct = data.product;
+    const product = data.product;
     
-    if (!strapiProduct) {
-      return null;
-    }
-    
-    // Преобразуем в совместимый формат
-    const product: Product = {
-      id: strapiProduct.id,
-      article: strapiProduct.article,
-      brand: strapiProduct.brand,
-      name: strapiProduct.name,
-      
-      // Совместимость размеров:
-      size: strapiProduct.sizes?.[0] || '',
-      sizes: strapiProduct.sizes || [],
-      
-      category: strapiProduct.category,
-      gender: strapiProduct.gender,
-      price: strapiProduct.price,
-      
-      // Совместимость фото:
-      photo: strapiProduct.mainPhoto || '/images/placeholder.jpg',
-      mainPhoto: strapiProduct.mainPhoto || '/images/placeholder.jpg',
-      additionalPhotos: strapiProduct.additionalPhotos || [],
-      
-      stockQuantity: strapiProduct.stockQuantity || 0,
-      availableStock: strapiProduct.availableStock || 0,
-      isActive: strapiProduct.isActive !== false,
-      slug: strapiProduct.slug || ''
-    };
-    
-    console.log(`✅ Товар ${id} загружен`);
+    console.log(`✅ Товар ${id} загружен через API`);
     return product;
 
   } catch (error) {
-    console.error(`❌ Ошибка загрузки товара ${id}:`, error);
+    console.error(`❌ Ошибка загрузки товара ${id} через API:`, error);
     return null;
   }
 };
@@ -247,11 +171,21 @@ export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrd
  */
 export const getBrands = async () => {
   try {
-    const response = await fetch('/api/brands');
+    const response = await fetch('/api/brands', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     return data.brands || [];
+
   } catch (error) {
-    console.error('❌ Ошибка загрузки брендов:', error);
+    console.error('❌ Ошибка загрузки брендов через API:', error);
     return [];
   }
 };
@@ -261,11 +195,21 @@ export const getBrands = async () => {
  */
 export const getCategories = async () => {
   try {
-    const response = await fetch('/api/categories');
+    const response = await fetch('/api/categories', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     return data.categories || [];
+
   } catch (error) {
-    console.error('❌ Ошибка загрузки категорий:', error);
+    console.error('❌ Ошибка загрузки категорий через API:', error);
     return [];
   }
 };
@@ -275,11 +219,21 @@ export const getCategories = async () => {
  */
 export const getSizes = async () => {
   try {
-    const response = await fetch('/api/sizes');
+    const response = await fetch('/api/sizes', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     return data.sizes || [];
+
   } catch (error) {
-    console.error('❌ Ошибка загрузки размеров:', error);
+    console.error('❌ Ошибка загрузки размеров через API:', error);
     return [];
   }
 };
@@ -291,9 +245,19 @@ export const getSizes = async () => {
  */
 export const getSystemHealth = async () => {
   try {
-    const response = await fetch('/api/health');
+    const response = await fetch('/api/health', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     return data;
+
   } catch (error) {
     console.error('❌ Ошибка проверки состояния системы:', error);
     return {
@@ -315,6 +279,7 @@ export const getSystemStats = async () => {
       totalBrands: 0,
       totalCategories: 0
     };
+
   } catch (error) {
     console.error('❌ Ошибка получения статистики:', error);
     return {
@@ -325,12 +290,10 @@ export const getSystemStats = async () => {
   }
 };
 
-// ==================== LEGACY ФУНКЦИИ (для совместимости) ====================
+// ==================== СОВМЕСТИМОСТЬ С СУЩЕСТВУЮЩИМ КОДОМ ====================
 
-/**
- * Проверка подключения (для совместимости)
- */
-export const testGoogleSheetsConnection = async (): Promise<boolean> => {
+// Для совместимости с компонентами, которые могут ожидать эти функции
+export const testConnection = async (): Promise<boolean> => {
   try {
     const health = await getSystemHealth();
     return health.status === 'healthy';
@@ -340,24 +303,8 @@ export const testGoogleSheetsConnection = async (): Promise<boolean> => {
 };
 
 // Алиасы для совместимости
-export const testConnection = testGoogleSheetsConnection;
-export const testStrapiConnection = testGoogleSheetsConnection;
-
-/**
- * Сохранение пользователя (legacy)
- */
-export const saveUserToGoogleSheetsAPI = async (userData: any): Promise<boolean> => {
-  console.log('⚠️ saveUserToGoogleSheetsAPI deprecated - используйте новую систему авторизации');
-  return false;
-};
-
-/**
- * Обновление даты входа (legacy)
- */
-export const updateLastLoginDate = async (email: string): Promise<boolean> => {
-  console.log('⚠️ updateLastLoginDate deprecated - будет реализовано через Strapi');
-  return false;
-};
+export const testStrapiConnection = testConnection;
+export const testGoogleSheetsConnection = testConnection;
 
 // ==================== ТИПЫ ДЛЯ ЭКСПОРТА ====================
 
