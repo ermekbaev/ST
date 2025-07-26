@@ -29,7 +29,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     }
   };
   
-
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
@@ -54,7 +53,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     setLoading(true);
     
     try {
-      console.log('📤 Отправка данных регистрации...');
+      console.log('📤 Отправка данных регистрации:', {
+        phone: formData.phone,
+        email: formData.email,
+        agreeToMarketing: formData.agreeToMarketing
+      });
       
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -72,38 +75,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       console.log('📥 Ответ сервера:', data);
 
       if (data.success) {
-        // Сохраняем пользователя в localStorage
+        // ИСПРАВЛЕНО: правильно сохраняем телефон
         if (typeof window !== 'undefined') {
           const userToSave = {
             id: data.user.id,
-            name: data.user.email.split('@')[0], // Временно используем часть email как имя
-            phone: data.user.phone,
-            email: data.user.email
+            name: data.user.email.split('@')[0],
+            phone: formData.phone, // Берем из формы!
+            email: data.user.email,
+            agreeToMarketing: formData.agreeToMarketing // Берем из формы!
           };
+          
+          console.log('💾 Сохраняем пользователя:', userToSave);
           localStorage.setItem('currentUser', JSON.stringify(userToSave));
-          console.log('💾 Пользователь сохранен в localStorage');
+          
+          // Сохраняем JWT токен если есть
+          if (data.jwt) {
+            localStorage.setItem('authToken', data.jwt);
+          }
         }
         
-        // Показываем успешное сообщение с деталями
-        const sheetsMessage = data.savedToSheets 
-          ? '📊 Данные сохранены в Google Таблицы!' 
-          : '💾 Данные сохранены локально.';
-        
-        const goToProfile = confirm(
-          `✅ Регистрация прошла успешно!\n\n${sheetsMessage}\n\n` +
-          '👤 Хотите перейти в личный кабинет?\n\n' +
-          'Нажмите "ОК" для перехода или "Отмена" чтобы остаться на странице.'
-        );
-        
+        // Сразу переходим в профиль
         onClose();
+        window.location.href = '/profile';
         
-        // Переход на существующую страницу профиля
-        if (goToProfile) {
-          window.location.href = '/profile';
-        } else {
-          // Обновляем страницу, чтобы обновить состояние авторизации
-          window.location.reload();
-        }
       } else {
         if (data.field) {
           setErrors({ [data.field]: data.error });
@@ -151,34 +145,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       console.log('📥 Ответ сервера:', data);
 
       if (data.success) {
-        // Сохраняем пользователя в localStorage в формате, совместимом с существующим профилем
+        // Сохраняем пользователя в localStorage
         if (typeof window !== 'undefined') {
           const userToSave = {
             id: data.user.id,
-            name: data.user.email.split('@')[0], // Временно используем часть email как имя
-            phone: data.user.phone,
-            email: data.user.email
+            name: data.user.email.split('@')[0],
+            phone: data.user.phone || 'Не указан', // Из ответа сервера
+            email: data.user.email,
+            agreeToMarketing: data.user.agreeToMarketing || false
           };
+          
+          console.log('💾 Сохраняем пользователя при входе:', userToSave);
           localStorage.setItem('currentUser', JSON.stringify(userToSave));
-          console.log('💾 Пользователь сохранен в localStorage');
+          
+          // Сохраняем JWT токен если есть
+          if (data.jwt) {
+            localStorage.setItem('authToken', data.jwt);
+          }
         }
         
-        const goToProfile = confirm(
-          '✅ Вход выполнен успешно!\n\n' +
-          `Добро пожаловать, ${data.user.email}!\n\n` +
-          '👤 Хотите перейти в личный кабинет?\n\n' +
-          'Нажмите "ОК" для перехода или "Отмена" чтобы остаться на странице.'
-        );
-        
+        // Сразу переходим в профиль
         onClose();
+        window.location.href = '/profile';
         
-        // Переход на существующую страницу профиля
-        if (goToProfile) {
-          window.location.href = '/profile';
-        } else {
-          // Обновляем страницу, чтобы обновить состояние авторизации
-          window.location.reload();
-        }
       } else {
         if (data.field) {
           setErrors({ [data.field]: data.error });
@@ -202,11 +191,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   };
 
   const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  // Запрещаем ввод символа +
-  if (e.key === '+') {
-    e.preventDefault();
-  }
-};
+    if (e.key === '+') {
+      e.preventDefault();
+    }
+  };
 
   return (
     <div 

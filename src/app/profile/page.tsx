@@ -10,6 +10,7 @@ interface User {
   name: string;
   phone: string;
   email: string;
+  agreeToMarketing?: boolean;
 }
 
 const UserProfilePage: NextPage = () => {
@@ -20,32 +21,44 @@ const UserProfilePage: NextPage = () => {
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
   useEffect(() => {
-    // ОБНОВЛЕННАЯ ЛОГИКА: Читаем пользователя из localStorage
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('currentUser');
+      
       if (savedUser) {
         try {
           const userData = JSON.parse(savedUser);
-          console.log('👤 Загружен пользователь из localStorage:', userData);
-          setUser({
+          console.log('👤 Данные из localStorage:', userData);
+          
+          // Устанавливаем данные пользователя
+          const userInfo = {
             name: userData.name || userData.email?.split('@')[0] || 'Пользователь',
             phone: userData.phone || 'Не указан',
-            email: userData.email || 'Не указан'
-          });
+            email: userData.email || 'Не указан',
+            agreeToMarketing: userData.agreeToMarketing || false
+          };
+          
+          console.log('👤 Обработанные данные пользователя:', userInfo);
+          
+          setUser(userInfo);
+          setAgreeToMarketing(userData.agreeToMarketing || false);
+          
         } catch (error) {
           console.error('Ошибка парсинга пользователя:', error);
           localStorage.removeItem('currentUser');
-          // Перенаправляем на главную если нет валидных данных
+          localStorage.removeItem('authToken');
           window.location.href = '/';
         }
       } else {
         console.log('❌ Пользователь не найден в localStorage');
-        // Перенаправляем на главную если не авторизован
         window.location.href = '/';
       }
       setIsLoading(false);
     }
-  }, []);
+  };
 
   const handleEditField = (field: string) => {
     console.log(`Редактировать поле: ${field}`);
@@ -59,65 +72,88 @@ const UserProfilePage: NextPage = () => {
 
   const handleLogout = () => {
     console.log('Выход из аккаунта');
-    const confirmLogout = confirm('Вы уверены, что хотите выйти из аккаунта?');
-    if (confirmLogout) {
-      // Очищаем localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('currentUser');
-      }
-      // Перенаправляем на главную
-      window.location.href = '/';
+    
+    // Сразу выходим без подтверждения
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('authToken');
     }
+    window.location.href = '/';
   };
 
-  // Показываем загрузку
-  if (isLoading) {
+// Полная версия handleMarketingChange с сохранением в Strapi
+const handleMarketingChange = async (newValue: boolean) => {
+  console.log('🔄 Обновляем согласие на маркетинг:', newValue);
+  
+  // Сначала обновляем локальное состояние (мгновенно)
+  setAgreeToMarketing(newValue);
+  
+  // Обновляем localStorage (мгновенно)
+  if (user) {
+    const updatedUser = { ...user, agreeToMarketing: newValue };
+    setUser(updatedUser);
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    console.log('✅ Согласие обновлено в localStorage');
+  }
+  
+  // Обновляем в Strapi (в фоне)
+  const authToken = localStorage.getItem('authToken');
+  if (authToken) {
+    try {
+      console.log('📤 Отправляем обновление в Strapi...');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}/api/users/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          agreeToMarketing: newValue
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Согласие успешно обновлено в Strapi:', result);
+      } else {
+        const error = await response.json();
+        console.error('❌ Ошибка обновления в Strapi:', error);
+        // НО НЕ откатываем изменение - localStorage уже обновлен
+      }
+    } catch (error) {
+      console.error('❌ Ошибка сети при обновлении согласия:', error);
+      // Оставляем изменение в localStorage даже при ошибке сети
+    }
+  } else {
+    console.log('⚠️ Нет JWT токена для обновления в Strapi');
+    // Но localStorage все равно обновлен
+  }
+};
+
+  if (isMobile) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="font-product text-gray-600">Загрузка профиля...</p>
-        </div>
-      </div>
+      <MobileProfileView 
+        user={user}
+        isLoading={isLoading}
+        agreeToMarketing={agreeToMarketing}
+        setAgreeToMarketing={handleMarketingChange}
+        handleEditField={handleEditField}
+        handleOrderHistory={handleOrderHistory}
+        handleLogout={handleLogout}
+      />
     );
   }
 
-  // Проверяем авторизацию
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="font-product text-2xl text-black mb-4">Доступ ограничен</h1>
-          <p className="font-product text-gray-600 mb-6">
-            Для доступа к личному кабинету необходимо авторизоваться
-          </p>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="bg-black text-white px-6 py-3 rounded-sm font-product text-sm uppercase tracking-wider hover:bg-gray-800 transition-colors"
-          >
-            На главную
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Общие пропсы для обеих версий
-  const commonProps = {
-    user,
-    isLoading,
-    agreeToMarketing,
-    setAgreeToMarketing,
-    handleEditField,
-    handleOrderHistory,
-    handleLogout
-  };
-
-  // Условный рендеринг в зависимости от размера экрана
-  return isMobile ? (
-    <MobileProfileView {...commonProps} />
-  ) : (
-    <DesktopProfileView {...commonProps} />
+  return (
+    <DesktopProfileView 
+      user={user}
+      isLoading={isLoading}
+      agreeToMarketing={agreeToMarketing}
+      setAgreeToMarketing={handleMarketingChange}
+      handleEditField={handleEditField}
+      handleOrderHistory={handleOrderHistory}
+      handleLogout={handleLogout}
+    />
   );
 };
 

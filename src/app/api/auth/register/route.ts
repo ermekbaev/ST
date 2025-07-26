@@ -1,5 +1,5 @@
+// Улучшенная версия /app/api/auth/register/route.ts с детальной отладкой
 import { NextResponse } from 'next/server';
-import { saveUserToGoogleSheets } from '@/services/googleSheetsService';
 
 interface RegisterRequest {
   phone: string;
@@ -7,22 +7,19 @@ interface RegisterRequest {
   agreeToMarketing: boolean;
 }
 
-interface User {
-  id: string;
-  phone: string;
-  email: string;
-  agreeToMarketing: boolean;
-  registrationDate: string;
-  lastLogin: string;
-}
-
-const SHEET_ID = '1naTkxDrQFfj_d7Q2U46GOj24hSqTAqrt_Yz1ImaKyVc';
-const USERS_SHEET_GID = '288409925';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const TEMP_PASSWORD = 'TigrShop2025!';
 
 export async function POST(request: Request) {
   try {
     const body: RegisterRequest = await request.json();
-    console.log('📝 Регистрация пользователя:', { email: body.email, phone: body.phone });
+    console.log('📝 === НАЧАЛО РЕГИСТРАЦИИ ===');
+    console.log('📊 Данные от клиента:', {
+      email: body.email,
+      phone: body.phone,
+      agreeToMarketing: body.agreeToMarketing,
+      agreeToMarketingType: typeof body.agreeToMarketing
+    });
 
     // Валидация данных
     const validation = validateRegistrationData(body);
@@ -34,70 +31,116 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Проверяем, существует ли пользователь
-    const existingUser = await checkUserExists(body.email, body.phone);
-    if (existingUser) {
+    // ШАГ 1: Создаем базового пользователя
+    console.log('🔧 ШАГ 1: Создание базового пользователя...');
+    const registerPayload = {
+      username: body.email,
+      email: body.email,
+      password: TEMP_PASSWORD
+    };
+    console.log('📤 Payload для регистрации:', registerPayload);
+
+    const registerResponse = await fetch(`${STRAPI_URL}/api/auth/local/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(registerPayload),
+    });
+
+    const userData = await registerResponse.json();
+    console.log('📥 Ответ Strapi регистрации:', userData);
+
+    if (!registerResponse.ok) {
+      console.error('❌ Ошибка создания пользователя:', userData);
+      
+      let error = 'Ошибка регистрации';
+      let field = '';
+
+      if (userData.error?.message?.includes('email') || userData.error?.message?.includes('Email')) {
+        error = 'Пользователь с таким email уже зарегистрирован';
+        field = 'email';
+      } else if (userData.error?.message?.includes('username')) {
+        error = 'Пользователь с таким email уже зарегистрирован';
+        field = 'email';
+      }
+
       return NextResponse.json({
         success: false,
-        error: existingUser.field === 'email' 
-          ? 'Пользователь с таким email уже зарегистрирован' 
-          : 'Пользователь с таким номером телефона уже зарегистрирован',
-        field: existingUser.field
+        error,
+        field
       }, { status: 409 });
     }
 
-    // Создаем нового пользователя
-    const newUser: User = {
-      id: generateUserId(),
+    console.log('✅ Базовый пользователь создан:', userData.user.id);
+
+    // ШАГ 2: Обновляем пользователя дополнительными полями
+    console.log('🔧 ШАГ 2: Обновление профиля...');
+    const updatePayload = {
       phone: body.phone,
-      email: body.email,
-      agreeToMarketing: body.agreeToMarketing,
+      agreeToMarketing: Boolean(body.agreeToMarketing), // Явное преобразование в Boolean
       registrationDate: new Date().toISOString(),
       lastLogin: new Date().toISOString()
     };
+    console.log('📤 Payload для обновления:', updatePayload);
 
-    console.log('✅ Пользователь создан:', newUser.id);
+    const updateResponse = await fetch(`${STRAPI_URL}/api/users/${userData.user.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userData.jwt}`,
+      },
+      body: JSON.stringify(updatePayload),
+    });
 
-    // Сохраняем через Google Apps Script webhook
-    let savedToSheets = false;
-    let sheetsError = null;
-    
-    try {
-      if (process.env.GOOGLE_APPS_SCRIPT_URL) {
-        console.log('💾 Сохраняем через Google Apps Script webhook...');
-        savedToSheets = await saveUserToGoogleSheets(newUser);
-      } else {
-        console.log('⚠️ Google Apps Script webhook не настроен');
-        sheetsError = 'Webhook не настроен';
-      }
-    } catch (error) {
-      console.error('❌ Ошибка при сохранении в Google Sheets:', error);
-      sheetsError = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    }
+    const updateResult = await updateResponse.json();
+    console.log('📥 Ответ обновления:', updateResult);
 
-    // Формируем сообщение о результате
-    let message = 'Регистрация успешна!';
-    if (savedToSheets) {
-      message += ' Данные сохранены в Google Таблицы.';
-    } else if (sheetsError) {
-      message += ` (Google Sheets: ${sheetsError})`;
+    if (!updateResponse.ok) {
+      console.error('⚠️ Ошибка обновления профиля:', updateResult);
+      // Продолжаем, но отмечаем проблему
     } else {
-      message += ' Данные сохранены локально.';
+      console.log('✅ Профиль успешно обновлен');
     }
 
+    // ШАГ 3: Проверяем финальные данные
+    console.log('🔧 ШАГ 3: Проверка сохраненных данных...');
+    const checkResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${userData.jwt}`,
+      },
+    });
+
+    if (checkResponse.ok) {
+      const finalUser = await checkResponse.json();
+      console.log('📊 ФИНАЛЬНЫЕ ДАННЫЕ В STRAPI:', {
+        id: finalUser.id,
+        email: finalUser.email,
+        phone: finalUser.phone,
+        agreeToMarketing: finalUser.agreeToMarketing,
+        agreeToMarketingType: typeof finalUser.agreeToMarketing
+      });
+    } else {
+      console.error('❌ Ошибка проверки данных:', await checkResponse.json());
+    }
+
+    // Возвращаем успешный ответ
+    console.log('🎉 === РЕГИСТРАЦИЯ ЗАВЕРШЕНА ===');
     return NextResponse.json({
       success: true,
-      message,
+      message: 'Регистрация успешна! Данные сохранены в Strapi.',
       user: {
-        id: newUser.id,
-        email: newUser.email,
-        phone: newUser.phone
+        id: userData.user.id,
+        email: userData.user.email,
+        phone: body.phone,
+        agreeToMarketing: Boolean(body.agreeToMarketing)
       },
-      savedToSheets
+      savedToSheets: true,
+      jwt: userData.jwt
     });
 
   } catch (error) {
-    console.error('❌ Ошибка регистрации:', error);
+    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА РЕГИСТРАЦИИ:', error);
     return NextResponse.json({
       success: false,
       error: 'Внутренняя ошибка сервера'
@@ -105,10 +148,7 @@ export async function POST(request: Request) {
   }
 }
 
-function generateUserId(): string {
-  return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
+// Функции валидации (те же)
 function validateRegistrationData(data: RegisterRequest): { isValid: boolean; error?: string; field?: string } {
   if (!data.email || !validateEmail(data.email)) {
     return { isValid: false, error: 'Некорректный email адрес', field: 'email' };
@@ -129,79 +169,4 @@ function validateEmail(email: string): boolean {
 function validatePhone(phone: string): boolean {
   const cleanPhone = phone.replace(/[^\d+]/g, '');
   return cleanPhone.length >= 10 && cleanPhone.length <= 12;
-}
-
-async function checkUserExists(email: string, phone: string): Promise<{ exists: true; field: 'email' | 'phone' } | null> {
-  try {
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${USERS_SHEET_GID}`;
-    
-    console.log('🔍 Проверяем лист "Пользователи" с gid=', USERS_SHEET_GID);
-    
-    const response = await fetch(csvUrl, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      }
-    });
-
-    if (!response.ok) {
-      console.log('❌ Ошибка доступа к листу "Пользователи":', response.status);
-      return null;
-    }
-
-    const csvText = await response.text();
-    const lines = csvText.split('\n').filter(line => line.trim());
-
-    // Проверяем каждую строку (пропускаем заголовок)
-    for (let i = 1; i < lines.length; i++) {
-      const values = parseCSVLine(lines[i]);
-      
-      if (values.length >= 3) {
-        const userPhone = cleanString(values[1]);
-        const userEmail = cleanString(values[2]);
-
-        if (userEmail.toLowerCase() === email.toLowerCase()) {
-          console.log('❌ Email уже существует:', userEmail);
-          return { exists: true, field: 'email' };
-        }
-
-        if (userPhone === phone) {
-          console.log('❌ Телефон уже существует:', userPhone);
-          return { exists: true, field: 'phone' };
-        }
-      }
-    }
-
-    console.log('✅ Пользователь не найден, можно регистрировать');
-    return null;
-
-  } catch (error) {
-    console.error('❌ Ошибка проверки пользователя:', error);
-    return null;
-  }
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  result.push(current.trim()); 
-  return result;
-}
-
-function cleanString(str: string): string {
-  return str.replace(/^["']+|["']+$/g, '').trim();
 }
