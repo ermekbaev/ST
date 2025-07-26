@@ -51,29 +51,3 @@ export async function PUT(request: Request) {
   }
 }
 
-// И в профиле использовать:
-const handleMarketingChange = async (newValue: boolean) => {
-  // Обновляем локально
-  setAgreeToMarketing(newValue);
-  
-  // Обновляем в Strapi через наш API
-  const authToken = localStorage.getItem('authToken');
-  if (authToken) {
-    try {
-      const response = await fetch('/api/user/update-marketing', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ agreeToMarketing: newValue }),
-      });
-      
-      if (response.ok) {
-        console.log('✅ Настройки синхронизированы с сервером');
-      }
-    } catch (error) {
-      console.error('❌ Ошибка синхронизации:', error);
-    }
-  }
-};

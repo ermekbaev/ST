@@ -1,13 +1,14 @@
-// src/app/api/sizes/route.ts
+// src/app/api/sizes/route.ts - ИСПРАВЛЕНО ДЛЯ КОЛЛЕКЦИИ SIZES
 import { NextRequest, NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export async function GET() {
   try {
-    console.log('🔄 API: Загружаем размеры из Strapi...');
+    console.log('🔄 API: Загружаем размеры из коллекции sizes...');
     
-    const strapiUrl = `${STRAPI_URL}/api/sizes?sort=order:asc,name:asc`;
+    // Правильный запрос к коллекции sizes
+    const strapiUrl = `${STRAPI_URL}/api/sizes?sort=value:asc`;
     console.log('📡 Запрос к Strapi:', strapiUrl);
     
     const strapiResponse = await fetch(strapiUrl, {
@@ -39,15 +40,19 @@ export async function GET() {
     if (strapiData.data && Array.isArray(strapiData.data)) {
       sizes = strapiData.data.map((item: any) => ({
         id: item.id,
-        name: item.name || item.attributes?.name || 'Без названия',
-        slug: item.slug || item.attributes?.slug || item.name?.toLowerCase(),
-        type: item.type || item.attributes?.type || 'general',
-        order: item.order || item.attributes?.order || 0
+        // Размер может быть в поле value или в attributes
+        name: item.value || item.attributes?.value || 'Без названия',
+        slug: (item.value || item.attributes?.value || '').toString(),
+        type: item.type || item.attributes?.type || 'shoe',
+        order: parseInt(item.value || item.attributes?.value || '0', 10)
       }));
+      
+      // Сортируем по численному значению
+      sizes.sort((a: { order: number; }, b: { order: number; }) => a.order - b.order);
     }
 
-    console.log(`✅ API: Возвращаем ${sizes.length} размеров`);
-    
+    console.log(`✅ API: Возвращаем ${sizes.length} размеров:`, sizes.map((s: { name: any; }) => s.name));
+
     return NextResponse.json({ 
       sizes,
       total: sizes.length 

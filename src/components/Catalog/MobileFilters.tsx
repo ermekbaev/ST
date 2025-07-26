@@ -1,4 +1,4 @@
-// src/components/Catalog/MobileFilters.tsx
+// src/components/Catalog/MobileFilters.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -25,7 +25,8 @@ interface MobileFiltersProps {
     categories: string[];
     sizes: string[];
   };
-  onFilterChange: (filterType: keyof FilterState, value: string | { min: string; max: string }) => void;
+  // ✅ ИСПРАВЛЕНО: Правильная типизация для onFilterChange
+  onFilterChange: (filterType: keyof FilterState, value: string | string[] | { min: string; max: string }) => void;
   onClearFilters: () => void;
   totalResults: number;
   isOpen: boolean;
@@ -75,6 +76,7 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
     };
   }, [isOpen]);
 
+  // ✅ ИСПРАВЛЕНО: Правильная обработка фильтров
   const handleFilterChange = (filterType: keyof FilterState, value: string | { min: string; max: string }) => {
     if (filterType === 'priceRange') {
       onFilterChange(filterType, value);
@@ -83,6 +85,7 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
       const newValues = currentValues.includes(value as string)
         ? currentValues.filter(v => v !== value)
         : [...currentValues, value as string];
+      // ✅ ИСПРАВЛЕНО: Передаем массив правильно
       onFilterChange(filterType, newValues);
     }
   };

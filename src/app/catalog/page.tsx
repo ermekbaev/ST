@@ -121,63 +121,37 @@ function CatalogContent() {
   };
 
   // Группировка товаров по названию
-  const groupProductsByName = (products: Product[]): Product[] => {
-    console.log('🔄 [CATALOG] Группируем товары по названию...');
+const groupProductsByName = (products: Product[]): Product[] => {
+  const grouped = products.reduce((acc, product) => {
+    const key = `${product.brand.toLowerCase()}_${product.name.toLowerCase()}`;
     
-    const grouped = products.reduce((acc, product) => {
-      const key = `${product.brand.toLowerCase()}_${product.name.toLowerCase()}`;
-      
-      if (!acc[key]) {
-        // Первый товар в группе
-        acc[key] = {
-          ...product,
-          allSizes: product.sizes?.length > 0 
-            ? product.sizes.map(size => ({ size, price: product.price }))
-            : product.size 
-            ? [{ size: product.size, price: product.price }]
-            : []
-        };
-      } else {
-        // Добавляем размеры к существующему товару
-        const newSizes = product.sizes?.length > 0 
-          ? product.sizes.map(size => ({ size, price: product.price }))
-          : product.size 
-          ? [{ size: product.size, price: product.price }]
-          : [];
-          
-        acc[key].allSizes = [...(acc[key].allSizes || []), ...newSizes];
-        
-        // Берем лучшее фото (самый длинный URL)
-        if (product.photo && product.photo.length > (acc[key].photo?.length || 0)) {
-          acc[key].photo = product.photo;
-        }
-      }
-      
-      return acc;
-    }, {} as Record<string, Product & { allSizes: Array<{size: string, price: number}> }>);
-    
-    // Преобразуем в массив уникальных товаров
-    const uniqueProducts = Object.values(grouped).map(product => {
-      // Сортируем размеры
-      const sortedSizes = (product.allSizes || []).sort((a, b) => {
-        const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
-        const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
-        return aNum - bNum;
-      });
-      
-      // Обновляем данные товара
-      return {
+    if (!acc[key]) {
+      acc[key] = {
         ...product,
-        sizes: sortedSizes.map(s => s.size),
-        size: sortedSizes.length > 0 ? sortedSizes[0].size : '',
-        price: sortedSizes.length > 0 ? sortedSizes[0].price : product.price,
-        allSizes: undefined // Удаляем временное поле
+        // ✅ ИСПРАВЛЕНО: Правильная обработка размеров
+        allSizes: product.sizes && product.sizes.length > 0 
+          ? product.sizes.map(size => ({ size, price: product.price }))  // ← Исправлено: size, не product.size
+          : [{ size: product.size, price: product.price }]
       };
-    });
+    } else {
+      // Добавляем размеры к существующему товару
+      const newSizes = product.sizes && product.sizes.length > 0 
+        ? product.sizes.map(size => ({ size, price: product.price }))
+        : [{ size: product.size, price: product.price }];
+      
+      acc[key].allSizes = [...(acc[key].allSizes || []), ...newSizes];
+      
+      // Берем лучшее фото (самый длинный URL)
+      if (product.photo && product.photo.length > (acc[key].photo?.length || 0)) {
+        acc[key].photo = product.photo;
+      }
+    }
     
-    console.log(`📊 [CATALOG] Группировка завершена: ${uniqueProducts.length} уникальных товаров`);
-    return uniqueProducts;
-  };
+    return acc;
+  }, {} as Record<string, any>);
+
+  return Object.values(grouped);
+};
 
   // Обновление опций фильтров из товаров (fallback)
   const updateFilterOptions = (products: Product[]) => {

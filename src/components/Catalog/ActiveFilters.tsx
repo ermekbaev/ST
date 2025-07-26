@@ -1,4 +1,4 @@
-// src/components/Catalog/ActiveFilters.tsx
+// src/components/Catalog/ActiveFilters.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React from 'react';
@@ -17,14 +17,14 @@ interface FilterState {
 interface ActiveFiltersProps {
   filters: FilterState;
   onRemoveFilter: (filterType: keyof FilterState, value?: string) => void;
-  onClearAll: () => void;
+  onClearAll: () => void;  // ✅ ИСПРАВЛЕНО: изменено с onClearFilters на onClearAll
   className?: string;
 }
 
 const ActiveFilters: React.FC<ActiveFiltersProps> = ({
   filters,
   onRemoveFilter,
-  onClearAll,
+  onClearAll,  // ✅ ИСПРАВЛЕНО: изменено с onClearFilters на onClearAll
   className = ''
 }) => {
   // Собираем все активные фильтры
@@ -122,14 +122,14 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
       {/* Mobile версия */}
       <div className="block lg:hidden">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[#8C8072] text-[16px] leading-[22px] font-product">
-            Активные фильтры ({activeFilters.length})
+          <span className="text-[#8C8072] text-[18px] leading-[25px] font-product">
+            Активные фильтры:
           </span>
           <button
             onClick={onClearAll}
-            className="text-[#8C8072] text-[14px] leading-[18px] font-product hover:text-black transition-colors underline"
+            className="text-[#8C8072] text-[14px] leading-[20px] font-product hover:text-black transition-colors underline"
           >
-            Очистить
+            Очистить все
           </button>
         </div>
         
@@ -137,9 +137,9 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
           {activeFilters.map((filter, index) => (
             <div
               key={`${filter.type}-${filter.value}-${index}`}
-              className="bg-[#E5DDD4] px-3 py-1 flex items-center gap-2 group hover:bg-[#D9CDBF] transition-colors"
+              className="bg-[#E5DDD4] px-3 py-1 flex items-center gap-2 text-sm"
             >
-              <span className="text-black text-[14px] leading-[18px] font-product">
+              <span className="text-black text-[14px] leading-[20px] font-product">
                 {filter.label}
               </span>
               <button
@@ -147,9 +147,7 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
                 className="text-black hover:text-red-600 transition-colors flex items-center justify-center w-3 h-3"
                 aria-label={`Удалить фильтр ${filter.label}`}
               >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                ×
               </button>
             </div>
           ))}

@@ -1,4 +1,4 @@
-// src/components/Catalog/DesktopFilters.tsx
+// src/components/Catalog/DesktopFilters.tsx - ФИНАЛЬНАЯ ВЕРСИЯ
 'use client';
 
 import React from 'react';
@@ -29,7 +29,7 @@ interface DesktopFiltersProps {
     categories: string[];
     sizes: string[];
   };
-  onFilterChange: (filterType: keyof FilterState, value: string | { min: string; max: string }) => void;
+  onFilterChange: (filterType: keyof FilterState, value: string | string[] | { min: string; max: string }) => void;
   onClearFilters: () => void;
   totalResults: number;
 }
@@ -88,11 +88,16 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
   return (
     <div className="hidden lg:block w-[475px] bg-white border-r border-gray-200">
       <div className="p-5">
+        {/* Результаты поиска */}
+        <div className="text-[#8C8072] text-[25px] leading-[34px] mb-4 font-product">
+          Найдено: {totalResults}
+        </div>
+        
         {/* Поиск */}
         <CatalogSearch
-          searchQuery={searchQuery}
-          onSearchChange={onSearchChange}
-          totalResults={totalResults}
+          value={searchQuery}
+          onChange={onSearchChange}
+          placeholder="введите название товара"
         />
 
         <FilterDivider />
@@ -123,7 +128,6 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
                 options={brandsToShow}
                 selectedValues={filters.brands}
                 onChange={(value) => handleFilterChange('brands', value)}
-                maxHeight="max-h-[300px]"
               />
             )}
             <FilterDivider />
@@ -158,7 +162,6 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
                 options={categoriesToShow}
                 selectedValues={filters.categories}
                 onChange={(value) => handleFilterChange('categories', value)}
-                maxHeight="max-h-[200px]"
               />
             )}
             <FilterDivider />
@@ -179,46 +182,31 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
               </div>
             ) : (
               <SizeFilter
-                sizes={sizesToShow}
-                selectedSizes={filters.sizes}
+                title="Размер"
+                options={sizesToShow}
+                selectedValues={filters.sizes}
                 onChange={(value) => handleFilterChange('sizes', value)}
-                maxItems={18}
                 showAll={true}
               />
             )}
+            <FilterDivider />
           </>
         )}
 
-        {/* Сообщения об ошибках или отсутствии данных */}
+        {/* Кнопка очистки фильтров */}
+        <button
+          onClick={onClearFilters}
+          className="w-full h-[50px] bg-black text-white text-[16px] font-product hover:bg-gray-800 transition-colors"
+        >
+          Сбросить фильтры
+        </button>
+
+        {/* Показываем ошибку если есть */}
         {error && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
-            <p className="text-sm text-yellow-800">
-              ⚠️ Ошибка загрузки фильтров из Strapi
-            </p>
-            <p className="text-xs text-yellow-600 mt-1">{error}</p>
+          <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded">
+            Ошибка загрузки фильтров: {error}
           </div>
         )}
-
-        {!loading && !error && brandsToShow.length === 0 && categoriesToShow.length === 0 && sizesToShow.length === 0 && (
-          <div className="p-3 bg-gray-50 border border-gray-200 rounded-md mb-4">
-            <p className="text-sm text-gray-600">
-              📦 Настройте модели в Strapi
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Создайте Brand, Category и Size
-            </p>
-          </div>
-        )}
-
-        {/* Кнопка очистить фильтры */}
-        <div className="mt-8 pb-8">
-          <button
-            onClick={onClearFilters}
-            className="w-full h-[80px] bg-[#0B0B0D] text-white text-[30px] leading-[41px] font-product uppercase hover:bg-gray-800 transition-colors"
-          >
-            ОЧИСТИТЬ ФИЛЬТРЫ
-          </button>
-        </div>
       </div>
     </div>
   );
