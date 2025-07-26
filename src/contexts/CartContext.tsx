@@ -93,25 +93,34 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items, isHydrated]);
 
   // Добавить товар в корзину
-  const addToCart = (product: Product) => {
-    //@ts-ignore
-    setItems(currentItems => {
-      const productId = product.id || product.article;
-      const existingItem = currentItems.find(item => (item.id || item.article) === productId);
+const addToCart = (product: Product) => {
+  console.log('🛒 Добавление товара:', product);
+  
+  //@ts-ignore
+  setItems(currentItems => {
+    // ✅ ИЗМЕНЕНИЕ: используем ID + размер для уникальности
+    const uniqueKey = `${product.id || product.article}-${product.size}`;
+    
+    // Ищем товар с тем же ID И размером
+    const existingItem = currentItems.find(item => 
+      `${item.id || item.article}-${item.size}` === uniqueKey
+    );
 
-      if (existingItem) {
-        // Если товар уже есть в корзине, увеличиваем количество
-        return currentItems.map(item =>
-          (item.id || item.article) === productId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        // Если товара нет в корзине, добавляем его
-        return [...currentItems, { ...product, quantity: 1 }];
-      }
-    });
-  };
+    if (existingItem) {
+      // Если товар с ТАКИМ ЖЕ РАЗМЕРОМ уже есть - увеличиваем количество
+      console.log(`📦 Товар уже в корзине, увеличиваем количество для размера ${product.size}`);
+      return currentItems.map(item =>
+        `${item.id || item.article}-${item.size}` === uniqueKey
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+    } else {
+      // Если товара с таким размером нет - добавляем новую позицию
+      console.log(`🆕 Добавляем новую позицию: ${product.name} размер ${product.size}`);
+      return [...currentItems, { ...product, quantity: 1 }];
+    }
+  });
+};
 
   // Удалить товар из корзины
   const removeFromCart = (productId: string) => {

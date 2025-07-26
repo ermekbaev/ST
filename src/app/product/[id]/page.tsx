@@ -180,8 +180,8 @@ export default function ProductPage({ params }: ProductPageProps) {
       id: product.id,
       article: product.article,
       brand: product.brand,
-      name: `${product.name} (размер ${size})`,
-      size: size,
+      name: product.name, 
+      size: size, 
       category: product.category,
       gender: 'Унисекс',
       price: price,
@@ -192,7 +192,7 @@ export default function ProductPage({ params }: ProductPageProps) {
     addToCart(cartItem);
     
     // Показываем уведомление
-    setNotificationProduct(`${product.name} (размер ${size})`);
+    setNotificationProduct(`${product.name} • Размер ${size}`);
     setShowNotification(true);
     
     // Логируем в консоль

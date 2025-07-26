@@ -1,11 +1,12 @@
-// src/components/Catalog/CatalogSort.tsx
+// src/components/Catalog/CatalogSort.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React from 'react';
 
 interface CatalogSortProps {
   sortBy: string;
-  onChange: (value: string) => void;
+  onSortChange: (value: string) => void;  // ✅ ИСПРАВЛЕНО: изменено с onChange на onSortChange
+  totalResults: number;  // ✅ ДОБАВЛЕНО: поддержка totalResults
   className?: string;
 }
 
@@ -19,7 +20,8 @@ const sortOptions = [
 
 const CatalogSort: React.FC<CatalogSortProps> = ({
   sortBy,
-  onChange,
+  onSortChange,  // ✅ ИСПРАВЛЕНО: изменено с onChange на onSortChange
+  totalResults,  // ✅ ДОБАВЛЕНО: принимаем totalResults
   className = ''
 }) => {
   return (
@@ -30,7 +32,7 @@ const CatalogSort: React.FC<CatalogSortProps> = ({
         </span>
         <select
           value={sortBy}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onSortChange(e.target.value)}  // ✅ ИСПРАВЛЕНО: используем onSortChange
           className="sort-select flex-1 bg-transparent text-[#8C8072] text-[14px] lg:text-[20px] leading-[18px] lg:leading-[27px] font-product focus:outline-none cursor-pointer"
         >
           {sortOptions.map((option) => (
