@@ -1,4 +1,4 @@
-// src/app/catalog/page.tsx - ВАШ КОД С ДОБАВЛЕННЫМ ПЕРЕМЕШИВАНИЕМ
+// src/app/catalog/page.tsx
 'use client'
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -22,6 +22,7 @@ interface Product {
   gender: string;
   price: number;
   photo: string;
+  sizes?: string[]; // Новое поле для массива размеров
 }
 
 interface FilterState {
@@ -61,9 +62,7 @@ function CatalogContent() {
   const [sortBy, setSortBy] = useState('popularity');
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const itemsPerPage = 36;
-
+  
   // Состояние фильтров
   const [filters, setFilters] = useState<FilterState>({
     brands: [],
@@ -73,7 +72,7 @@ function CatalogContent() {
     priceRange: { min: '', max: '' }
   });
 
-  // Доступные опции для фильтров
+  // Опции фильтров (fallback для старых данных)
   const [filterOptions, setFilterOptions] = useState({
     brands: [] as string[],
     genders: [] as string[],
@@ -81,112 +80,50 @@ function CatalogContent() {
     sizes: [] as string[]
   });
 
+  const itemsPerPage = 20;
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ✅ ДОБАВЛЯЕМ ФУНКЦИЮ ПЕРЕМЕШИВАНИЯ (без генериков)
-  const shuffleArray = (array: Product[]): Product[] => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  // Загрузка товаров из Strapi
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 [CATALOG] Загружаем товары из Strapi...');
+      
+      const response = await fetch('/api/products');
+      const result = await response.json();
+      
+      if (response.ok && result.products) {
+        console.log(`✅ [CATALOG] Загружено ${result.products.length} товаров из Strapi`);
+        
+        // Группируем товары по названию (объединяем разные размеры)
+        const groupedProducts = groupProductsByName(result.products);
+        
+        setProducts(groupedProducts);
+        console.log(`📊 [CATALOG] После группировки: ${groupedProducts.length} уникальных товаров`);
+        
+        // Обновляем опции фильтров из загруженных товаров (fallback)
+        updateFilterOptions(groupedProducts);
+        
+      } else {
+        console.error('❌ [CATALOG] API вернул ошибку:', result);
+        setProducts([]);
+      }
+      
+    } catch (error) {
+      console.error('❌ [CATALOG] Ошибка загрузки товаров:', error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
-    return shuffled;
   };
 
-  // Читаем фильтры из URL при загрузке
-  useEffect(() => {
-    if (mounted && isInitialLoad) {
-      const urlFilters = readFiltersFromURL();
-      setFilters(urlFilters);
-      setIsInitialLoad(false);
-    }
-  }, [mounted, isInitialLoad]);
-
-  // Функция для чтения фильтров из URL
-  const readFiltersFromURL = (): FilterState => {
-    const newFilters: FilterState = {
-      brands: [],
-      genders: [],
-      categories: [],
-      sizes: [],
-      priceRange: { min: '', max: '' }
-    };
-
-    // Читаем параметры из URL
-    const category = searchParams.get('category');
-    const brand = searchParams.get('brand');
-    const gender = searchParams.get('gender');
-    const size = searchParams.get('size');
-    const search = searchParams.get('search');
-    const minPrice = searchParams.get('minPrice');
-    const maxPrice = searchParams.get('maxPrice');
-
-    // Заполняем фильтры из URL
-    if (category) {
-      newFilters.categories = category.split(',').filter(Boolean);
-    }
-    if (brand) {
-      newFilters.brands = brand.split(',').filter(Boolean);
-    }
-    if (gender) {
-      newFilters.genders = gender.split(',').filter(Boolean);
-    }
-    if (size) {
-      newFilters.sizes = size.split(',').filter(Boolean);
-    }
-    if (search) {
-      setSearchQuery(search);
-    }
-    if (minPrice || maxPrice) {
-      newFilters.priceRange = {
-        min: minPrice || '',
-        max: maxPrice || ''
-      };
-    }
-
-    return newFilters;
-  };
-
-  // Функция для обновления URL
-  const updateURL = (newFilters: FilterState, newSearchQuery?: string) => {
-    const params = new URLSearchParams();
-
-    // Добавляем активные фильтры в URL
-    if (newFilters.categories.length > 0) {
-      params.set('category', newFilters.categories.join(','));
-    }
-    if (newFilters.brands.length > 0) {
-      params.set('brand', newFilters.brands.join(','));
-    }
-    if (newFilters.genders.length > 0) {
-      params.set('gender', newFilters.genders.join(','));
-    }
-    if (newFilters.sizes.length > 0) {
-      params.set('size', newFilters.sizes.join(','));
-    }
-    if (newFilters.priceRange.min) {
-      params.set('minPrice', newFilters.priceRange.min);
-    }
-    if (newFilters.priceRange.max) {
-      params.set('maxPrice', newFilters.priceRange.max);
-    }
-    if (newSearchQuery && newSearchQuery.trim()) {
-      params.set('search', newSearchQuery.trim());
-    }
-
-    // Обновляем URL без перезагрузки страницы
-    const newURL = `/catalog${params.toString() ? '?' + params.toString() : ''}`;
-    router.replace(newURL, { scroll: false });
-  };
-
-  // ✅ ОБНОВЛЯЕМ ФУНКЦИЮ ГРУППИРОВКИ С ПЕРЕМЕШИВАНИЕМ
+  // Группировка товаров по названию
   const groupProductsByName = (products: Product[]): Product[] => {
     console.log('🔄 [CATALOG] Группируем товары по названию...');
-    console.log('📊 [CATALOG] Исходное количество записей:', products.length);
     
-    // Группируем по уникальной комбинации: бренд + название
     const grouped = products.reduce((acc, product) => {
       const key = `${product.brand.toLowerCase()}_${product.name.toLowerCase()}`;
       
@@ -194,14 +131,24 @@ function CatalogContent() {
         // Первый товар в группе
         acc[key] = {
           ...product,
-          allSizes: [{ size: product.size, price: product.price }]
+          allSizes: product.sizes?.length > 0 
+            ? product.sizes.map(size => ({ size, price: product.price }))
+            : product.size 
+            ? [{ size: product.size, price: product.price }]
+            : []
         };
       } else {
-        // Добавляем размер к существующему товару
-        acc[key].allSizes.push({ size: product.size, price: product.price });
+        // Добавляем размеры к существующему товару
+        const newSizes = product.sizes?.length > 0 
+          ? product.sizes.map(size => ({ size, price: product.price }))
+          : product.size 
+          ? [{ size: product.size, price: product.price }]
+          : [];
+          
+        acc[key].allSizes = [...(acc[key].allSizes || []), ...newSizes];
         
         // Берем лучшее фото (самый длинный URL)
-        if (product.photo && product.photo.length > acc[key].photo.length) {
+        if (product.photo && product.photo.length > (acc[key].photo?.length || 0)) {
           acc[key].photo = product.photo;
         }
       }
@@ -218,138 +165,98 @@ function CatalogContent() {
         return aNum - bNum;
       });
       
-      // Берем минимальный размер и цену для отображения
-      const minSize = sortedSizes[0] || { size: product.size, price: product.price };
-      
+      // Обновляем данные товара
       return {
-        id: product.id,
-        article: product.article,
-        brand: product.brand,
-        name: product.name,
-        size: minSize.size,
-        category: product.category,
-        gender: product.gender,
-        price: minSize.price,
-        photo: product.photo
+        ...product,
+        sizes: sortedSizes.map(s => s.size),
+        size: sortedSizes.length > 0 ? sortedSizes[0].size : '',
+        price: sortedSizes.length > 0 ? sortedSizes[0].price : product.price,
+        allSizes: undefined // Удаляем временное поле
       };
     });
     
-    console.log('📊 [CATALOG] Уникальных товаров после группировки:', uniqueProducts.length);
-    
-    // ✅ ДОБАВЛЯЕМ ПЕРЕМЕШИВАНИЕ для разнообразия
-    const shuffledProducts = shuffleArray(uniqueProducts);
-    console.log('🎲 [CATALOG] Товары перемешаны для разнообразия');
-    
-    return shuffledProducts;
+    console.log(`📊 [CATALOG] Группировка завершена: ${uniqueProducts.length} уникальных товаров`);
+    return uniqueProducts;
   };
 
-  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ТОВАРОВ
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      
-      console.log('🔍 [CATALOG] Загружаем товары через API...');
-      
-      const response = await fetch('/api/products', {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-      
-      console.log('📡 [CATALOG] Response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      // ✅ Обрабатываем JSON ответ от API
-      const result = await response.json();
-      console.log('📦 [CATALOG] API Result:', {
-        success: result.success,
-        count: result.count,
-        dataLength: result.data?.length || 0
-      });
-      
-      if (result.success && result.data) {
-        // Обеспечиваем ID и базовые поля
-        const productsWithId = result.data.map((product: any, index: number) => ({
-          ...product,
-          id: product.id || product.article || `product_${index}`,
-          article: product.article || '',
-          brand: product.brand || '',
-          name: product.name || '',
-          size: product.size || '',
-          category: product.category || '',
-          gender: product.gender || '',
-          price: Number(product.price) || 0,
-          photo: product.photo || ''
-        }));
-        
-        // ✅ ГРУППИРУЕМ И ПЕРЕМЕШИВАЕМ ТОВАРЫ ПО НАЗВАНИЮ
-        const groupedAndShuffledProducts = groupProductsByName(productsWithId);
-        setProducts(groupedAndShuffledProducts);
-        
-        console.log('✅ [CATALOG] Финальное количество товаров в каталоге:', groupedAndShuffledProducts.length);
-        
-        // Показываем примеры
-        if (groupedAndShuffledProducts.length > 0) {
-          console.log('📋 [CATALOG] Примеры товаров в каталоге:');
-          groupedAndShuffledProducts.slice(0, 3).forEach((p: any, i: number) => {
-            console.log(`  ${i + 1}. ${p.brand} - ${p.name} (размер: ${p.size}, цена: ${p.price}₽)`);
-          });
-        }
-        
-      } else {
-        console.error('❌ [CATALOG] API вернул ошибку:', result);
-        throw new Error(result.error || 'API вернул пустые данные');
-      }
-      
-    } catch (error) {
-      console.error('❌ [CATALOG] Ошибка загрузки товаров:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Загрузка товаров
-  useEffect(() => {
-    if (mounted) {
-      fetchProducts();
-    }
-  }, [mounted]);
-
-  // Обновление опций фильтров при загрузке товаров
-  useEffect(() => {
+  // Обновление опций фильтров из товаров (fallback)
+  const updateFilterOptions = (products: Product[]) => {
     if (products.length > 0) {
       const brands = [...new Set(products.map(p => p.brand))].sort();
       const genders = [...new Set(products.map(p => p.gender))].sort();
       const categories = [...new Set(products.map(p => p.category))].sort();
-      const sizes = [...new Set(products.map(p => p.size))].sort((a, b) => {
+      
+      // Собираем все размеры из товаров
+      const allSizes = new Set<string>();
+      products.forEach(product => {
+        if (product.sizes && product.sizes.length > 0) {
+          product.sizes.forEach(size => allSizes.add(size));
+        } else if (product.size) {
+          allSizes.add(product.size);
+        }
+      });
+      
+      const sizes = Array.from(allSizes).sort((a, b) => {
         const aNum = parseFloat(a.replace(/[^\d.]/g, ''));
         const bNum = parseFloat(b.replace(/[^\d.]/g, ''));
         return aNum - bNum;
       });
 
       setFilterOptions({ brands, genders, categories, sizes });
+      console.log('📊 [CATALOG] Опции фильтров обновлены:', { brands: brands.length, categories: categories.length, sizes: sizes.length });
     }
-  }, [products]);
+  };
 
-  // Применение фильтров и обновление URL
+  // Инициализация фильтров из URL
   useEffect(() => {
-    if (!isInitialLoad) {
-      updateURL(filters, searchQuery);
-      applyFilters();
-      setCurrentPage(1); // Сбрасываем страницу при изменении фильтров
+    if (!mounted) return;
+
+    const urlBrands = searchParams.get('brands')?.split(',') || [];
+    const urlGenders = searchParams.get('genders')?.split(',') || [];
+    const urlCategories = searchParams.get('categories')?.split(',') || [];
+    const urlSizes = searchParams.get('sizes')?.split(',') || [];
+    const urlMinPrice = searchParams.get('minPrice') || '';
+    const urlMaxPrice = searchParams.get('maxPrice') || '';
+    const urlSearch = searchParams.get('search') || '';
+    const urlSort = searchParams.get('sort') || 'popularity';
+
+    setFilters({
+      brands: urlBrands.filter(Boolean),
+      genders: urlGenders.filter(Boolean),
+      categories: urlCategories.filter(Boolean),
+      sizes: urlSizes.filter(Boolean),
+      priceRange: { min: urlMinPrice, max: urlMaxPrice }
+    });
+    
+    setSearchQuery(urlSearch);
+    setSortBy(urlSort);
+  }, [mounted, searchParams]);
+
+  // Загрузка товаров при монтировании
+  useEffect(() => {
+    if (mounted) {
+      fetchProducts();
     }
-  }, [filters, searchQuery, isInitialLoad]);
+  }, [mounted]);
 
-  // Применение фильтров к товарам
-  useEffect(() => {
-    applyFilters();
-  }, [products, filters, searchQuery, sortBy]);
+  // Обновление URL при изменении фильтров
+  const updateURL = (newFilters: FilterState, newSearchQuery: string, newSortBy: string) => {
+    const params = new URLSearchParams();
 
-  // ✅ ОБНОВЛЯЕМ ФУНКЦИЮ ФИЛЬТРОВ С ПОДДЕРЖКОЙ СЛУЧАЙНОЙ СОРТИРОВКИ
+    if (newFilters.brands.length > 0) params.set('brands', newFilters.brands.join(','));
+    if (newFilters.genders.length > 0) params.set('genders', newFilters.genders.join(','));
+    if (newFilters.categories.length > 0) params.set('categories', newFilters.categories.join(','));
+    if (newFilters.sizes.length > 0) params.set('sizes', newFilters.sizes.join(','));
+    if (newFilters.priceRange.min) params.set('minPrice', newFilters.priceRange.min);
+    if (newFilters.priceRange.max) params.set('maxPrice', newFilters.priceRange.max);
+    if (newSearchQuery.trim()) params.set('search', newSearchQuery.trim());
+    if (newSortBy !== 'popularity') params.set('sort', newSortBy);
+
+    const newURL = `/catalog${params.toString() ? '?' + params.toString() : ''}`;
+    router.replace(newURL, { scroll: false });
+  };
+
+  // Применение фильтров
   const applyFilters = () => {
     let filtered = [...products];
 
@@ -387,7 +294,8 @@ function CatalogContent() {
     // Фильтр по размерам
     if (filters.sizes.length > 0) {
       filtered = filtered.filter(product =>
-        filters.sizes.includes(product.size)
+        product.sizes?.some(size => filters.sizes.includes(size)) ||
+        (product.size && filters.sizes.includes(product.size))
       );
     }
 
@@ -395,50 +303,57 @@ function CatalogContent() {
     const minPrice = filters.priceRange.min ? parseFloat(filters.priceRange.min) : 0;
     const maxPrice = filters.priceRange.max ? parseFloat(filters.priceRange.max) : Infinity;
     
-    if (minPrice > 0 || maxPrice < Infinity) {
-      filtered = filtered.filter(product =>
-        product.price >= minPrice && product.price <= maxPrice
-      );
-    }
+    filtered = filtered.filter(product =>
+      product.price >= minPrice && product.price <= maxPrice
+    );
 
-    // ✅ ОБНОВЛЯЕМ СОРТИРОВКУ С ПОДДЕРЖКОЙ СЛУЧАЙНОГО ПОРЯДКА
-    switch (sortBy) {
-      case 'price-asc':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-desc':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'name-asc':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'name-desc':
-        filtered.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case 'random':
-        // ✅ ДОБАВЛЯЕМ ОПЦИЮ: случайная сортировка
-        filtered = shuffleArray(filtered);
-        console.log('🎲 [CATALOG] Применена случайная сортировка');
-        break;
-      default:
-        // popularity - оставляем перемешанный порядок из группировки
-        break;
-    }
+    // Сортировка
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-asc':
+          return a.price - b.price;
+        case 'price-desc':
+          return b.price - a.price;
+        case 'newest':
+          return new Date(b.id || '').getTime() - new Date(a.id || '').getTime();
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'popularity':
+        default:
+          return 0; // Оставляем оригинальный порядок
+      }
+    });
 
     setFilteredProducts(filtered);
+    console.log(`🔍 [CATALOG] Применены фильтры: ${filtered.length} товаров`);
   };
 
-  // Обработчики фильтров с обновлением URL
+  // Применение фильтров при изменении
+  useEffect(() => {
+    applyFilters();
+  }, [products, filters, searchQuery, sortBy]);
+
+  // Обновление URL при изменении фильтров
+  useEffect(() => {
+    if (mounted) {
+      updateURL(filters, searchQuery, sortBy);
+      setCurrentPage(1); // Сбрасываем страницу при изменении фильтров
+    }
+  }, [filters, searchQuery, sortBy, mounted]);
+
+  // Обработчики
   const handleFilterChange = (filterType: keyof FilterState, value: string | string[] | { min: string; max: string }) => {
     setFilters(prev => {
       if (filterType === 'priceRange') {
         return { ...prev, priceRange: value as { min: string; max: string } };
       }
       
+      // Если передан массив, используем его напрямую
       if (Array.isArray(value)) {
         return { ...prev, [filterType]: value };
       }
       
+      // Иначе переключаем значение в массиве
       const currentValues = prev[filterType] as string[];
       const newValues = currentValues.includes(value as string)
         ? currentValues.filter(v => v !== value)
@@ -537,39 +452,48 @@ function CatalogContent() {
         <div className="flex-1 catalog-content">
           <div className="p-5">
             {/* Мобильная кнопка фильтра */}
-            <MobileFilterButton
-              onClick={() => setIsMobileFiltersOpen(true)}
-              totalResults={filteredProducts.length}
-              hasActiveFilters={hasActiveFilters()}
-              className="mb-6"
-            />
+            <div className="lg:hidden mb-5">
+              <MobileFilterButton
+                onOpenFilters={() => setIsMobileFiltersOpen(true)}
+                totalResults={filteredProducts.length}
+                hasActiveFilters={hasActiveFilters()}
+              />
+            </div>
 
             {/* Активные фильтры */}
             <ActiveFilters
               filters={filters}
               onRemoveFilter={handleRemoveFilter}
               onClearAll={clearFilters}
+              className="mb-5"
             />
 
-            {/* Сортировка */}
-            <CatalogSort
-              sortBy={sortBy}
-              onChange={setSortBy}
-            />
+            {/* Сортировка для десктопа */}
+            <div className="hidden lg:block mb-5">
+              <CatalogSort
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                totalResults={filteredProducts.length}
+              />
+            </div>
 
             {/* Сетка товаров */}
             <ProductGrid
               products={currentProducts}
               loading={loading}
-              onClearFilters={clearFilters}
+              onClearFilters={hasActiveFilters() ? clearFilters : undefined}
             />
 
             {/* Пагинация */}
-            <CatalogPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <CatalogPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -577,7 +501,7 @@ function CatalogContent() {
   );
 }
 
-// Главный экспортируемый компонент с Suspense
+// Основной экспорт с Suspense
 export default function CatalogPage() {
   return (
     <Suspense fallback={<CatalogLoading />}>

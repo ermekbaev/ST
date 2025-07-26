@@ -1,42 +1,65 @@
-// app/api/brands/route.ts
+// src/app/api/brands/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.STRAPI_URL || 'http://localhost:1337';
-const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
 export async function GET() {
   try {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
+    console.log('🔄 API: Загружаем бренды из Strapi...');
     
-    if (STRAPI_API_TOKEN) {
-      headers['Authorization'] = `Bearer ${STRAPI_API_TOKEN}`;
-    }
-
-    const response = await fetch(`${STRAPI_URL}/api/brands?sort=name:asc`, {
-      headers,
+    const strapiUrl = `${STRAPI_URL}/api/brands?sort=name:asc`;
+    console.log('📡 Запрос к Strapi:', strapiUrl);
+    
+    const strapiResponse = await fetch(strapiUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
       next: { revalidate: 300 } // Кеш на 5 минут
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    console.log('📡 Ответ от Strapi brands:', strapiResponse.status);
+
+    if (!strapiResponse.ok) {
+      console.error(`❌ Strapi brands недоступен: ${strapiResponse.status}`);
+      return NextResponse.json(
+        { 
+          error: `Strapi недоступен (${strapiResponse.status})`,
+          brands: []
+        },
+        { status: strapiResponse.status }
+      );
     }
 
-    const data = await response.json();
+    const strapiData = await strapiResponse.json();
+    console.log('📦 Получено брендов от Strapi:', strapiData.data?.length || 0);
     
-    const brands = data.data?.map((item: any) => ({
-      id: item.id,
-      name: item.attributes.name,
-      slug: item.attributes.slug
-    })) || [];
+    // Обрабатываем ответ от Strapi
+    let brands = [];
+    
+    if (strapiData.data && Array.isArray(strapiData.data)) {
+      brands = strapiData.data.map((item: any) => ({
+        id: item.id,
+        name: item.name || item.attributes?.name || 'Без названия',
+        slug: item.slug || item.attributes?.slug || item.name?.toLowerCase()
+      }));
+    }
 
-    return NextResponse.json({ brands });
+    console.log(`✅ API: Возвращаем ${brands.length} брендов`);
+    
+    return NextResponse.json({ 
+      brands,
+      total: brands.length 
+    });
 
   } catch (error) {
     console.error('❌ API: Ошибка загрузки брендов:', error);
+    
     return NextResponse.json(
-      { error: 'Ошибка загрузки брендов' },
+      { 
+        error: 'Ошибка подключения к Strapi',
+        brands: [],
+        message: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      },
       { status: 500 }
     );
   }
