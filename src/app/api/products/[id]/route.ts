@@ -1,4 +1,4 @@
-// app/api/products/[id]/route.ts
+// app/api/products/[id]/route.ts - ОКОНЧАТЕЛЬНЫЙ РАБОЧИЙ КОД
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -15,14 +15,14 @@ export async function GET(
     let strapiUrl: string;
     
     if (!isNaN(Number(id))) {
-      // Если передан числовой ID
-      strapiUrl = `${STRAPI_URL}/api/products/${id}`;
+      // Если передан числовой ID - добавляем populate=*
+      strapiUrl = `${STRAPI_URL}/api/products/${id}?populate=*`;
     } else if (id.length > 10 && id.match(/^[a-z0-9]+$/)) {
       // Если передан documentId (длинная строка из букв и цифр)
-      strapiUrl = `${STRAPI_URL}/api/products?filters[documentId][$eq]=${id}`;
+      strapiUrl = `${STRAPI_URL}/api/products?filters[documentId][$eq]=${id}&populate=*`;
     } else {
       // Если передан slug
-      strapiUrl = `${STRAPI_URL}/api/products?filters[slug][$eq]=${id}`;
+      strapiUrl = `${STRAPI_URL}/api/products?filters[slug][$eq]=${id}&populate=*`;
     }
     
     console.log(`📡 Запрос к Strapi: ${strapiUrl}`);
@@ -74,37 +74,121 @@ export async function GET(
         { status: 404 }
       );
     }
-    const sizes = ['40', '41', '42', '43']; // Временно статично
-    const mainPhoto = item.mainPhoto || '/images/placeholder.jpg';
+
+    console.log(`🔍 Структура товара:`, {
+      id: item.id,
+      name: item.name,
+      hasSizes: !!item.sizes,
+      sizesCount: item.sizes?.length || 0,
+      sizesPreview: item.sizes?.slice(0, 2).map((s: any) => ({
+        value: s.value,
+        price: s.price,
+        hasPrice: s.price !== null
+      }))
+    });
+
+    // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Правильная обработка размеров с ценами
+    let allSizes = [];
     
+    if (item.sizes && Array.isArray(item.sizes)) {
+      // Фильтруем и обрабатываем размеры
+      allSizes = item.sizes
+        .filter((sizeItem: any) => {
+          const hasPrice = sizeItem.price !== null && sizeItem.price !== undefined;
+          const hasStock = sizeItem.stockQuantity !== null && sizeItem.stockQuantity !== undefined;
+          console.log(`📏 Размер ${sizeItem.value}: price=${sizeItem.price}, stock=${sizeItem.stockQuantity}, включаем=${hasPrice && hasStock}`);
+          return hasPrice && hasStock;
+        })
+        .map((sizeItem: any) => {
+          const stockQty = sizeItem.stockQuantity || 0;
+          const reservedQty = sizeItem.reservedQuantity || 0;
+          const availableQty = Math.max(0, stockQty - reservedQty);
+          
+          return {
+            id: sizeItem.id,
+            size: String(sizeItem.value || ''),
+            price: sizeItem.price || 0,
+            originalPrice: sizeItem.originalPrice,
+            available: availableQty > 0,
+            stockQuantity: stockQty,
+            reservedQuantity: reservedQty,
+            availableQuantity: availableQty
+          };
+        });
+      
+      // Сортируем размеры
+      allSizes.sort((a: any, b: any) => {
+        const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
+        const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
+        return aNum - bNum;
+      });
+      
+      console.log(`✅ Обработано размеров с ценами: ${allSizes.length}`);
+      console.log(`💰 Цены размеров:`, allSizes.map((s: any) => `${s.size}: ${s.price}₽`));
+    }
+
+    // Извлекаем связанные данные
+    const brand = item.brand?.name ? String(item.brand.name) : 'Nike';
+    const category = item.category?.name ? String(item.category.name) : 'Кроссовки';
+    const gender = item.gender?.name ? String(item.gender.name) : 'Унисекс';
+
+    // Обрабатываем фото
+    const mainPhoto = item.mainPhoto || '/images/placeholder.jpg';
+    let additionalPhotos = [];
+    
+    if (item.addTotalPhotos && Array.isArray(item.addTotalPhotos)) {
+      additionalPhotos = item.addTotalPhotos;
+    }
+
+    // КЛЮЧЕВОЕ: Создаем размеры в правильном формате для фронтенда
+    const sizesForFrontend = allSizes.length > 0 ? allSizes : [
+      // Fallback только если действительно нет размеров с ценами
+      { size: '41', price: 0, available: false, stockQuantity: 0, reservedQuantity: 0, availableQuantity: 0 }
+    ];
+
     const product = {
       id: item.id?.toString() || '',
       article: item.article || '',
-      brand: 'Nike', // Временно статично
+      brand: brand,
       name: item.name || '',
       
-      // ДЛЯ СОВМЕСТИМОСТИ - оба формата размеров:
-      size: sizes[0] || '', // Первый размер для старых компонентов
-      sizes: sizes,         // Массив размеров для новых компонентов
+      // ДЛЯ СОВМЕСТИМОСТИ - размеры как строки (для старых компонентов)
+      size: sizesForFrontend[0]?.size || '',
+      sizes: sizesForFrontend.map((s: any) => s.size),
       
-      category: 'Кроссовки',
-      gender: 'Унисекс',
-      price: item.price || 0,
+      // НОВОЕ: Размеры с полной информацией о ценах
+      allSizes: allSizes, // ← Размеры с индивидуальными ценами
       
-      // ДЛЯ СОВМЕСТИМОСТИ - оба формата фото:
-      photo: mainPhoto,     // Для старых компонентов
-      mainPhoto: mainPhoto, // Для новых компонентов
-      additionalPhotos: item.additionalPhotos || [],
+      category: category,
+      gender: gender,
+      price: allSizes.length > 0 ? Math.min(...allSizes.map((s: any) => s.price)) : 0,
       
-      stockQuantity: item.stockQuantity || 0,
-      availableStock: Math.max(0, (item.stockQuantity || 0) - (item.reservedQuantity || 0)),
+      // Фото
+      photo: mainPhoto,
+      mainPhoto: mainPhoto,
+      additionalPhotos: additionalPhotos,
+      
+      // Наличие
+      stockQuantity: allSizes.reduce((sum: number, s: any) => sum + (s.stockQuantity || 0), 0),
+      availableStock: allSizes.reduce((sum: number, s: any) => sum + (s.availableQuantity || 0), 0),
+      inStock: allSizes.some((s: any) => s.available),
+      
       isActive: item.isActive !== false,
       slug: item.slug || item.documentId || '',
       createdAt: item.createdAt,
-      updatedAt: item.updatedAt
+      updatedAt: item.updatedAt,
+      
+      description: `${brand} ${item.name} - ${category}`,
+      deliveryInfo: 'Доставка 1-3 дня по России'
     };
     
-    console.log(`✅ API: Товар ${id} найден:`, product.name);
+    console.log(`✅ API: Товар ${id} обработан:`, {
+      name: product.name,
+      brand: product.brand,
+      sizesWithPrices: product.allSizes.length,
+      minPrice: product.price,
+      sizesPreview: product.allSizes.slice(0, 3).map((s: any) => `${s.size}:${s.price}₽`)
+    });
     
     return NextResponse.json({ product });
 

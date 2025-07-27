@@ -1,4 +1,4 @@
-// src/app/product/[id]/page.tsx - ИСПРАВЛЕННАЯ ВЕРСИЯ для Strapi API
+// src/app/product/[id]/page.tsx - ВАШ КОД с минимальными исправлениями
 'use client';
 
 import React, { useState, useEffect, use } from 'react';
@@ -72,19 +72,52 @@ export default function ProductPage({ params }: ProductPageProps) {
               name: productData.name,
               price: productData.price,
               sizes: productData.sizes,
+              allSizes: productData.allSizes, // ДОБАВИЛИ проверку
               mainPhoto: productData.mainPhoto,
               additionalPhotos: productData.additionalPhotos
             });
             
-            // Создаем размеры в правильном формате
-            const productSizes: ProductSize[] = productData.sizes?.map((sizeValue: string) => ({
-              size: sizeValue,
-              price: productData.price, // Пока одна цена для всех размеров
-              available: true
-            })) || [
-              // Если размеров нет, создаем дефолтный
-              { size: productData.size || '41', price: productData.price, available: true }
-            ];
+            // ИСПРАВЛЕНО: Обработка размеров с индивидуальными ценами
+            let productSizes: ProductSize[] = [];
+
+            if (productData.allSizes && Array.isArray(productData.allSizes)) {
+              // Если API вернуло размеры с ценами (новый формат)
+              productSizes = productData.allSizes.map((sizeData: any) => ({
+                size: sizeData.size,
+                price: sizeData.price, // ← РЕАЛЬНАЯ ЦЕНА РАЗМЕРА
+                available: sizeData.available,
+                originalPrice: sizeData.originalPrice
+              }));
+              
+              console.log('📏 Используем размеры с ценами из API:', productSizes.map(s => `${s.size}: ${s.price}₽`));
+              
+            } else if (productData.sizes && Array.isArray(productData.sizes)) {
+              // Fallback: старый формат API
+              if (typeof productData.sizes[0] === 'string') {
+                // Размеры как строки - используем одну цену
+                productSizes = productData.sizes.map((sizeValue: string) => ({
+                  size: sizeValue,
+                  price: productData.price,
+                  available: true
+                }));
+                console.log('⚠️ Используем fallback размеры с одинаковой ценой');
+              } else {
+                // Размеры как объекты
+                productSizes = productData.sizes.map((sizeData: any) => ({
+                  size: sizeData.size || sizeData.value,
+                  price: sizeData.price || productData.price,
+                  available: sizeData.available !== false,
+                  originalPrice: sizeData.originalPrice
+                }));
+                console.log('📏 Используем размеры как объекты из API');
+              }
+            } else {
+              // Последний fallback
+              productSizes = [
+                { size: productData.size || '41', price: productData.price, available: true }
+              ];
+              console.log('⚠️ Используем дефолтный размер');
+            }
             
             // Преобразуем данные в нужный формат для компонента
             const productInfo: ProductInfoType = {
@@ -95,7 +128,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               category: productData.category,
               article: productData.article,
               description: `${productData.brand} ${productData.name} - ${productData.category}`,
-              sizes: productSizes,
+              sizes: productSizes, // ← теперь с правильными ценами
               inStock: productData.availableStock > 0,
               deliveryInfo: 'Доставка 1-3 дня по России'
             };
@@ -172,8 +205,11 @@ export default function ProductPage({ params }: ProductPageProps) {
   const handleAddToCart = (size: string) => {
     if (!product) return;
     
+    // ИСПРАВЛЕНО: Получаем правильную цену размера
     const selectedSizeInfo = product.sizes.find(s => s.size === size);
     const price = selectedSizeInfo?.price || product.price;
+    
+    console.log(`💰 Цена для размера ${size}: ${price}₽`, selectedSizeInfo);
     
     // Создаем объект товара для корзины
     const cartItem = {
@@ -184,7 +220,7 @@ export default function ProductPage({ params }: ProductPageProps) {
       size: size, 
       category: product.category,
       gender: 'Унисекс',
-      price: price,
+      price: price, // ← правильная цена размера
       photo: images[0]?.url || '/images/placeholder.jpg'
     };
     

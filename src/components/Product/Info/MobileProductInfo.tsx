@@ -1,4 +1,4 @@
-// src/components/Product/Info/MobileProductInfo.tsx
+// src/components/Product/Info/MobileProductInfo.tsx - ВАШ КОД с минимальными исправлениями
 'use client';
 
 import React, { useState } from 'react';
@@ -20,7 +20,8 @@ export interface ProductInfo {
   category: string;
   article: string;
   description?: string;
-  sizes: ProductSize[];
+  sizes: ProductSize[]; // оставляем для совместимости
+  allSizes?: ProductSize[]; // ДОБАВИЛИ: размеры с API
   inStock: boolean;
   isNew?: boolean;
   isExclusive?: boolean;
@@ -51,12 +52,20 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
     return price.toLocaleString('ru-RU') + ' ₽';
   };
 
+  // ИСПРАВЛЕНО: Используем размеры из API (allSizes) если есть, иначе sizes
+  const availableSizes = product.allSizes && product.allSizes.length > 0 ? product.allSizes : product.sizes;
+
+  // ИСПРАВЛЕНО: Получаем информацию о выбранном размере из правильного источника
+  const actualSelectedSizeInfo = selectedSize && availableSizes
+    ? availableSizes.find(s => s.size === selectedSize)
+    : selectedSizeInfo;
+
   // Получаем финальную цену (из выбранного размера или базовую)
-  const finalPrice = selectedSizeInfo?.price || product.price;
-  const hasDiscount = selectedSizeInfo?.originalPrice && selectedSizeInfo.originalPrice > finalPrice;
+  const finalPrice = actualSelectedSizeInfo?.price || product.price;
+  const hasDiscount = actualSelectedSizeInfo?.originalPrice && actualSelectedSizeInfo.originalPrice > finalPrice;
 
   // Сортируем размеры по числовому значению
-  const sortedSizes = [...product.sizes].sort((a, b) => {
+  const sortedSizes = [...availableSizes].sort((a, b) => {
     const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
     const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
     return aNum - bNum;
@@ -82,9 +91,9 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
           {formatPrice(finalPrice)}
         </span>
         
-        {hasDiscount && selectedSizeInfo?.originalPrice && (
+        {hasDiscount && actualSelectedSizeInfo?.originalPrice && (
           <span className="text-gray-400 line-through text-lg">
-            {formatPrice(selectedSizeInfo.originalPrice)}
+            {formatPrice(actualSelectedSizeInfo.originalPrice)}
           </span>
         )}
       </div>
@@ -135,7 +144,7 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
           >
             <span className="text-black text-left text-[15px] leading-[20px]">
               {selectedSize ? 
-                `${selectedSize} RU — ${formatPrice(selectedSizeInfo?.price || product.price)}` 
+                `${selectedSize} RU — ${formatPrice(actualSelectedSizeInfo?.price || product.price)}` 
                 : 'Выберите размер'
               }
             </span>
