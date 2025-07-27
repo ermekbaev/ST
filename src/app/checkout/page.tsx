@@ -1,4 +1,4 @@
-// src/app/checkout/page.tsx
+// src/app/checkout/page.tsx - ИСПРАВЛЕН: БЕЗ КОНФЛИКТА РЕДИРЕКТОВ
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +11,8 @@ const CheckoutPage: React.FC = () => {
   const { items, clearCart } = useCart();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [orderCompleted, setOrderCompleted] = useState(false); // ✅ ДОБАВИЛИ ФЛАГ
   
   // ✅ ОБЩЕЕ СОСТОЯНИЕ ДЛЯ СИНХРОНИЗАЦИИ КОМПОНЕНТОВ
   const [selectedDelivery, setSelectedDelivery] = useState('store_pickup');
@@ -25,70 +27,132 @@ const CheckoutPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Редирект если корзина пуста
+  // ✅ ИСПРАВЛЕН: Редирект только если корзина пуста И заказ НЕ завершен
   useEffect(() => {
-    if (!isLoading && items.length === 0) {
+    if (!isLoading && items.length === 0 && !orderCompleted && !isProcessing) {
+      console.log('🔄 Корзина пуста, перенаправляем на главную (но НЕ после завершения заказа)');
       router.push('/');
     }
-  }, [items, router, isLoading]);
+  }, [items, router, isLoading, orderCompleted, isProcessing]);
 
-  // ✅ ПРОСТОЙ ОБРАБОТЧИК ОТПРАВКИ ЗАКАЗА
-  // const handleOrderSubmit = async (orderData: any) => {
-  //   try {
-  //     console.log('📦 Отправка заказа:', orderData);
-      
-  //     // Здесь будет API запрос к вашему серверу
-  //     const response = await fetch('/api/orders', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         ...orderData,
-  //         deliveryMethod: selectedDelivery,
-  //         paymentMethod: selectedPayment,
-  //         cartItems: items,
-  //         timestamp: new Date().toISOString()
-  //       }),
-  //     });
-
-  //     if (response.ok) {
-  //       const result = await response.json();
-  //       console.log('✅ Заказ создан:', result);
-        
-  //       // Очищаем корзину и перенаправляем на страницу успеха
-  //       clearCart();
-  //       router.push(`/checkout/success?orderId=${result.orderId}`);
-  //     } else {
-  //       throw new Error('Ошибка при создании заказа');
-  //     }
-  //   } catch (error) {
-  //     console.error('❌ Ошибка заказа:', error);
-  //     alert('Произошла ошибка при оформлении заказа. Попробуйте еще раз.');
-  //   }
-  // };
-
+  // ОБРАБОТЧИК ОТПРАВКИ ЗАКАЗА
   const handleOrderSubmit = async (orderData: any) => {
-  try {
-    console.log('📦 Данные заказа:', orderData);
-    console.log('🛒 Товары в корзине:', items);
-    console.log('🚚 Способ доставки:', selectedDelivery);
-    console.log('💳 Способ оплаты:', selectedPayment);
+    if (isProcessing) return;
     
-    // Генерируем уникальный ID заказа
-    const orderId = 'TS-' + Date.now();
+    console.log('🚀 НАЧИНАЕМ ОБРАБОТКУ ЗАКАЗА');
+    setIsProcessing(true);
     
-    // Очищаем корзину
-    clearCart();
+    try {
+      // Валидация
+      if (!orderData.firstName?.trim() || !orderData.phone?.trim()) {
+        throw new Error('Заполните имя и телефон');
+      }
+
+      if (items.length === 0) {
+        throw new Error('Корзина пуста');
+      }
+
+      // Подготавливаем данные
+      const orderPayload = {
+        customerInfo: {
+          name: orderData.firstName.trim(),
+          phone: orderData.phone.trim(),
+          email: orderData.email?.trim() || '',
+        },
+        items: items.map(item => ({
+          productId: item.id || item.article,
+          productName: item.name || item.title,
+          //@ts-ignore
+          size: item.selectedSize || item.size,
+          quantity: item.quantity,
+          priceAtTime: item.price,
+        })),
+        totalAmount: calculateTotal(),
+        deliveryMethod: selectedDelivery,
+        paymentMethod: selectedPayment,
+        deliveryAddress: orderData.city && orderData.address 
+          ? `${orderData.city.trim()}, ${orderData.address.trim()}`
+          : '',
+        notes: orderData.notes?.trim() || '',
+      };
+
+      console.log('📋 Отправляем в API:', orderPayload);
+
+      // Отправляем в API
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderPayload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Ошибка создания заказа');
+      }
+
+      console.log('✅ Заказ создан:', result.orderNumber);
+
+      // ✅ КРИТИЧНО: Сначала устанавливаем флаг, ПОТОМ очищаем корзину
+      setOrderCompleted(true);
+      
+      // Небольшая задержка чтобы флаг успел установиться
+      setTimeout(() => {
+        clearCart();
+        
+        // Еще одна задержка перед перенаправлением
+        setTimeout(() => {
+          const successUrl = `/order-success?orderNumber=${result.orderNumber}&paymentMethod=${selectedPayment}`;
+          
+          if (selectedPayment === 'cash_vladivostok') {
+            console.log('🎯 Перенаправляем на:', successUrl + '&type=cash');
+            router.push(successUrl + '&type=cash');
+          } else {
+            console.log('🎯 Перенаправляем на:', successUrl + '&type=online_pending');
+            router.push(successUrl + '&type=online_pending');
+          }
+        }, 100);
+      }, 100);
+
+    } catch (error) {
+      console.error('❌ Ошибка при оформлении заказа:', error);
+      
+      let errorMessage = 'Произошла ошибка при оформлении заказа.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      alert(`Ошибка: ${errorMessage}\n\nПопробуйте еще раз или свяжитесь с нами:\n📞 Телефон: +7 (xxx) xxx-xx-xx\n📧 Email: tigran200615@gmail.com`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Вычисление общей суммы
+  const calculateTotal = () => {
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // Перенаправляем на страницу успеха
-    router.push(`/order-success?orderId=${orderId}`);
-    
-  } catch (error) {
-    console.error('❌ Ошибка:', error);
-    alert('Произошла ошибка. Попробуйте еще раз.');
-  }
-};
+    let deliveryCost = 0;
+    switch (selectedDelivery) {
+      case 'cdek_pickup':
+        deliveryCost = 300;
+        break;
+      case 'cdek_courier':
+        deliveryCost = 500;
+        break;
+      case 'courier_ts':
+        deliveryCost = 0;
+        break;
+      case 'store_pickup':
+      default:
+        deliveryCost = 0;
+    }
+
+    return subtotal + deliveryCost;
+  };
 
   // Показываем загрузчик
   if (isLoading) {
@@ -99,8 +163,8 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
-  // Если корзина пуста после загрузки
-  if (items.length === 0) {
+  // ✅ ИСПРАВЛЕН: Показываем "корзина пуста" только если заказ НЕ завершается
+  if (items.length === 0 && !orderCompleted && !isProcessing) {
     return (
       <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
         <div className="text-center">
@@ -146,6 +210,7 @@ const CheckoutPage: React.FC = () => {
                 onDeliveryChange={setSelectedDelivery}
                 onPaymentChange={setSelectedPayment}
                 isMobile={false}
+                isProcessing={isProcessing}
               />
             </div>
                      
@@ -157,6 +222,7 @@ const CheckoutPage: React.FC = () => {
                 selectedDelivery={selectedDelivery}
                 selectedPayment={selectedPayment}
                 isMobile={false}
+                isProcessing={isProcessing}
               />
             </div>
           </div>
@@ -174,6 +240,7 @@ const CheckoutPage: React.FC = () => {
               onDeliveryChange={setSelectedDelivery}
               onPaymentChange={setSelectedPayment}
               isMobile={true}
+              isProcessing={isProcessing}
             />
           </div>
                    
@@ -185,6 +252,7 @@ const CheckoutPage: React.FC = () => {
               selectedDelivery={selectedDelivery}
               selectedPayment={selectedPayment}
               isMobile={true}
+              isProcessing={isProcessing}
             />
           </div>
         </div>

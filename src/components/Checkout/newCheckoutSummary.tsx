@@ -21,6 +21,7 @@ interface NewOrderSummaryProps {
   selectedDelivery: string;
   selectedPayment: string;
   isMobile?: boolean;
+  isProcessing?: boolean;
 }
 
 // ============================================================================

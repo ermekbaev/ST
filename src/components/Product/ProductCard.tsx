@@ -14,7 +14,7 @@ interface Product {
   gender: string;
   price: number;
   photo: string;
-  slug?: string; // Добавляем поддержку slug
+  slug?: string;
 }
 
 interface ProductCardProps {
@@ -39,24 +39,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   }, [product]);
 
   const handleCardClick = () => {
-    // ИСПРАВЛЕНО: Используем slug, documentId или ID в порядке приоритета
     let productIdentifier: string;
     
     if (product.slug && product.slug.trim()) {
-      // Приоритет - slug для SEO
       productIdentifier = product.slug;
       console.log('🔗 Переход по slug:', productIdentifier);
     } else if (product.id) {
-      // Если нет slug, используем ID
       productIdentifier = product.id;
       console.log('🔗 Переход по ID:', productIdentifier);
     } else {
-      // Fallback на article
       productIdentifier = product.article;
       console.log('🔗 Переход по article:', productIdentifier);
     }
     
-    // Переход на страницу товара
     router.push(`/product/${productIdentifier}`);
   };
 
@@ -97,7 +92,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       onClick={handleCardClick}
     >
       <div className="relative overflow-hidden w-full">
-
         {!showPlaceholder ? (
           <img
             src={product.photo}
@@ -106,7 +100,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             onError={handleImageError}
             onLoad={handleImageLoad}
             loading="lazy"
-            crossOrigin="anonymous"
+            // ИСПРАВЛЕНО: Удален crossOrigin="anonymous" который блокировал CORS
+            referrerPolicy="no-referrer"
           />
         ) : (
           <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">

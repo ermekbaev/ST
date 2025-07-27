@@ -42,6 +42,7 @@ interface NewCheckoutFormProps {
   onDeliveryChange: (deliveryId: string) => void;
   onPaymentChange: (paymentId: string) => void;
   isMobile?: boolean;
+  isProcessing?: boolean;
 }
 
 // ============================================================================
@@ -71,7 +72,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   selectedPayment,
   onDeliveryChange,
   onPaymentChange,
-  isMobile = false 
+  isMobile = false,
 }) => {
   // ============================================================================
   // СОСТОЯНИЕ И ФОРМА
