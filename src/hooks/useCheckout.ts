@@ -1,9 +1,40 @@
-// src/hooks/useCheckout.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ БЕЗ ЦИКЛИЧЕСКИХ ЗАВИСИМОСТЕЙ
+// src/hooks/useCheckout.ts - ОБНОВЛЕННАЯ ВЕРСИЯ С ИНТЕГРАЦИЕЙ STRAPI
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useCart } from '@/contexts/CartContext';
 import { useDeliverySettings } from './useDeliverySettings';
 import { CheckoutFormData, AppliedPromoCode, DeliveryMethod, PaymentMethod } from '@/types/checkout';
+
+// ✅ ДОБАВЛЯЕМ ИНТЕРФЕЙСЫ ДЛЯ API
+interface OrderItem {
+  productId: string;
+  productName: string;
+  size: string;
+  quantity: number;
+  priceAtTime: number;
+}
+
+interface CreateOrderData {
+  customerInfo: {
+    name: string;
+    phone: string;
+    email?: string;
+  };
+  items: OrderItem[];
+  totalAmount: number;
+  deliveryMethod: string;
+  paymentMethod: string;
+  deliveryAddress?: string;
+  notes?: string;
+}
+
+interface CreateOrderResponse {
+  success: boolean;
+  orderId?: string;
+  orderNumber?: string;
+  error?: string;
+  details?: string;
+}
 
 export const useCheckout = () => {
   const { items, clearCart } = useCart();
@@ -129,43 +160,120 @@ export const useCheckout = () => {
     console.log('🗑️ Промокод удален');
   }, [calculateTotals]);
 
-  // ✅ ОТПРАВКА ЗАКАЗА
-const submitOrder = useCallback(async (data: CheckoutFormData) => {
-  try {
-    setIsSubmitting(true);
-    
-    const finalCalculations = calculateTotals(data.deliveryMethod);
-    
-    // Генерируем номер заказа
-    const orderNumber = `TS-${Date.now().toString().slice(-6)}`;
-    
-    const orderData = {
-      ...data,
-      items,
-      calculations: finalCalculations,
-      appliedPromoCode,
-      orderNumber,
-      timestamp: new Date().toISOString()
+  // ✅ НОВАЯ ФУНКЦИЯ ОТПРАВКИ В STRAPI API
+  const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
+    try {
+      console.log('🔄 Отправляем заказ в Strapi API:', orderData);
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Заказ успешно создан в Strapi:', data);
+        return {
+          success: true,
+          orderId: data.orderId,
+          orderNumber: data.orderNumber
+        };
+      } else {
+        console.error('❌ Ошибка создания заказа в Strapi:', data);
+        return {
+          success: false,
+          error: data.error || 'Ошибка создания заказа',
+          details: data.details
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ Ошибка сети при отправке в Strapi:', error);
+      return {
+        success: false,
+        error: 'Ошибка подключения к серверу',
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      };
+    }
+  }, []);
+
+  // ✅ ПРЕОБРАЗОВАНИЕ ДАННЫХ ИЗ ФОРМЫ В ФОРМАТ API
+  const formatOrderDataForAPI = useCallback((formData: CheckoutFormData, calculations: any): CreateOrderData => {
+    return {
+      customerInfo: {
+        name: `${formData.firstName} ${formData.lastName}`.trim() || formData.firstName,
+        phone: formData.phone,
+        email: formData.email || undefined,
+      },
+      items: items.map(item => ({
+        productId: item.id || item.article || 'UNKNOWN',
+        productName: item.name || `${item.brand} ${item.name}`.trim() || 'Товар без названия',
+        size: item.selectedSize || item.size || 'ONE SIZE',
+        quantity: item.quantity || 1,
+        priceAtTime: item.price || 0
+      })),
+      totalAmount: calculations.total,
+      deliveryMethod: formData.deliveryMethod,
+      paymentMethod: formData.paymentMethod,
+      deliveryAddress: formData.address ? 
+        `${formData.address}, ${formData.city}, ${formData.region} ${formData.postalCode}`.trim() : 
+        '',
+      notes: appliedPromoCode ? 
+        `Промокод: ${appliedPromoCode.code} (-${appliedPromoCode.appliedDiscount}₽)` : 
+        ''
     };
-    
-    console.log('📦 Отправка заказа:', orderData);
-    
-    // Имитация отправки
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Очищаем корзину после успешного заказа
-    clearCart();
-    
-    // Перенаправляем на страницу успеха с номером заказа
-    window.location.href = `/order-success?orderNumber=${orderNumber}`;
-    
-  } catch (error) {
-    console.error('❌ Ошибка при оформлении заказа:', error);
-    alert('Ошибка при оформлении заказа. Попробуйте еще раз.');
-  } finally {
-    setIsSubmitting(false);
-  }
-}, [items, calculateTotals, appliedPromoCode, clearCart]);
+  }, [items, appliedPromoCode]);
+
+  // ✅ ОБНОВЛЕННАЯ ОТПРАВКА ЗАКАЗА С ИНТЕГРАЦИЕЙ STRAPI
+  const submitOrder = useCallback(async (data: CheckoutFormData) => {
+    try {
+      setIsSubmitting(true);
+      
+      const finalCalculations = calculateTotals(data.deliveryMethod);
+      
+      console.log('📦 Начинаем оформление заказа...');
+      console.log('📊 Итоговые расчеты:', finalCalculations);
+      
+      // Валидация корзины
+      if (!items || items.length === 0) {
+        throw new Error('Корзина пуста');
+      }
+
+      if (finalCalculations.total <= 0) {
+        throw new Error('Неверная сумма заказа');
+      }
+
+      // Преобразуем данные для API
+      const orderData = formatOrderDataForAPI(data, finalCalculations);
+      
+      // Отправляем в Strapi через новый API
+      const result = await createOrderInStrapi(orderData);
+      
+      if (result.success) {
+        console.log('✅ Заказ успешно создан!', result);
+        
+        // Очищаем корзину после успешного заказа
+        clearCart();
+        
+        // Перенаправляем на страницу успеха с номером заказа из Strapi
+        window.location.href = `/order-success?orderNumber=${result.orderNumber}`;
+        
+      } else {
+        throw new Error(result.error || 'Ошибка создания заказа');
+      }
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      console.error('❌ Ошибка при оформлении заказа:', errorMessage);
+      alert(`Ошибка при оформлении заказа: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [items, calculateTotals, clearCart, formatOrderDataForAPI, createOrderInStrapi]);
 
   return {
     form,

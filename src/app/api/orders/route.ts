@@ -1,4 +1,4 @@
-// src/app/api/orders/route.ts - ЭТАП 1: БЕЗ ОПЛАТЫ
+// src/app/api/orders/route.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -53,62 +53,40 @@ export async function POST(request: NextRequest) {
       customerName: body.customerInfo.name,
       customerPhone: body.customerInfo.phone,
       customerEmail: body.customerInfo.email || '',
-      totalAmount: body.totalAmount,
+      totalAmount: body.totalAmount, // ИСПРАВЛЕНО: было totalNumber
       deliveryMethod: body.deliveryMethod,
       paymentMethod: body.paymentMethod,
       deliveryAddress: body.deliveryAddress || '',
       notes: body.notes || '',
       orderStatus: 'pending',
-      paymentStatus: body.paymentMethod === 'cash_vladivostok' ? 'pending_cash' : 'pending_online',
-      createdAt: new Date().toISOString(),
+      paymentStatus: body.paymentMethod === 'cash_vladivostok' ? 'pending' : 'pending',
     };
 
-    let strapiOrderId = null;
+    console.log('💾 Сохраняем заказ в Strapi...');
 
-    // Сохраняем в Strapi (если настроен)
-    if (STRAPI_URL && STRAPI_API_TOKEN) {
-      try {
-        strapiOrderId = await saveOrderToStrapi(orderData, body.items);
-        console.log('✅ Заказ сохранен в Strapi с ID:', strapiOrderId);
-      } catch (strapiError) {
-        console.error('❌ Ошибка сохранения в Strapi:', strapiError);
-        // Не прерываем выполнение - заказ обработаем вручную
-      }
-    } else {
-      console.warn('⚠️ Strapi не настроен, заказ сохранен только в логах');
-    }
+    // Сохраняем заказ в Strapi
+    const orderId = await saveOrderToStrapi(orderData, body.items);
+    
+    console.log(`✅ Заказ сохранен в Strapi с ID: ${orderId}`);
 
     // Отправляем уведомление админу
     await sendAdminNotification(orderNumber, body, orderData);
 
-    // Логируем заказ для аудита
-    console.log('📋 ЗАКАЗ СОЗДАН:', {
-      orderNumber,
-      customer: `${body.customerInfo.name} (${body.customerInfo.phone})`,
-      items: body.items.length,
-      total: body.totalAmount,
-      delivery: body.deliveryMethod,
-      payment: body.paymentMethod,
-      strapiId: strapiOrderId,
-      timestamp: new Date().toISOString()
-    });
-
     return NextResponse.json({
       success: true,
+      orderId,
       orderNumber,
-      strapiOrderId,
-      message: 'Заказ создан успешно! Мы свяжемся с вами в ближайшее время.',
-      nextStep: body.paymentMethod === 'cash_vladivostok' 
-        ? 'Ожидайте звонка для подтверждения заказа'
-        : 'В будущем здесь будет интеграция с онлайн-оплатой'
+      message: 'Заказ успешно создан'
     });
 
   } catch (error) {
-    console.error('❌ API: Критическая ошибка создания заказа:', error);
+    console.error('❌ Ошибка создания заказа:', error);
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Техническая ошибка. Попробуйте позже или свяжитесь с нами по телефону.' 
+        error: 'Внутренняя ошибка сервера',
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
       },
       { status: 500 }
     );
@@ -117,9 +95,13 @@ export async function POST(request: NextRequest) {
 
 // Генерация номера заказа
 function generateOrderNumber(): string {
-  const timestamp = Date.now().toString();
-  const random = Math.random().toString(36).substr(2, 4).toUpperCase();
-  return `TS-${timestamp.slice(-6)}-${random}`;
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const random = Math.floor(Math.random() * 999).toString().padStart(3, '0');
+  
+  return `ORD${year}${month}${day}${random}`;
 }
 
 // Валидация данных заказа
@@ -167,10 +149,21 @@ function validateOrderData(data: CreateOrderData): { isValid: boolean; error?: s
 
 // Сохранение заказа в Strapi
 async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']): Promise<string> {
+  if (!STRAPI_API_TOKEN) {
+    throw new Error('STRAPI_API_TOKEN не настроен');
+  }
+
+//   const headers: HeadersInit = {
+//     'Content-Type': 'application/json',
+//     'Authorization': `Bearer ${STRAPI_API_TOKEN}`,
+//   };
+
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${STRAPI_API_TOKEN}`,
+  'Content-Type': 'application/json',
+  // Убираем Authorization для Public роли
   };
+
+  console.log('🔄 Создаем основной заказ в Strapi...');
 
   // 1. Создаем основной заказ
   const orderResponse = await fetch(`${STRAPI_URL}/api/orders`, {
@@ -181,35 +174,45 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
 
   if (!orderResponse.ok) {
     const errorText = await orderResponse.text();
+    console.error('❌ Ошибка ответа Strapi:', errorText);
     throw new Error(`Ошибка создания заказа в Strapi: ${orderResponse.status} - ${errorText}`);
   }
 
   const orderResult = await orderResponse.json();
   const orderId = orderResult.data.id;
 
+  console.log(`✅ Основной заказ создан с ID: ${orderId}`);
+
   // 2. Создаем позиции заказа
+  console.log(`🔄 Создаем ${items.length} позиций заказа...`);
+  
   const itemPromises = items.map(async (item, index) => {
     try {
+      const itemData = {
+        orderId: orderId.toString(), 
+        productId: item.productId,
+        productName: item.productName || `Товар ${item.productId}`,
+        size: item.size,
+        quantity: item.quantity, // ИСПРАВЛЕНО: не Quantity
+        priceAtTime: item.priceAtTime,
+      };
+
+      console.log(`🔄 Создаем позицию ${index + 1}:`, itemData);
+
       const itemResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          data: {
-            order: orderId,
-            productId: item.productId,
-            productName: item.productName || `Товар ${item.productId}`,
-            size: item.size,
-            quantity: item.quantity,
-            priceAtTime: item.priceAtTime,
-          }
-        })
+        body: JSON.stringify({ data: itemData })
       });
 
       if (!itemResponse.ok) {
-        console.error(`❌ Ошибка создания позиции ${index + 1}:`, await itemResponse.text());
+        const errorText = await itemResponse.text();
+        console.error(`❌ Ошибка создания позиции ${index + 1}:`, errorText);
         return false;
       }
 
+      const itemResult = await itemResponse.json();
+      console.log(`✅ Позиция ${index + 1} создана с ID:`, itemResult.data.id);
       return true;
     } catch (error) {
       console.error(`❌ Ошибка создания позиции ${index + 1}:`, error);
@@ -222,7 +225,11 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
   
   console.log(`📦 Создано позиций заказа: ${successCount}/${items.length}`);
 
-  return orderId;
+  if (successCount === 0) {
+    throw new Error('Не удалось создать ни одной позиции заказа');
+  }
+
+  return orderId.toString();
 }
 
 // Отправка уведомления админу
@@ -231,14 +238,14 @@ async function sendAdminNotification(orderNumber: string, orderData: CreateOrder
     // Формируем текст уведомления
     const message = formatAdminNotification(orderNumber, orderData, savedData);
     
+    console.log('📧 Отправляем уведомление админу...');
+    
     // Пытаемся отправить в Telegram
     if (TELEGRAM_BOT_TOKEN && ADMIN_TELEGRAM_CHAT_ID) {
       await sendTelegramNotification(message);
     } else {
-      console.log('📧 УВЕДОМЛЕНИЕ АДМИНУ (Telegram не настроен):', message);
+      console.log('📧 УВЕДОМЛЕНИЕ АДМИНУ (Telegram не настроен):\n', message);
     }
-
-    // В будущем здесь можно добавить отправку email
 
   } catch (error) {
     console.error('❌ Ошибка отправки уведомления админу:', error);
@@ -320,7 +327,7 @@ function getDeliveryMethodName(method: string): string {
 
 function getPaymentMethodName(method: string): string {
   const methods = {
-    'card': 'Онлайн картой (будет добавлено)',
+    'card': 'Онлайн картой',
     'cash_vladivostok': 'Наличными во Владивостоке'
   };
   //@ts-ignore
