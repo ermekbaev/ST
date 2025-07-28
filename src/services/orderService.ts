@@ -88,7 +88,7 @@ export const formatCheckoutDataForAPI = (
     items: cartItems.map(item => ({
       productId: item.id || item.article || 'UNKNOWN',
       productName: item.name || `${item.brand} ${item.name}`.trim() || 'Товар без названия',
-      size: item.selectedSize || item.size || 'ONE SIZE',
+      size: item.size || 'ONE SIZE',
       quantity: item.quantity || 1,
       priceAtTime: item.price || 0
     })),
