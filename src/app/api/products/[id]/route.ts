@@ -1,14 +1,14 @@
-// app/api/products/[id]/route.ts - ОКОНЧАТЕЛЬНЫЙ РАБОЧИЙ КОД
+// app/api/products/[id]/route.ts - ИСПРАВЛЕНО для Next.js 15
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     console.log(`🔄 API: Загружаем товар ${id}`);
 
     // Определяем, что передано - числовой ID, documentId или slug
@@ -192,11 +192,11 @@ export async function GET(
     
     return NextResponse.json({ product });
 
-  } catch (error) {
-    console.error(`❌ API: Ошибка загрузки товара ${params.id}:`, error);
-    return NextResponse.json(
-      { error: 'Внутренняя ошибка сервера' },
-      { status: 500 }
-    );
-  }
+} catch (error) {
+  console.error(`❌ API: Ошибка загрузки товара:`, error);
+  return NextResponse.json(
+    { error: 'Внутренняя ошибка сервера' },
+    { status: 500 }
+  );
+}
 }
