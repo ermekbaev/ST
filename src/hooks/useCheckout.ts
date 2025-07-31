@@ -160,46 +160,66 @@ export const useCheckout = () => {
     console.log('🗑️ Промокод удален');
   }, [calculateTotals]);
 
-  // ✅ НОВАЯ ФУНКЦИЯ ОТПРАВКИ В STRAPI API
-  const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
-    try {
-      console.log('🔄 Отправляем заказ в Strapi API:', orderData);
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ В STRAPI API - ЗАМЕНИТЕ НА ЭТУ
+const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
+  try {
+    console.log('🔄 Отправляем заказ в Strapi API:', orderData);
 
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
-      });
+    // ✅ ДОБАВЛЕНО: Получаем токен пользователя
+    const userToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    
+    // ✅ ДОБАВЛЕНО: Отладочная информация
+    console.log('🔍 Отладка токена пользователя:', {
+      hasUserToken: !!userToken,
+      tokenPreview: userToken ? `${userToken.substring(0, 20)}...` : 'НЕТ ТОКЕНА'
+    });
 
-      const data = await response.json();
+    // ✅ ИСПРАВЛЕНО: Формируем заголовки с токеном авторизации
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
 
-      if (response.ok) {
-        console.log('✅ Заказ успешно создан в Strapi:', data);
-        return {
-          success: true,
-          orderId: data.orderId,
-          orderNumber: data.orderNumber
-        };
-      } else {
-        console.error('❌ Ошибка создания заказа в Strapi:', data);
-        return {
-          success: false,
-          error: data.error || 'Ошибка создания заказа',
-          details: data.details
-        };
-      }
+    // ✅ ДОБАВЛЕНО: Добавляем токен в заголовки если пользователь авторизован
+    if (userToken) {
+      headers['Authorization'] = `Bearer ${userToken}`;
+      console.log('✅ Токен добавлен в заголовки запроса');
+    } else {
+      console.log('⚠️ ТОКЕН НЕ НАЙДЕН - заказ будет создан как гостевой');
+    }
 
-    } catch (error) {
-      console.error('❌ Ошибка сети при отправке в Strapi:', error);
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(orderData)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log('✅ Заказ успешно создан в Strapi:', data);
+      return {
+        success: true,
+        orderId: data.orderId,
+        orderNumber: data.orderNumber
+      };
+    } else {
+      console.error('❌ Ошибка создания заказа в Strapi:', data);
       return {
         success: false,
-        error: 'Ошибка подключения к серверу',
-        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+        error: data.error || 'Ошибка создания заказа',
+        details: data.details
       };
     }
-  }, []);
+
+  } catch (error) {
+    console.error('❌ Ошибка сети при отправке в Strapi:', error);
+    return {
+      success: false,
+      error: 'Ошибка подключения к серверу',
+      details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+    };
+  }
+}, []);
 
   // ✅ ПРЕОБРАЗОВАНИЕ ДАННЫХ ИЗ ФОРМЫ В ФОРМАТ API
   const formatOrderDataForAPI = useCallback((formData: CheckoutFormData, calculations: any): CreateOrderData => {

@@ -33,6 +33,44 @@ export async function POST(request: NextRequest) {
     
     const body: CreateOrderData = await request.json();
     
+    // ✅ ДОБАВЛЕНО: Получаем и проверяем токен пользователя
+    const authHeader = request.headers.get('authorization');
+    const userToken = authHeader?.replace('Bearer ', '') || null;
+    
+    // ✅ ДОБАВЛЕНО: Отладочная информация о токене
+    console.log('🔍 Отладка входящих данных:', {
+      hasUserToken: !!userToken,
+      tokenPreview: userToken ? `${userToken.substring(0, 20)}...` : 'НЕТ ТОКЕНА'
+    });
+
+    if (!userToken) {
+      console.log('❌ ТОКЕН НЕ ПЕРЕДАН ИЗ ФРОНТЕНДА!');
+    } else {
+      console.log('✅ Токен получен, заказ будет привязан к пользователю');
+    }
+
+    // ✅ ДОБАВЛЕНО: Получаем данные пользователя если токен есть
+    let userId: string | null = null;
+    if (userToken) {
+      try {
+        const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+          },
+        });
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          userId = userData.id;
+          console.log('✅ Пользователь найден:', userData.id, userData.email);
+        } else {
+          console.log('⚠️ Токен недействителен, создаем гостевой заказ');
+        }
+      } catch (error) {
+        console.error('❌ Ошибка проверки пользователя:', error);
+      }
+    }
+    
     // Базовая валидация
     const validation = validateOrderData(body);
     if (!validation.isValid) {
@@ -47,7 +85,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = generateOrderNumber();
     console.log('🔢 Сгенерирован номер заказа:', orderNumber);
 
-    // Подготавливаем данные для Strapi
+    // ✅ ИСПРАВЛЕНО: Подготавливаем данные для Strapi с userId
     const orderData = {
       orderNumber,
       customerName: body.customerInfo.name,
@@ -60,14 +98,19 @@ export async function POST(request: NextRequest) {
       notes: body.notes || '',
       orderStatus: 'pending',
       paymentStatus: body.paymentMethod === 'cash_vladivostok' ? 'pending' : 'pending',
+      // ✅ ДОБАВЛЕНО: Привязываем к пользователю если авторизован
+      ...(userId && { user: userId })
     };
 
-    console.log('💾 Сохраняем заказ в Strapi...');
+    console.log('💾 Сохраняем заказ в Strapi...', {
+      isUserOrder: !!userId,
+      userId: userId || 'guest'
+    });
 
     // Сохраняем заказ в Strapi
     const orderId = await saveOrderToStrapi(orderData, body.items);
     
-    console.log(`✅ Заказ сохранен в Strapi с ID: ${orderId}`);
+    console.log(`✅ Заказ сохранен в Strapi с ID: ${orderId}`, userId ? '(авторизованный)' : '(гостевой)');
 
     // Отправляем уведомление админу
     await sendAdminNotification(orderNumber, body, orderData);
@@ -76,7 +119,8 @@ export async function POST(request: NextRequest) {
       success: true,
       orderId,
       orderNumber,
-      message: 'Заказ успешно создан'
+      message: 'Заказ успешно создан',
+      userOrder: !!userId // ✅ ДОБАВЛЕНО: Флаг авторизованного заказа
     });
 
   } catch (error) {

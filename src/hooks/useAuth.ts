@@ -30,6 +30,7 @@ export const useAuth = () => {
     setUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
+      localStorage.removeItem('authToken'); // ✅ ДОБАВЛЕНО: Очищаем токен
     }
   };
 
@@ -40,11 +41,20 @@ export const useAuth = () => {
     }
   };
 
+  // ✅ ДОБАВЛЕНО: Функция получения JWT токена
+  const getToken = (): string | null => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('authToken');
+    }
+    return null;
+  };
+
   return {
     user,
     loading,
     logout,
     login,
+    getToken, // ✅ ДОБАВЛЕНО: Экспортируем функцию getToken
     isAuthenticated: !!user
   };
 };
