@@ -72,7 +72,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       });
 
       const data = await response.json();
-      console.log('📥 Ответ сервера:', data);
+      console.log('📥 Ответ сервера при регистрации:', data);
 
       if (data.success) {
         // ИСПРАВЛЕНО: правильно сохраняем телефон
@@ -85,13 +85,23 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             agreeToMarketing: formData.agreeToMarketing // Берем из формы!
           };
           
-          console.log('💾 Сохраняем пользователя:', userToSave);
+          console.log('💾 Сохраняем пользователя при регистрации:', userToSave);
           localStorage.setItem('currentUser', JSON.stringify(userToSave));
           
-          // Сохраняем JWT токен если есть
+          // ✅ КРИТИЧЕСКИ ВАЖНО: Сохраняем JWT токен если есть
           if (data.jwt) {
             localStorage.setItem('authToken', data.jwt);
+            console.log('✅ JWT токен сохранен в localStorage при регистрации:', data.jwt.substring(0, 20) + '...');
+          } else {
+            console.log('⚠️ JWT токен НЕ получен от сервера при регистрации!');
           }
+
+          // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: Проверяем что токен действительно сохранился
+          const savedToken = localStorage.getItem('authToken');
+          console.log('🔍 Проверка сохранения токена:', {
+            tokenSaved: !!savedToken,
+            tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'НЕТ ТОКЕНА'
+          });
         }
         
         // Сразу переходим в профиль
@@ -142,7 +152,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       });
 
       const data = await response.json();
-      console.log('📥 Ответ сервера:', data);
+      console.log('📥 Ответ сервера при входе:', data);
 
       if (data.success) {
         // Сохраняем пользователя в localStorage
@@ -158,10 +168,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           console.log('💾 Сохраняем пользователя при входе:', userToSave);
           localStorage.setItem('currentUser', JSON.stringify(userToSave));
           
-          // Сохраняем JWT токен если есть
+          // ✅ КРИТИЧЕСКИ ВАЖНО: Сохраняем JWT токен если есть
           if (data.jwt) {
             localStorage.setItem('authToken', data.jwt);
+            console.log('✅ JWT токен сохранен в localStorage при входе:', data.jwt.substring(0, 20) + '...');
+          } else {
+            console.log('⚠️ JWT токен НЕ получен от сервера при входе!');
           }
+
+          // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: Проверяем что токен действительно сохранился
+          const savedToken = localStorage.getItem('authToken');
+          console.log('🔍 Проверка сохранения токена:', {
+            tokenSaved: !!savedToken,
+            tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'НЕТ ТОКЕНА'
+          });
         }
         
         // Сразу переходим в профиль

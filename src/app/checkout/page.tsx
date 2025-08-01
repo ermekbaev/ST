@@ -77,12 +77,13 @@ const CheckoutPage: React.FC = () => {
       };
 
       console.log('📋 Отправляем в API:', orderPayload);
-
+      const token = localStorage.getItem('authToken');
       // Отправляем в API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}) // ВАЖНО
         },
         body: JSON.stringify(orderPayload),
       });

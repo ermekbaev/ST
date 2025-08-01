@@ -133,11 +133,13 @@ export const getProductById = async (id: string): Promise<Product | null> => {
 export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
   try {
     console.log('🔄 Создаем заказ через API...', orderData);
+    const token = localStorage.getItem('authToken');
 
     const response = await fetch('/api/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}) // ВАЖНО
       },
       body: JSON.stringify(orderData)
     });

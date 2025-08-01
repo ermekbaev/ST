@@ -34,11 +34,13 @@ export interface CreateOrderResponse {
 export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
   try {
     console.log('🔄 Отправляем заказ на сервер:', orderData);
+    const token = localStorage.getItem('authToken');
 
     const response = await fetch('/api/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}) // ВАЖНО
       },
       body: JSON.stringify(orderData)
     });

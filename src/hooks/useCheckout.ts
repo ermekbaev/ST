@@ -177,6 +177,7 @@ const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Prom
     // ✅ ИСПРАВЛЕНО: Формируем заголовки с токеном авторизации
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...(userToken ? { Authorization: `Bearer ${userToken}` } : {}) // ВАЖНО
     };
 
     // ✅ ДОБАВЛЕНО: Добавляем токен в заголовки если пользователь авторизован
