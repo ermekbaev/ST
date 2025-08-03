@@ -5,6 +5,13 @@ import React, { useState, useEffect } from 'react';
 const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  
+  // 🎯 ДОБАВЛЕНО: Состояния для поддержки touch/swipe
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Минимальное расстояние для регистрации свайпа
+  const minSwipeDistance = 50;
 
   const slides = [
     {
@@ -48,6 +55,32 @@ const HeroSlider = () => {
       alt: "Индивидуальный заказ"
     }
   ];
+
+  // 🎯 ДОБАВЛЕНО: Обработчики touch событий для свайпа
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      // Свайп влево - следующий слайд
+      nextSlide();
+    } else if (isRightSwipe) {
+      // Свайп вправо - предыдущий слайд
+      prevSlide();
+    }
+  };
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -98,6 +131,13 @@ const HeroSlider = () => {
       className="relative w-full overflow-hidden group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      // 🎯 ДОБАВЛЕНО: Touch события для поддержки свайпа на мобильных
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ 
+        touchAction: 'pan-y pinch-zoom' // Разрешаем только вертикальный скролл и zoom
+      }}
     >
       <div 
         className="flex transition-transform duration-500 ease-in-out"

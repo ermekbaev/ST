@@ -241,105 +241,142 @@ const handleAuthIconClick = () => {
     console.log(`Клик по навигации: ${item}`);
   }, []);
 
-  const getMenuPosition = useCallback((): React.CSSProperties => {
-    if (!activeMenu) return {};
-    
-    const activeIndex = menuItems.indexOf(activeMenu);
-    
-    // Уменьшаем сдвиг для "информация" (последний пункт)
-    let centerOffset;
-    if (activeIndex === menuItems.length - 1) { // информация
-      centerOffset = (activeIndex - 3.5) * 120 + 50; // уменьшили сдвиг до +50px
+// Замените функцию getMenuPosition в вашем DesktopHeader.tsx
+
+const getMenuPosition = useCallback((): React.CSSProperties => {
+  if (!activeMenu) return {};
+  
+  const activeIndex = menuItems.indexOf(activeMenu);
+  
+  // Проверяем ширину экрана
+  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1400;
+  
+  let centerOffset;
+  
+  if (activeIndex === menuItems.length - 1) { // информация
+    if (screenWidth >= 1400) {
+      centerOffset = (activeIndex - 3.5) * 120 + 50;
+    } else if (screenWidth >= 1200) {
+      centerOffset = (activeIndex - 3.5) * 100 + 30;
+    } else if (screenWidth >= 1024) {
+      centerOffset = (activeIndex - 3.5) * 70;
     } else {
-      centerOffset = (activeIndex - 3.5) * 120 + 200; // обычный сдвиг для остальных
+      centerOffset = 0; // Центрируем на малых экранах
     }
+  } else {
+    if (screenWidth >= 1400) {
+      centerOffset = (activeIndex - 3.5) * 120 + 200;
+    } else if (screenWidth >= 1200) {
+      centerOffset = (activeIndex - 3.5) * 100 + 150;
+    } else if (screenWidth >= 1024) {
+      centerOffset = (activeIndex - 3.5) * 70 + 80;
+    } else {
+      centerOffset = 0; // Центрируем на малых экранах
+    }
+  }
+  
+  // Ограничиваем сдвиг чтобы не выходить за границы
+  const maxOffset = Math.max(0, (screenWidth - 600) / 2 - 40);
+  const minOffset = -maxOffset;
+  centerOffset = Math.max(minOffset, Math.min(maxOffset, centerOffset));
+  
+  return {
+    transform: `translateX(${centerOffset}px)`,
+    // Предотвращаем выход за границы экрана
+    maxWidth: screenWidth < 900 ? 'calc(100vw - 30px)' : 'calc(100vw - 80px)',
+    // Добавляем центрирование по умолчанию
+    margin: '0 auto',
+    // Ограничиваем ширину контейнера
+    width: 'fit-content'
+  };
+}, [activeMenu, menuItems]);
+
+// И добавьте хук для отслеживания изменения размера экрана
+const [screenWidth, setScreenWidth] = useState(1400);
+
+useEffect(() => {
+  const handleResize = () => {
+    setScreenWidth(window.innerWidth);
+  };
+  
+  if (typeof window !== 'undefined') {
+    handleResize(); // Установить начальное значение
+    window.addEventListener('resize', handleResize);
     
-    return {
-      transform: `translateX(${centerOffset}px)`
-    };
-  }, [activeMenu, menuItems]);
+    return () => window.removeEventListener('resize', handleResize);
+  }
+}, []);
 
-  const renderMegaMenu = (): JSX.Element | null => {
-    if (!activeMenu || !megaMenuData[activeMenu as MenuKey]) {
-      return null;
-    }
+const renderMegaMenu = (): JSX.Element | null => {
+  if (!activeMenu || !megaMenuData[activeMenu as MenuKey]) {
+    return null;
+  }
 
-    const menuData = megaMenuData[activeMenu as MenuKey];
+  const menuData = megaMenuData[activeMenu as MenuKey];
 
-    return (
-      <div 
-        className="absolute top-full left-0 w-full bg-brand-beige z-50 animate-slide-down"
-        onMouseEnter={() => setActiveMenu(activeMenu)}
-        onMouseLeave={handleMenuLeave}
-        style={{
-          marginTop: '-1px'
-        }}
-      >
-        <div className="w-full py-12">
-          <div 
-            className="w-[800px] mx-auto px-16"
-            style={getMenuPosition()}
-          >
-            <div className="mb-16">
-              <div className="flex items-start">
+  return (
+    <div 
+      className="mega-menu-container"
+      onMouseEnter={() => setActiveMenu(activeMenu)}
+      onMouseLeave={handleMenuLeave}
+    >
+      <div className="w-full py-8 lg:py-12">
+        <div 
+          className="mega-menu-inner w-4xl"
+          style={getMenuPosition()}
+        >
+          <div className="mb-8 lg:mb-16">
+            <div className="flex">
+              <h3 className="mega-menu-title ">
+                {menuData.title}
+              </h3>
+              <div className="">
+                <div className="w-full h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
+                <div className="ml-5 grid grid-cols-2">
+                  {menuData.categories.map((category: string, index: number) => (
+                    <a
+                      key={index}
+                      href={menuData.links?.[category] || '#'}
+                      className="mega-menu-link"
+                    >
+                      {category}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Секция КАТЕГОРИЯ только если это НЕ информация */}
+          {activeMenu !== 'информация' && (
+            <div>
+              <div className="flex">
                 <h3 className="mega-menu-title">
-                  {menuData.title}
+                  КАТЕГОРИЯ
                 </h3>
-                <div className="flex-1">
-                  <div className="w-full h-0.5 bg-brand-dark mb-8 mt-6"></div>
-                  <div className="grid grid-cols-2 gap-x-16 gap-y-3">
-                    {menuData.categories.map((category: string, index: number) => (
-                      <a
-                        key={index}
-                        href={menuData.links?.[category] || '#'}
-                        className="mega-menu-link"
-                      >
-                        {category}
+                <div className="">
+                  <div className="w-auto h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
+                  <div className="ml-5 grid grid-cols-2">
+                    {menuData.subcategories.map((subcategory: string, index: number) => (
+                      <a key={index} href="#" className="mega-menu-link">
+                        {subcategory}
+                      </a>
+                    ))}
+                    {menuData.additional?.map((item: string, index: number) => (
+                      <a key={`additional-${index}`} href="#" className="mega-menu-link">
+                        {item}
                       </a>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Показываем секцию КАТЕГОРИЯ только если это НЕ информация */}
-            {activeMenu !== 'информация' && (
-              <div>
-                <div className="flex items-start">
-                  <h3 className="mega-menu-title">
-                    КАТЕГОРИЯ
-                  </h3>
-                  <div className="flex-1">
-                    <div className="w-full h-0.5 bg-brand-dark mb-8 mt-6"></div>
-                    <div className="grid grid-cols-2 gap-x-16 gap-y-3">
-                      {menuData.subcategories.map((subcategory: string, index: number) => (
-                        <a
-                          key={index}
-                          href="#"
-                          className="mega-menu-link"
-                        >
-                          {subcategory}
-                        </a>
-                      ))}
-                      {menuData.additional && menuData.additional.map((item: string, index: number) => (
-                        <a
-                          key={`additional-${index}`}
-                          href="#"
-                          className="mega-menu-link"
-                        >
-                          {item}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   return (
     <header className="w-full bg-white border-b border-gray-200 relative">

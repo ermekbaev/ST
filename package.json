@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@a2seven/yoo-checkout": "^1.1.4",
     "@hookform/resolvers": "^5.1.1",
+    "crypto": "^1.0.1",
     "csv-parse": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "next": "15.3.5",
