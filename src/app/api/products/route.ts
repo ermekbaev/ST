@@ -1,40 +1,104 @@
-// src/app/api/products/route.ts - ПРАВИЛЬНЫЙ для вашей структуры Strapi
+// src/app/api/products/route.ts - ПОЛНЫЙ КОД С КЭШИРОВАНИЕМ
 
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
+// Кэш товаров
+let cachedProducts: { products: any; total?: any; } | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 минут кэш
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔄 API: Получен запрос на товары');
     
-    // Запрос товаров с populate=*
-    const strapiUrl = `${STRAPI_URL}/api/products?populate=*`;
-    console.log('🔄 Запрашиваем:', strapiUrl);
+    // Проверяем кэш
+    const now = Date.now();
+    const cacheAge = now - cacheTimestamp;
+    const isCacheValid = cachedProducts && cacheAge < CACHE_DURATION;
     
-    const strapiResponse = await fetch(strapiUrl, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log('📡 Ответ от Strapi:', strapiResponse.status, strapiResponse.statusText);
-
-    if (!strapiResponse.ok) {
-      console.error(`❌ Strapi недоступен: ${strapiResponse.status}`);
-      return NextResponse.json(
-        { 
-          error: `Strapi недоступен (${strapiResponse.status})`,
-          message: 'Убедитесь что Strapi запущен на localhost:1337'
-        },
-        { status: 502 }
-      );
+    if (isCacheValid) {//@ts-ignore
+      console.log(`📦 Возвращаем ${cachedProducts.products.length} товаров из кэша (возраст: ${Math.round(cacheAge / 1000)}с)`);
+      return NextResponse.json(cachedProducts);
     }
-
-    const strapiData = await strapiResponse.json();
-    console.log('📦 Получено от Strapi:', strapiData.data?.length || 0, 'товаров');
     
-    if (!strapiData.data || !Array.isArray(strapiData.data)) {
+    console.log('🔄 Кэш устарел или пустой, загружаем свежие данные...');
+    
+    // Функция для получения всех товаров через параллельные запросы
+    const getAllProductsParallel = async () => {
+      console.log('📦 Загружаем товары через параллельные запросы...');
+      
+      // Сначала получаем общее количество товаров
+      const firstPageUrl = `${STRAPI_URL}/api/products?populate=*&pagination[page]=1&pagination[pageSize]=100`;
+      const firstResponse = await fetch(firstPageUrl);
+      
+      if (!firstResponse.ok) {
+        throw new Error(`Ошибка получения первой страницы: ${firstResponse.status}`);
+      }
+      
+      const firstData = await firstResponse.json();
+      const totalItems = firstData.meta?.pagination?.total || 0;
+      const pageSize = 100;
+      const totalPages = Math.ceil(totalItems / pageSize);
+      
+      console.log(`📊 Найдено ${totalItems} товаров на ${totalPages} страницах`);
+      
+      // Если всего одна страница, возвращаем её
+      if (totalPages <= 1) {
+        return firstData.data || [];
+      }
+      
+      // Создаем массив промисов для параллельной загрузки остальных страниц
+      const promises = [];
+      
+      // Добавляем первую страницу
+      promises.push(Promise.resolve(firstData.data));
+      
+      // Создаем промисы для остальных страниц
+      for (let page = 2; page <= totalPages; page++) {
+        const pageUrl = `${STRAPI_URL}/api/products?populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
+        
+        const pagePromise = fetch(pageUrl)
+          .then(response => {
+            if (!response.ok) {
+              console.error(`❌ Ошибка на странице ${page}: ${response.status}`);
+              return [];
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log(`✅ Страница ${page}: ${data.data?.length || 0} товаров`);
+            return data.data || [];
+          })
+          .catch(error => {
+            console.error(`❌ Ошибка загрузки страницы ${page}:`, error);
+            return [];
+          });
+        
+        promises.push(pagePromise);
+      }
+      
+      // Выполняем все запросы параллельно
+      console.log(`🚀 Запускаем ${promises.length} параллельных запросов...`);
+      const startTime = Date.now();
+      
+      const results = await Promise.all(promises);
+      
+      const endTime = Date.now();
+      console.log(`⚡ Параллельная загрузка завершена за ${endTime - startTime}ms`);
+      
+      // Объединяем все результаты
+      const allProducts = results.flat();
+      console.log(`📦 Всего загружено: ${allProducts.length} товаров`);
+      
+      return allProducts;
+    };
+
+    // Получаем все товары параллельно
+    const allStrapiProducts = await getAllProductsParallel();
+    
+    if (allStrapiProducts.length === 0) {
       return NextResponse.json({
         products: [],
         total: 0,
@@ -42,13 +106,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    console.log(`📊 Обрабатываем ${allStrapiProducts.length} товаров...`);
+    const processStartTime = Date.now();
+
     // Обрабатываем товары из реальной структуры Strapi
-    const products = strapiData.data.map((item: any) => {
-      console.log(`🔄 Обрабатываем товар:`, item.name || 'Без названия');
-      
+    const products = allStrapiProducts.map((item: any) => {
       // В новой версии Strapi данные лежат прямо в корне item, без attributes
-      const data = item; // не item.attributes!
-      
+      const data = item;
+
       // Извлекаем размеры с ценами из массива sizes
       let productSizes = [];
       
@@ -60,13 +125,6 @@ export async function GET(request: NextRequest) {
                    sizeItem.stockQuantity !== null;
           })
           .map((sizeItem: any) => {
-            console.log(`📏 Обрабатываем размер:`, {
-              value: sizeItem.value,
-              price: sizeItem.price,
-              stockQuantity: sizeItem.stockQuantity,
-              reservedQuantity: sizeItem.reservedQuantity
-            });
-            
             // Вычисляем доступное количество
             const stockQty = sizeItem.stockQuantity || 0;
             const reservedQty = sizeItem.reservedQuantity || 0;
@@ -90,13 +148,9 @@ export async function GET(request: NextRequest) {
           const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
           return aNum - bNum;
         });
-        
-        console.log(`✅ Размеры с ценами:`, productSizes.map((s: { size: any; price: any; }) => `${s.size}: ${s.price}₽`));
-      } else {
-        console.log(`⚠️ Размеры не найдены для товара:`, data.name);
       }
 
-      // Извлекаем связанные данные (они лежат прямо в объектах)
+      // Извлекаем связанные данные
       const brand = data.brand?.name ? String(data.brand.name) : 'Не указан';
       const category = data.category?.name ? String(data.category.name) : 'Не указана';
       const gender = data.gender?.name ? String(data.gender.name) : 'Унисекс';
@@ -110,12 +164,11 @@ export async function GET(request: NextRequest) {
       const mainPhoto = String(data.mainPhoto || '/images/placeholder.jpg');
       let additionalPhotos = [];
       
-      // addTotalPhotos может быть массивом или null
       if (data.addTotalPhotos && Array.isArray(data.addTotalPhotos)) {
         additionalPhotos = data.addTotalPhotos;
       }
       
-      const product = {
+      return {
         id: String(item.id || ''),
         article: String(data.article || ''),
         brand: brand,
@@ -130,7 +183,7 @@ export async function GET(request: NextRequest) {
         
         category: category,
         gender: gender,
-        price: basePrice, // Минимальная цена среди размеров
+        price: basePrice,
         
         // Фото
         photo: mainPhoto,
@@ -147,35 +200,57 @@ export async function GET(request: NextRequest) {
         createdAt: data.createdAt,
         updatedAt: data.updatedAt
       };
-      
-      console.log(`✅ Товар обработан:`, {
-        name: product.name,
-        brand: product.brand,
-        category: product.category,
-        basePrice: product.price,
-        sizesCount: product.allSizes.length,
-        availableSizes: product.allSizes.filter((s: { available: any; }) => s.available).length
-      });
-      
-      return product;
     });
     
+    const processEndTime = Date.now();
+    console.log(`⚡ Обработка товаров завершена за ${processEndTime - processStartTime}ms`);
     console.log(`✅ API: Возвращаем ${products.length} товаров с индивидуальными ценами размеров`);
     
-    return NextResponse.json({
+    // Формируем результат
+    const result = {
       products,
-      total: strapiData.meta?.pagination?.total || products.length,
-    });
+      total: allStrapiProducts.length,
+    };
+    
+    // Сохраняем в кэш
+    cachedProducts = result;
+    cacheTimestamp = now;
+    console.log(`💾 Данные сохранены в кэш на ${CACHE_DURATION / 1000 / 60} минут`);
+    
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('❌ API: Ошибка загрузки товаров:', error);
+    
+    // Если есть кэш, возвращаем его даже если устарел
+    if (cachedProducts) {
+      console.log('⚠️ Ошибка загрузки, возвращаем устаревший кэш');
+      return NextResponse.json({
+        ...cachedProducts,
+        cached: true,
+        error: 'Данные могут быть устаревшими'
+      });
+    }
+    
     return NextResponse.json(
       { 
         error: 'Ошибка подключения к Strapi',
         message: error instanceof Error ? error.message : 'Неизвестная ошибка',
-        suggestion: 'Проверьте что Strapi запущен на localhost:1337 и содержит товары с размерами'
+        suggestion: 'Проверьте что Strapi запущен и содержит товары с размерами'
       },
       { status: 500 }
     );
   }
+}
+
+// Функция для очистки кэша
+export async function DELETE(request: NextRequest) {
+  cachedProducts = null;
+  cacheTimestamp = 0;
+  console.log('🗑️ Кэш товаров очищен');
+  
+  return NextResponse.json({ 
+    message: 'Кэш очищен',
+    success: true 
+  });
 }

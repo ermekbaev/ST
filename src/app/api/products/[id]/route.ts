@@ -140,11 +140,13 @@ export async function GET(
       additionalPhotos = item.addTotalPhotos;
     }
 
-    // КЛЮЧЕВОЕ: Создаем размеры в правильном формате для фронтенда
-    const sizesForFrontend = allSizes.length > 0 ? allSizes : [
-      // Fallback только если действительно нет размеров с ценами
-      { size: '41', price: 0, available: false, stockQuantity: 0, reservedQuantity: 0, availableQuantity: 0 }
-    ];
+    // Только товары с настроенными размерами
+    const sizesForFrontend = allSizes;
+
+    // Если нет размеров с ценами - пропускаем товар
+    if (sizesForFrontend.length === 0) {
+      return; // пропускаем этот товар
+    }
 
     const product = {
       id: item.id?.toString() || '',
