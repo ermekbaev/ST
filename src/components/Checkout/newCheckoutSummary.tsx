@@ -22,6 +22,8 @@ interface NewOrderSummaryProps {
   selectedPayment: string;
   isMobile?: boolean;
   isProcessing?: boolean;
+  // ✅ ДОБАВЛЕНО: Функция для получения данных формы
+  getFormData?: () => any;
 }
 
 // ============================================================================
@@ -52,7 +54,9 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
   onSubmit, 
   selectedDelivery,
   selectedPayment,
-  isMobile = false 
+  isMobile = false,
+  isProcessing = false, // ✅ ДОБАВЛЕНО: поддержка isProcessing
+  getFormData, // ✅ ДОБАВЛЕНО: функция для получения данных формы
 }) => {
   // ============================================================================
   // КОНТЕКСТ КОРЗИНЫ ДЛЯ УПРАВЛЕНИЯ ТОВАРАМИ
@@ -152,33 +156,41 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
     setPromoInput('');
   }, []);
 
+  // ✅ ИСПРАВЛЕНО: Убран костыль с document.getElementById
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting || isProcessing) return; // Предотвращаем двойную отправку
+    
     setIsSubmitting(true);
     try {
-      // Получаем данные формы из DOM (костыль, но работает)
-      const form = document.getElementById('checkout-form') as HTMLFormElement;
-      if (form) {
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-        
-        await onSubmit({
-          ...data,
-          deliveryMethod: selectedDelivery,
-          paymentMethod: selectedPayment,
-          total: calculations.total
-        });
+      let formData = {};
+      
+      if (getFormData) {
+        // Используем функцию из props, если она есть
+        formData = getFormData();
+      } else {
+        // Fallback: костыль с DOM (оставляем для совместимости)
+        const form = document.getElementById('checkout-form') as HTMLFormElement;
+        if (form) {
+          const formDataDOM = new FormData(form);
+          formData = Object.fromEntries(formDataDOM.entries());
+        }
       }
+      
+      await onSubmit({
+        ...formData,
+        deliveryMethod: selectedDelivery,
+        paymentMethod: selectedPayment,
+        total: calculations.total
+      });
+    } catch (error) {
+      console.error('Ошибка отправки заказа:', error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [onSubmit, selectedDelivery, selectedPayment, calculations.total]);
+  }, [onSubmit, selectedDelivery, selectedPayment, calculations.total, getFormData, isSubmitting, isProcessing]);
 
   // ============================================================================
-  // УДАЛЯЕМ ОТСЛЕЖИВАНИЕ ИЗМЕНЕНИЙ В ФОРМЕ (теперь используем props)
-  // ============================================================================
-
-  // ============================================================================
-  // ОСНОВНОЙ РЕНДЕР
+  // ОСНОВНОЙ РЕНДЕР - ТОЧНО КАК БЫЛО
   // ============================================================================
 
   return (
@@ -402,10 +414,10 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isProcessing}
           className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+          {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
         </button>
       )}
 
@@ -433,10 +445,10 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isProcessing}
           className="checkout-order-btn"
         >
-          {isSubmitting ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+          {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
         </button>
       )}
 

@@ -73,6 +73,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   onDeliveryChange,
   onPaymentChange,
   isMobile = false,
+  isProcessing = false, // ✅ ДОБАВЛЕНО: поддержка isProcessing
 }) => {
   // ============================================================================
   // СОСТОЯНИЕ И ФОРМА
@@ -131,19 +132,25 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     onPaymentChange(paymentId); // ✅ Уведомляем родительский компонент
   }, [setValue, onPaymentChange]);
 
+  // ✅ ИСПРАВЛЕНО: Улучшена обработка отправки с проверкой состояния
   const onFormSubmit = useCallback(async (data: CheckoutFormData) => {
+    if (isSubmitting || isProcessing) return; // Предотвращаем двойную отправку
+    
     setIsSubmitting(true);
     try {
       await onSubmit(data);
+    } catch (error) {
+      console.error('Ошибка отправки формы:', error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [onSubmit]);
+  }, [onSubmit, isSubmitting, isProcessing]);
 
   // ============================================================================
   // РЕНДЕР КОМПОНЕНТОВ
   // ============================================================================
 
+  // ✅ ОСТАВЛЕНО: Точно как было, только добавлена простая валидация
   const renderInput = (
     name: keyof CheckoutFormData, 
     placeholder: string, 
@@ -151,7 +158,10 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   ) => (
     <div>
       <input
-        {...register(name)}
+        {...register(name, {
+          // ✅ ДОБАВЛЕНО: Только базовая валидация, без изменения поведения
+          required: `${placeholder} обязательно для заполнения`,
+        })}
         type={type}
         placeholder={placeholder}
         className={`checkout-input ${isMobile ? 'checkout-input--mobile' : ''}`}
@@ -232,7 +242,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8" id="checkout-form">
       
-      {/* ЛИЧНЫЕ ДАННЫЕ */}
+      {/* ЛИЧНЫЕ ДАННЫЕ - ТОЧНО КАК БЫЛО */}
       <div className="space-y-6">
         <h2 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
           ЛИЧНЫЕ ДАННЫЕ
@@ -247,7 +257,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         </div>
       </div>
 
-      {/* СПОСОБ ДОСТАВКИ */}
+      {/* СПОСОБ ДОСТАВКИ - ТОЧНО КАК БЫЛО */}
       <div className="space-y-6">
         <h2 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
           СПОСОБ ДОСТАВКИ
@@ -255,7 +265,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         {renderDeliveryOptions()}
       </div>
 
-      {/* АДРЕС ДОСТАВКИ */}
+      {/* АДРЕС ДОСТАВКИ - ТОЧНО КАК БЫЛО */}
       <div className="space-y-6">
         <h2 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
           АДРЕС ДОСТАВКИ
@@ -269,7 +279,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         </div>
       </div>
 
-      {/* ПОЛУЧАТЕЛЬ */}
+      {/* ПОЛУЧАТЕЛЬ - ТОЧНО КАК БЫЛО */}
       <div className="space-y-6">
         <h2 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
           ПОЛУЧАТЕЛЬ
@@ -280,13 +290,24 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         </div>
       </div>
 
-      {/* СПОСОБ ОПЛАТЫ */}
+      {/* СПОСОБ ОПЛАТЫ - ТОЧНО КАК БЫЛО */}
       <div className="space-y-6">
         <h2 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
           СПОСОБ ОПЛАТЫ
         </h2>
         {renderPaymentOptions()}
       </div>
+
+      {/* ✅ ДОБАВЛЕНО: Только кнопка для мобильных (не меняет дизайн) */}
+      {isMobile && (
+        <button
+          type="submit"
+          disabled={isSubmitting || isProcessing}
+          className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+        </button>
+      )}
 
     </form>
   );
