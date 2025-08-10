@@ -51,7 +51,7 @@ const CheckoutPage: React.FC = () => {
           customerPhone: orderData.customerInfo.phone,
           description: `Оплата заказа #${orderResponse.orderNumber || orderResponse.orderId} в Tigr Shop`,
           // 🔥 ИСПРАВЛЕНО: Добавляем paymentId в return_url
-          returnUrl: `${window.location.origin}/order-success?orderNumber=${orderResponse.orderNumber}&paymentId={payment.id}`,
+          returnUrl: `${window.location.origin}/order-success?orderNumber=${orderResponse.orderNumber}`,
           items: formatCartItemsForPayment(items)
         };
 

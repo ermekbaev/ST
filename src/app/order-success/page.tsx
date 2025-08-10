@@ -1,43 +1,98 @@
-// src/app/order-success/page.tsx - ОБНОВЛЕННЫЙ С ПРОВЕРКОЙ НЕЗАВЕРШЕННЫХ ПЛАТЕЖЕЙ
+// src/app/order-success/page.tsx - ПОЛНАЯ ВЕРСИЯ С СИНХРОНИЗАЦИЕЙ
 'use client';
 
 import SuccessHero from '@/components/OrderSuccess/SuccessHero';
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useCart } from '@/contexts/CartContext'; // 🔥 ДОБАВЛЕНО
+import { useCart } from '@/contexts/CartContext';
 
 // Компонент который использует useSearchParams
 const OrderSuccessContent: React.FC = () => {
   const searchParams = useSearchParams();
-  const { clearCart } = useCart(); // 🔥 ДОБАВЛЕНО
+  const { clearCart } = useCart();
   
   const orderNumber = searchParams.get('orderNumber') || undefined;
-  const paymentId = searchParams.get('paymentId') || undefined;
+  const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
+  const [statusSynced, setStatusSynced] = useState(false);
   
-  // 🔥 ДОБАВЛЕНО: Проверяем localStorage на незавершенные платежи
   useEffect(() => {
+    console.log('🔍 OrderSuccess useEffect запущен');
+    
+    // Получаем paymentId из localStorage
     const pendingPaymentId = localStorage.getItem('pendingPaymentId');
     const pendingOrderId = localStorage.getItem('pendingOrderId');
     
-    // Если есть успешный платеж, очищаем корзину и localStorage
-    if (paymentId && paymentId === pendingPaymentId) {
-      console.log('✅ Успешный возврат с ЮKassa, очищаем корзину');
+    console.log('📋 LocalStorage содержимое:', {
+      pendingPaymentId,
+      pendingOrderId,
+      allKeys: Object.keys(localStorage)
+    });
+    
+    if (pendingPaymentId) {
+      console.log('✅ Найден paymentId в localStorage:', pendingPaymentId);
+      setPaymentId(pendingPaymentId);
+      
+      // Очищаем корзину и localStorage при успешном возврате
+      console.log('🧹 Очищаем корзину и localStorage');
       clearCart();
       localStorage.removeItem('pendingPaymentId');
       localStorage.removeItem('pendingOrderId');
+      
+      console.log('✅ Очистка завершена, новое содержимое localStorage:', {
+        pendingPaymentId: localStorage.getItem('pendingPaymentId'),
+        pendingOrderId: localStorage.getItem('pendingOrderId')
+      });
+
+      // 🔥 НОВОЕ: Синхронизируем статус платежа
+      if (orderNumber && !statusSynced) {
+        syncPaymentStatus(pendingPaymentId, orderNumber);
+      }
+    } else {
+      console.log('ℹ️ PaymentId не найден в localStorage - заказ без онлайн оплаты или localStorage пуст');
     }
-    
-    // Если пользователь вернулся без paymentId, но есть pending - возможно отмена
-    if (!paymentId && pendingPaymentId) {
-      console.log('⚠️ Возврат без paymentId - возможно платеж отменен');
-      // НЕ очищаем корзину - пользователь может попробовать снова
+  }, [clearCart, orderNumber, statusSynced]);
+
+  // 🔥 НОВАЯ ФУНКЦИЯ: Синхронизация статуса платежа
+  const syncPaymentStatus = async (paymentId: string, orderNumber: string) => {
+    try {
+      console.log('🔄 Синхронизируем статус платежа с ЮKassa...');
+      setStatusSynced(true);
+
+      // 🔥 ИСПРАВЛЕНО: Используем orderNumber для поиска заказа в Strapi
+      // Strapi найдет заказ по полю orderNumber, а не по ID
+      
+      const response = await fetch('/api/payments/sync-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentId,
+          orderNumber // Передаем полный номер заказа
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Статус платежа синхронизирован:', result.payment);
+        
+        if (result.payment.updated) {
+          console.log('🎉 Статус в Strapi обновлен на paid!');
+        }
+      } else {
+        console.error('❌ Ошибка синхронизации:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Сетевая ошибка синхронизации:', error);
     }
-  }, [paymentId, clearCart]);
+  };
 
   console.log('📄 Страница успеха загружена:', {
     orderNumber,
     paymentId,
-    hasPayment: !!paymentId
+    hasPayment: !!paymentId,
+    statusSynced
   });
 
   return <SuccessHero orderNumber={orderNumber} paymentId={paymentId} />;
