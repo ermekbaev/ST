@@ -1,8 +1,10 @@
-// src/hooks/useCheckout.ts - ОБНОВЛЕННАЯ ВЕРСИЯ С ИНТЕГРАЦИЕЙ STRAPI
+// src/hooks/useCheckout.ts - ОБНОВЛЕННАЯ ВЕРСИЯ С ИНТЕГРАЦИЕЙ ЮKASSA
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation'; // 🔥 ДОБАВЛЕНО: для навигации после создания платежа
 import { useCart } from '@/contexts/CartContext';
 import { useDeliverySettings } from './useDeliverySettings';
+import { createPayment, formatCartItemsForPayment } from '@/services/paymentService'; // 🔥 ДОБАВЛЕНО: импорт сервиса ЮKassa
 import { CheckoutFormData, AppliedPromoCode, DeliveryMethod, PaymentMethod } from '@/types/checkout';
 
 // ✅ ДОБАВЛЯЕМ ИНТЕРФЕЙСЫ ДЛЯ API
@@ -37,10 +39,12 @@ interface CreateOrderResponse {
 }
 
 export const useCheckout = () => {
+  const router = useRouter(); // 🔥 ДОБАВЛЕНО: хук для навигации
   const { items, clearCart } = useCart();
   const { deliveryOptions, paymentOptions, promoCodes, generalSettings, loading } = useDeliverySettings();
   const [appliedPromoCode, setAppliedPromoCode] = useState<AppliedPromoCode | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // 🔥 ДОБАВЛЕНО: состояние обработки платежа
 
   // ✅ ФОРМА БЕЗ ЦИКЛИЧЕСКИХ ЗАВИСИМОСТЕЙ
   const form = useForm<CheckoutFormData>({
@@ -160,69 +164,113 @@ export const useCheckout = () => {
     console.log('🗑️ Промокод удален');
   }, [calculateTotals]);
 
-// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ В STRAPI API - ЗАМЕНИТЕ НА ЭТУ
-const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
-  try {
-    console.log('🔄 Отправляем заказ в Strapi API:', orderData);
+  // ✅ СОЗДАНИЕ ЗАКАЗА В STRAPI (БЕЗ ИЗМЕНЕНИЙ)
+  const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
+    try {
+      console.log('🔄 Отправляем заказ в Strapi API:', orderData);
 
-    // ✅ ДОБАВЛЕНО: Получаем токен пользователя
-    const userToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    
-    // ✅ ДОБАВЛЕНО: Отладочная информация
-    console.log('🔍 Отладка токена пользователя:', {
-      hasUserToken: !!userToken,
-      tokenPreview: userToken ? `${userToken.substring(0, 20)}...` : 'НЕТ ТОКЕНА'
-    });
+      const userToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      
+      console.log('🔍 Отладка токена пользователя:', {
+        hasUserToken: !!userToken,
+        tokenPreview: userToken ? `${userToken.substring(0, 20)}...` : 'НЕТ ТОКЕНА'
+      });
 
-    // ✅ ИСПРАВЛЕНО: Формируем заголовки с токеном авторизации
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(userToken ? { Authorization: `Bearer ${userToken}` } : {}) // ВАЖНО
-    };
-
-    // ✅ ДОБАВЛЕНО: Добавляем токен в заголовки если пользователь авторизован
-    if (userToken) {
-      headers['Authorization'] = `Bearer ${userToken}`;
-      console.log('✅ Токен добавлен в заголовки запроса');
-    } else {
-      console.log('⚠️ ТОКЕН НЕ НАЙДЕН - заказ будет создан как гостевой');
-    }
-
-    const response = await fetch('/api/orders', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(orderData)
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      console.log('✅ Заказ успешно создан в Strapi:', data);
-      return {
-        success: true,
-        orderId: data.orderId,
-        orderNumber: data.orderNumber
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(userToken ? { Authorization: `Bearer ${userToken}` } : {})
       };
-    } else {
-      console.error('❌ Ошибка создания заказа в Strapi:', data);
+
+      if (userToken) {
+        headers['Authorization'] = `Bearer ${userToken}`;
+        console.log('✅ Токен добавлен в заголовки запроса');
+      } else {
+        console.log('⚠️ ТОКЕН НЕ НАЙДЕН - заказ будет создан как гостевой');
+      }
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(orderData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Заказ успешно создан в Strapi:', data);
+        return {
+          success: true,
+          orderId: data.orderId,
+          orderNumber: data.orderNumber
+        };
+      } else {
+        console.error('❌ Ошибка создания заказа в Strapi:', data);
+        return {
+          success: false,
+          error: data.error || 'Ошибка создания заказа',
+          details: data.details
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ Ошибка сети при отправке в Strapi:', error);
       return {
         success: false,
-        error: data.error || 'Ошибка создания заказа',
-        details: data.details
+        error: 'Ошибка подключения к серверу',
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
       };
     }
+  }, []);
 
-  } catch (error) {
-    console.error('❌ Ошибка сети при отправке в Strapi:', error);
-    return {
-      success: false,
-      error: 'Ошибка подключения к серверу',
-      details: error instanceof Error ? error.message : 'Неизвестная ошибка'
-    };
-  }
-}, []);
+  // 🔥 НОВАЯ ФУНКЦИЯ: ОБРАБОТКА ПЛАТЕЖА ЧЕРЕЗ ЮKASSA
+  const processPayment = useCallback(async (orderData: CreateOrderData, orderResponse: CreateOrderResponse) => {
+    if (orderData.paymentMethod === 'card' && orderResponse.orderId) {
+      console.log('💳 Инициируем оплату через ЮKassa');
+      
+      setIsProcessingPayment(true);
+      
+      try {
+        const paymentData = {
+          amount: orderData.totalAmount,
+          orderId: orderResponse.orderId,
+          customerEmail: orderData.customerInfo.email,
+          customerPhone: orderData.customerInfo.phone,
+          description: `Оплата заказа #${orderResponse.orderNumber || orderResponse.orderId} в Tigr Shop`,
+          returnUrl: `${window.location.origin}/orders/${orderResponse.orderId}/success`,
+          items: formatCartItemsForPayment(items) // Передаем детали товаров для чека
+        };
 
-  // ✅ ПРЕОБРАЗОВАНИЕ ДАННЫХ ИЗ ФОРМЫ В ФОРМАТ API
+        const paymentResponse = await createPayment(paymentData);
+        
+        if (paymentResponse.success && paymentResponse.confirmationUrl) {
+          console.log('✅ Платеж создан, перенаправляем на ЮKassa');
+          
+          // Очищаем корзину перед перенаправлением
+          clearCart();
+          
+          // Перенаправляем на страницу оплаты ЮKassa
+          window.location.href = paymentResponse.confirmationUrl;
+          return;
+          
+        } else {
+          console.error('❌ Ошибка создания платежа:', paymentResponse.error);
+          throw new Error(paymentResponse.error || 'Ошибка создания платежа');
+        }
+
+      } catch (error) {
+        console.error('❌ Ошибка обработки платежа:', error);
+        setIsProcessingPayment(false);
+        throw error;
+      }
+    } else {
+      // Для других способов оплаты - обычное перенаправление
+      console.log('📦 Заказ создан без онлайн оплаты');
+      clearCart();
+      router.push(`/orders/${orderResponse.orderId}/success`);
+    }
+  }, [items, clearCart, router]);
+
+  // ✅ ПРЕОБРАЗОВАНИЕ ДАННЫХ ИЗ ФОРМЫ В ФОРМАТ API (БЕЗ ИЗМЕНЕНИЙ)
   const formatOrderDataForAPI = useCallback((formData: CheckoutFormData, calculations: any): CreateOrderData => {
     return {
       customerInfo: {
@@ -249,52 +297,67 @@ const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Prom
     };
   }, [items, appliedPromoCode]);
 
-  // ✅ ОБНОВЛЕННАЯ ОТПРАВКА ЗАКАЗА С ИНТЕГРАЦИЕЙ STRAPI
-  const submitOrder = useCallback(async (data: CheckoutFormData) => {
-    try {
-      setIsSubmitting(true);
-      
-      const finalCalculations = calculateTotals(data.deliveryMethod);
-      
-      console.log('📦 Начинаем оформление заказа...');
-      console.log('📊 Итоговые расчеты:', finalCalculations);
-      
-      // Валидация корзины
-      if (!items || items.length === 0) {
-        throw new Error('Корзина пуста');
-      }
+  // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ЗАКАЗА С ИНТЕГРАЦИЕЙ ЮKASSA
+const submitOrder = useCallback(async (data: CheckoutFormData) => {
+  if (isSubmitting || isProcessingPayment) return;
 
-      if (finalCalculations.total <= 0) {
-        throw new Error('Неверная сумма заказа');
-      }
+  try {
+    setIsSubmitting(true);
+    
+    const finalCalculations = calculateTotals(data.deliveryMethod);
+    
+    // 🔥 ДОБАВЬТЕ ЭТИ ЛОГИ ДЛЯ ОТЛАДКИ:
+    console.log('🔍 === ОТЛАДКА ОТПРАВКИ ЗАКАЗА ===');
+    console.log('📋 Данные формы:', data);
+    console.log('💳 Способ оплаты:', data.paymentMethod);
+    console.log('💰 Расчеты:', finalCalculations);
+    console.log('🛒 Товары:', items);
+    
+    console.log('📦 Начинаем оформление заказа...');
+    console.log('📊 Итоговые расчеты:', finalCalculations);
+    
+    // Валидация корзины
+    if (!items || items.length === 0) {
+      throw new Error('Корзина пуста');
+    }
 
-      // Преобразуем данные для API
-      const orderData = formatOrderDataForAPI(data, finalCalculations);
-      
-      // Отправляем в Strapi через новый API
-      const result = await createOrderInStrapi(orderData);
-      
-      if (result.success) {
-        console.log('✅ Заказ успешно создан!', result);
-        
-        // Очищаем корзину после успешного заказа
-        clearCart();
-        
-        // Перенаправляем на страницу успеха с номером заказа из Strapi
-        window.location.href = `/order-success?orderNumber=${result.orderNumber}`;
-        
-      } else {
-        throw new Error(result.error || 'Ошибка создания заказа');
-      }
-      
-    } catch (error) {
+    if (finalCalculations.total <= 0) {
+      throw new Error('Неверная сумма заказа');
+    }
+
+    // Преобразуем данные для API
+    const orderData = formatOrderDataForAPI(data, finalCalculations);
+    
+    // 🔥 ДОБАВЬТЕ ЭТИ ЛОГИ:
+    console.log('📤 Данные для API:', orderData);
+    console.log('💳 Проверяем способ оплаты:', orderData.paymentMethod);
+    console.log('❓ Это карта?', orderData.paymentMethod === 'card');
+    
+    // Создаем заказ в Strapi
+    const orderResponse = await createOrderInStrapi(orderData);
+    
+    if (!orderResponse.success) {
+      throw new Error(orderResponse.error || 'Ошибка создания заказа');
+    }
+
+    console.log('✅ Заказ создан в Strapi, ID:', orderResponse.orderId);
+
+    // 🔥 ДОБАВЬТЕ ЭТИ ЛОГИ:
+    console.log('🚀 Запускаем processPayment...');
+    
+    // Обрабатываем платеж (если нужно) или перенаправляем
+    await processPayment(orderData, orderResponse);
+    
+  } catch (error) {
+    // ... остальной код
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       console.error('❌ Ошибка при оформлении заказа:', errorMessage);
       alert(`Ошибка при оформлении заказа: ${errorMessage}`);
-    } finally {
+      
       setIsSubmitting(false);
+      setIsProcessingPayment(false);
     }
-  }, [items, calculateTotals, clearCart, formatOrderDataForAPI, createOrderInStrapi]);
+  }, [isSubmitting, isProcessingPayment, items, calculateTotals, formatOrderDataForAPI, createOrderInStrapi, processPayment]);
 
   return {
     form,
@@ -308,6 +371,7 @@ const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Prom
     applyPromoCode,
     submitOrder,
     isSubmitting,
+    isProcessingPayment, // 🔥 ДОБАВЛЕНО: новое состояние для UI
     loading,
     generalSettings
   };

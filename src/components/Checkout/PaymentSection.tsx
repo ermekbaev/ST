@@ -1,4 +1,4 @@
-// src/components/Checkout/PaymentSection.tsx
+// src/components/Checkout/PaymentSection.tsx - БЕЗ ФОЛЛБЭКА
 'use client';
 
 import React from 'react';
@@ -23,27 +23,27 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 }) => {
   const { register, watch, setValue } = form;
   
-  // Фоллбэк к стандартным опциям если не переданы или пустые
-  const defaultOptions: PaymentOption[] = [
-    { 
-      id: 'card', 
-      name: 'Оплата картой (МИР, VISA, MasterCard)',
-      description: 'Онлайн оплата банковской картой'
-    },
-    { 
-      id: 'cash_vladivostok', 
-      name: 'Оплата наличными в городе Владивосток',
-      description: 'Оплата наличными при получении'
-    }
-  ];
-
-  // Используем API данные если есть, иначе фоллбэк
-  const options = paymentOptions && paymentOptions.length > 0 ? paymentOptions : defaultOptions;
+  // 🔥 УБРАЛИ ФОЛЛБЭК - используем только данные из API
+  const options = paymentOptions;
   const selectedPayment = watch('paymentMethod');
 
   const handlePaymentChange = (optionId: string) => {
     setValue('paymentMethod', optionId, { shouldValidate: true });
   };
+
+  // Если нет опций - показываем загрузку
+  if (!options || options.length === 0) {
+    return (
+      <div className="space-y-6">
+        <h2 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
+          СПОСОБ ОПЛАТЫ
+        </h2>
+        <div className="text-center py-4">
+          <p className="text-gray-500">Загружаем способы оплаты...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

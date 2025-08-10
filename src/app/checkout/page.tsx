@@ -1,9 +1,10 @@
-// src/app/checkout/page.tsx - ИСПРАВЛЕН: БЕЗ КОНФЛИКТА РЕДИРЕКТОВ
+// src/app/checkout/page.tsx - ОБНОВЛЕН С ПОДДЕРЖКОЙ ЮKASSA
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
+import { createPayment, formatCartItemsForPayment } from '@/services/paymentService'; // 🔥 ДОБАВЛЕНО
 import NewCheckoutForm from '@/components/Checkout/newChekoutForm';
 import NewOrderSummary from '@/components/Checkout/newCheckoutSummary';
 
@@ -12,9 +13,9 @@ const CheckoutPage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [orderCompleted, setOrderCompleted] = useState(false); // ✅ ДОБАВИЛИ ФЛАГ
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // 🔥 ДОБАВЛЕНО
+  const [orderCompleted, setOrderCompleted] = useState(false);
   
-  // ✅ ОБЩЕЕ СОСТОЯНИЕ ДЛЯ СИНХРОНИЗАЦИИ КОМПОНЕНТОВ
   const [selectedDelivery, setSelectedDelivery] = useState('store_pickup');
   const [selectedPayment, setSelectedPayment] = useState('card');
 
@@ -27,19 +28,93 @@ const CheckoutPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // ✅ ИСПРАВЛЕН: Редирект только если корзина пуста И заказ НЕ завершен
+  // Редирект только если корзина пуста И заказ НЕ завершен
   useEffect(() => {
-    if (!isLoading && items.length === 0 && !orderCompleted && !isProcessing) {
-      console.log('🔄 Корзина пуста, перенаправляем на главную (но НЕ после завершения заказа)');
+    if (!isLoading && items.length === 0 && !orderCompleted && !isProcessing && !isProcessingPayment) {
+      console.log('🔄 Корзина пуста, перенаправляем на главную');
       router.push('/');
     }
-  }, [items, router, isLoading, orderCompleted, isProcessing]);
+  }, [items, router, isLoading, orderCompleted, isProcessing, isProcessingPayment]);
 
-  // ОБРАБОТЧИК ОТПРАВКИ ЗАКАЗА
-  const handleOrderSubmit = async (orderData: any) => {
-    if (isProcessing) return;
+  // 🔥 ИСПРАВЛЕННАЯ ФУНКЦИЯ: НЕ ОЧИЩАЕМ КОРЗИНУ ДО ОПЛАТЫ
+  const processPayment = async (orderData: any, orderResponse: any) => {
+    if (orderData.paymentMethod === 'card' && orderResponse.orderId) {
+      console.log('💳 Инициируем оплату через ЮKassa');
+      
+      setIsProcessingPayment(true);
+      
+      try {
+        const paymentData = {
+          amount: orderData.totalAmount,
+          orderId: orderResponse.orderId,
+          customerEmail: orderData.customerInfo.email,
+          customerPhone: orderData.customerInfo.phone,
+          description: `Оплата заказа #${orderResponse.orderNumber || orderResponse.orderId} в Tigr Shop`,
+          // 🔥 ИСПРАВЛЕНО: Добавляем paymentId в return_url
+          returnUrl: `${window.location.origin}/order-success?orderNumber=${orderResponse.orderNumber}&paymentId={payment.id}`,
+          items: formatCartItemsForPayment(items)
+        };
+
+        console.log('🔥 Создаем платеж в ЮKassa:', paymentData);
+
+        const paymentResponse = await createPayment(paymentData);
+        
+        if (paymentResponse.success && paymentResponse.confirmationUrl) {
+          console.log('✅ Платеж создан, перенаправляем на ЮKassa:', paymentResponse.confirmationUrl);
+          
+          // 🔥 ИСПРАВЛЕНО: НЕ очищаем корзину и НЕ устанавливаем completed
+          // Корзина очистится только после УСПЕШНОЙ оплаты через webhook
+          
+          // Сохраняем ID платежа в localStorage для проверки при возврате
+          localStorage.setItem('pendingPaymentId', paymentResponse.paymentId || '');
+          localStorage.setItem('pendingOrderId', orderResponse.orderId || '');
+          
+          // Перенаправляем на страницу оплаты ЮKassa
+          window.location.href = paymentResponse.confirmationUrl;
+          return;
+          
+        } else {
+          console.error('❌ Ошибка создания платежа:', paymentResponse.error);
+          throw new Error(paymentResponse.error || 'Ошибка создания платежа');
+        }
+
+      } catch (error) {
+        console.error('❌ Ошибка обработки платежа:', error);
+        setIsProcessingPayment(false);
+        throw error;
+      }
+    } else {
+      // Для других способов оплаты - обычное перенаправление
+      console.log('📦 Заказ создан без онлайн оплаты');
+      clearCart();
+      setOrderCompleted(true);
+      
+      router.push(`/order-success?orderNumber=${orderResponse.orderNumber}`);
+    }
+  };
+
+  // Функция расчета общей стоимости
+  const calculateTotal = () => {
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    console.log('🚀 НАЧИНАЕМ ОБРАБОТКУ ЗАКАЗА');
+    // Простая логика доставки (можно улучшить)
+    let deliveryPrice = 0;
+    if (selectedDelivery === 'cdek_pickup') deliveryPrice = 300;
+    if (selectedDelivery === 'cdek_courier') deliveryPrice = 500;
+    if (selectedDelivery === 'post_russia') deliveryPrice = 250;
+    if (selectedDelivery === 'boxberry') deliveryPrice = 350;
+    
+    return subtotal + deliveryPrice;
+  };
+
+  // 🔥 ОБНОВЛЕННЫЙ ОБРАБОТЧИК ОТПРАВКИ ЗАКАЗА
+  const handleOrderSubmit = async (orderData: any) => {
+    if (isProcessing || isProcessingPayment) return;
+    
+    console.log('🚀 НАЧИНАЕМ ОБРАБОТКУ ЗАКАЗА С ЮKASSA');
+    console.log('📋 Данные формы:', orderData);
+    console.log('💳 Способ оплаты:', orderData.paymentMethod || selectedPayment);
+    
     setIsProcessing(true);
     
     try {
@@ -52,7 +127,7 @@ const CheckoutPage: React.FC = () => {
         throw new Error('Корзина пуста');
       }
 
-      // Подготавливаем данные
+      // Подготавливаем данные для API
       const orderPayload = {
         customerInfo: {
           name: orderData.firstName.trim(),
@@ -69,127 +144,67 @@ const CheckoutPage: React.FC = () => {
         })),
         totalAmount: calculateTotal(),
         deliveryMethod: selectedDelivery,
-        paymentMethod: selectedPayment,
+        paymentMethod: orderData.paymentMethod || selectedPayment, // 🔥 ВАЖНО: берем из формы
         deliveryAddress: orderData.city && orderData.address 
           ? `${orderData.city.trim()}, ${orderData.address.trim()}`
           : '',
         notes: orderData.notes?.trim() || '',
       };
 
-      console.log('📋 Отправляем в API:', orderPayload);
+      console.log('📤 Отправляем заказ в Strapi:', orderPayload);
+      console.log('💳 Проверяем способ оплаты:', orderPayload.paymentMethod);
+      console.log('❓ Это карта?', orderPayload.paymentMethod === 'card');
+
+      // Отправляем в API заказов
       const token = localStorage.getItem('authToken');
-      // Отправляем в API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}) // ВАЖНО
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify(orderPayload),
+        body: JSON.stringify(orderPayload)
       });
 
-      const result = await response.json();
+      const orderResponse = await response.json();
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Ошибка создания заказа');
+      if (!response.ok) {
+        throw new Error(orderResponse.error || 'Ошибка создания заказа');
       }
 
-      console.log('✅ Заказ создан:', result.orderNumber);
+      console.log('✅ Заказ создан в Strapi:', orderResponse);
 
-      // ✅ КРИТИЧНО: Сначала устанавливаем флаг, ПОТОМ очищаем корзину
-      setOrderCompleted(true);
-      
-      // Небольшая задержка чтобы флаг успел установиться
-      setTimeout(() => {
-        clearCart();
-        
-        // Еще одна задержка перед перенаправлением
-        setTimeout(() => {
-          const successUrl = `/order-success?orderNumber=${result.orderNumber}&paymentMethod=${selectedPayment}`;
-          
-          if (selectedPayment === 'cash_vladivostok') {
-            console.log('🎯 Перенаправляем на:', successUrl + '&type=cash');
-            router.push(successUrl + '&type=cash');
-          } else {
-            console.log('🎯 Перенаправляем на:', successUrl + '&type=online_pending');
-            router.push(successUrl + '&type=online_pending');
-          }
-        }, 100);
-      }, 100);
+      // 🔥 НОВОЕ: Обрабатываем платеж через ЮKassa
+      console.log('🚀 Запускаем обработку платежа...');
+      await processPayment(orderPayload, orderResponse);
 
-    } catch (error) {
-      console.error('❌ Ошибка при оформлении заказа:', error);
+    } catch (error: any) {
+      console.error('❌ Ошибка при обработке заказа:', error);
+      alert(`Ошибка: ${error.message}`);
       
-      let errorMessage = 'Произошла ошибка при оформлении заказа.';
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      alert(`Ошибка: ${errorMessage}\n\nПопробуйте еще раз или свяжитесь с нами:\n📞 Телефон: +7 (xxx) xxx-xx-xx\n📧 Email: tigran200615@gmail.com`);
-    } finally {
       setIsProcessing(false);
+      setIsProcessingPayment(false);
     }
   };
 
-  // Вычисление общей суммы
-  const calculateTotal = () => {
-    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    let deliveryCost = 0;
-    switch (selectedDelivery) {
-      case 'cdek_pickup':
-        deliveryCost = 300;
-        break;
-      case 'cdek_courier':
-        deliveryCost = 500;
-        break;
-      case 'courier_ts':
-        deliveryCost = 0;
-        break;
-      case 'store_pickup':
-      default:
-        deliveryCost = 0;
-    }
-
-    return subtotal + deliveryCost;
-  };
-
-  // Показываем загрузчик
   if (isLoading) {
     return (
-      <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
-        <div className="text-xl">Загрузка...</div>
-      </div>
-    );
-  }
-
-  // ✅ ИСПРАВЛЕН: Показываем "корзина пуста" только если заказ НЕ завершается
-  if (items.length === 0 && !orderCompleted && !isProcessing) {
-    return (
-      <div className="min-h-screen lg:bg-[#E5DDD4] bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Корзина пуста</h2>
-          <p className="text-gray-600 mb-6">Добавьте товары в корзину для оформления заказа</p>
-          <button
-            onClick={() => router.push('/')}
-            className="bg-black text-white px-6 py-3 font-medium hover:bg-gray-800 transition-colors"
-          >
-            Вернуться к покупкам
-          </button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загружаем страницу оформления...</p>
         </div>
       </div>
     );
   }
 
-  // Преобразуем товары корзины в нужный формат
+  // Карта товаров для компонентов
   const cartItems = items.map(item => ({
     id: item.id || item.article || '',
-    name: item.name || item.title || '',
+    name: item.name || item.title || 'Товар',
     price: item.price || 0,
     quantity: item.quantity || 1,
-    image: item.image || item.photo || item.images?.[0] || '',
-    photo: item.photo || item.image || '',
+    image: item.images?.[0] || item.photo || item.image || '',
     size: item.size || '',
     article: item.article || item.id || ''
   }));
@@ -211,7 +226,7 @@ const CheckoutPage: React.FC = () => {
                 onDeliveryChange={setSelectedDelivery}
                 onPaymentChange={setSelectedPayment}
                 isMobile={false}
-                isProcessing={isProcessing}
+                isProcessing={isProcessing || isProcessingPayment}
               />
             </div>
                      
@@ -223,7 +238,7 @@ const CheckoutPage: React.FC = () => {
                 selectedDelivery={selectedDelivery}
                 selectedPayment={selectedPayment}
                 isMobile={false}
-                isProcessing={isProcessing}
+                isProcessing={isProcessing || isProcessingPayment}
               />
             </div>
           </div>
@@ -241,7 +256,7 @@ const CheckoutPage: React.FC = () => {
               onDeliveryChange={setSelectedDelivery}
               onPaymentChange={setSelectedPayment}
               isMobile={true}
-              isProcessing={isProcessing}
+              isProcessing={isProcessing || isProcessingPayment}
             />
           </div>
                    
@@ -253,11 +268,22 @@ const CheckoutPage: React.FC = () => {
               selectedDelivery={selectedDelivery}
               selectedPayment={selectedPayment}
               isMobile={true}
-              isProcessing={isProcessing}
+              isProcessing={isProcessing || isProcessingPayment}
             />
           </div>
         </div>
       </main>
+
+      {/* 🔥 ДОБАВЛЕНО: Индикатор обработки платежа */}
+      {isProcessingPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg text-center max-w-sm mx-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold mb-2">Создаем платеж</h3>
+            <p className="text-gray-600">Сейчас перенаправим вас на страницу оплаты ЮKassa...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

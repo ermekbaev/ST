@@ -1,12 +1,212 @@
+// src/components/OrderSuccess/SuccessHero.tsx - ИСПРАВЛЕН: БЕЗ ОШИБОК ПРИ ОТСУТСТВИИ PAYMENTID
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { checkPaymentStatus, getPaymentStatusText } from '@/services/paymentService';
+
+interface PaymentInfo {
+  status: string;
+  amount?: {
+    value: string;
+    currency: string;
+  };
+  paid: boolean;
+}
 
 interface SuccessHeroProps {
   orderNumber?: string;
+  paymentId?: string;
 }
 
-const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) => {
+const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", paymentId }) => {
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false); // 🔥 ИСПРАВЛЕНО: изначально false
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  // 🔥 ИСПРАВЛЕНО: Проверка статуса платежа ТОЛЬКО если есть paymentId
+  useEffect(() => {
+    const checkPayment = async () => {
+      // 🔥 ВАЖНО: Проверяем только если есть paymentId
+      if (!paymentId) {
+        console.log('📋 Нет paymentId - заказ без онлайн оплаты');
+        setIsLoadingPayment(false);
+        return;
+      }
+
+      setIsLoadingPayment(true);
+      
+      try {
+        console.log('🔍 Проверяем статус платежа:', paymentId);
+        
+        const response = await checkPaymentStatus(paymentId);
+        
+        if (response.success && response.payment) {
+          setPaymentInfo({
+            status: response.payment.status,
+            amount: response.payment.amount,
+            paid: response.payment.paid
+          });
+        } else {
+          console.error('❌ Ошибка проверки платежа:', response.error);
+          setPaymentError(response.error || 'Ошибка проверки платежа');
+        }
+      } catch (err) {
+        console.error('❌ Сетевая ошибка при проверке платежа:', err);
+        setPaymentError('Ошибка проверки статуса платежа');
+      }
+      
+      setIsLoadingPayment(false);
+    };
+
+    // Проверяем статус через небольшую задержку только если есть paymentId
+    if (paymentId) {
+      const timer = setTimeout(checkPayment, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [paymentId]);
+
+  // Автоматическая проверка статуса каждые 10 секунд для pending платежей
+  useEffect(() => {
+    if (paymentInfo?.status === 'pending' && paymentId) {
+      const interval = setInterval(async () => {
+        try {
+          const response = await checkPaymentStatus(paymentId);
+          if (response.success && response.payment) {
+            setPaymentInfo({
+              status: response.payment.status,
+              amount: response.payment.amount,
+              paid: response.payment.paid
+            });
+            
+            if (response.payment.status !== 'pending') {
+              clearInterval(interval);
+            }
+          }
+        } catch (err) {
+          console.error('❌ Ошибка автопроверки платежа:', err);
+        }
+      }, 10000);
+
+      return () => clearInterval(interval);
+    }
+  }, [paymentInfo?.status, paymentId]);
+
+  // 🔥 ИСПРАВЛЕНО: Функция получения заголовка
+  const getTitle = () => {
+    if (isLoadingPayment) {
+      return 'ПРОВЕРЯЕМ СТАТУС ОПЛАТЫ';
+    }
+    
+    // 🔥 НОВОЕ: Если нет paymentId - показываем стандартное сообщение
+    if (!paymentId) {
+      return 'ВАШ ЗАКАЗ ПРИНЯТ';
+    }
+    
+    if (paymentError) {
+      return 'ЗАКАЗ ПРИНЯТ';
+    }
+    
+    if (paymentInfo) {
+      switch (paymentInfo.status) {
+        case 'succeeded':
+          return 'ВАШ ЗАКАЗ УСПЕШНО ОПЛАЧЕН';
+        case 'pending':
+          return 'ОЖИДАЕМ ПОДТВЕРЖДЕНИЯ ОПЛАТЫ';
+        case 'canceled':
+          return 'ЗАКАЗ СОЗДАН, ОПЛАТА ОТМЕНЕНА';
+        default:
+          return 'ВАШ ЗАКАЗ ПРИНЯТ';
+      }
+    }
+    
+    return 'ВАШ ЗАКАЗ ПРИНЯТ';
+  };
+
+  // 🔥 ИСПРАВЛЕНО: Функция получения подзаголовка
+  const getSubtitle = () => {
+    if (isLoadingPayment) {
+      return 'Это займет несколько секунд...';
+    }
+    
+    // 🔥 НОВОЕ: Если нет paymentId - стандартное сообщение
+    if (!paymentId) {
+      return 'Мы свяжемся с вами в ближайшее время';
+    }
+    
+    if (paymentError) {
+      return 'Мы свяжемся с вами для уточнения способа оплаты';
+    }
+    
+    if (paymentInfo) {
+      switch (paymentInfo.status) {
+        case 'succeeded':
+          return 'Мы свяжемся с вами в ближайшее время';
+        case 'pending':
+          return 'Платеж обрабатывается, ожидайте подтверждения';
+        case 'canceled':
+          return 'Свяжитесь с нами для повторной оплаты';
+        default:
+          return 'Мы свяжемся с вами в ближайшее время';
+      }
+    }
+    
+    return 'Мы свяжемся с вами в ближайшее время';
+  };
+
+  // 🔥 ИСПРАВЛЕНО: Функция для отображения статуса платежа
+  const renderPaymentStatus = () => {
+    // 🔥 ВАЖНО: Не показываем статус если нет paymentId или есть ошибка загрузки
+    if (!paymentId || isLoadingPayment) return null;
+    
+    // 🔥 ИСПРАВЛЕНО: Показываем ошибку только если она связана с конкретным платежом
+    if (paymentError && paymentId) {
+      return (
+        <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-500 rounded">
+          <p className="text-yellow-300 text-center text-sm">
+            ⚠️ Не удалось проверить статус платежа
+          </p>
+          <p className="text-yellow-200 text-xs text-center mt-1">
+            Заказ создан успешно, проверьте оплату позже
+          </p>
+        </div>
+      );
+    }
+    
+    if (paymentInfo) {
+      const statusColor = paymentInfo.status === 'succeeded' ? 'text-green-300' : 
+                         paymentInfo.status === 'pending' ? 'text-yellow-300' : 'text-red-300';
+      
+      return (
+        <div className="mt-4 p-3 bg-black/30 border border-white/20 rounded">
+          <div className="text-center">
+            <p className={`font-medium ${statusColor}`}>
+              {getPaymentStatusText(paymentInfo.status)}
+            </p>
+            {paymentInfo.amount && (
+              <p className="text-white text-sm mt-1">
+                Сумма: {paymentInfo.amount.value} {paymentInfo.amount.currency}
+              </p>
+            )}
+            
+            {paymentInfo.status === 'pending' && (
+              <p className="text-yellow-200 text-xs mt-2">
+                💡 Обновляем статус автоматически каждые 10 секунд
+              </p>
+            )}
+            
+            {paymentInfo.status === 'canceled' && (
+              <p className="text-red-200 text-xs mt-2">
+                📞 Обратитесь в поддержку для повторной оплаты
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   const handleGoToMain = () => {
     window.location.href = '/';
   };
@@ -16,43 +216,36 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
   };
 
   return (
-    // ИЗМЕНЕНИЕ: убираем фиксированную высоту h-[645px] lg:h-[563px] 
-    // и заменяем на min-h-screen, чтобы компонент занимал всю высоту экрана
     <div className="order-success-hero-container relative w-full min-h-screen overflow-hidden">
       
       {/* ======== ДЕСКТОПНАЯ ВЕРСИЯ ======== */}
       <div className="hidden lg:block relative z-20 min-h-screen">
         <div className="min-h-screen flex flex-col justify-center items-center px-8">
           
-          {/* Заголовочная секция с линиями по бокам */}
           <div className="w-full mb-16">
             <div className="flex items-start justify-between w-full px-5">
-              {/* Левая линия */}
               <div className="flex-1 flex justify-start items-start pt-[1.2em] pr-8">
                 <div className="w-full h-0.5 bg-white"></div>
               </div>
               
-              {/* Центральный блок с заголовком */}
               <div className="text-center flex-shrink-0">
                 <h1 className="order-success-title text-white font-bold text-[50px] leading-[59px] mb-4 whitespace-nowrap">
-                  ВАШ ЗАКАЗ УСПЕШНО ОПЛАЧЕН
+                  {getTitle()}
                 </h1>
                 <p className="order-success-subtitle text-[#d9cdbf] text-[20px] leading-[27px]">
-                  Мы свяжемся с вами в ближайшее время
+                  {getSubtitle()}
                 </p>
+                
+                {renderPaymentStatus()}
               </div>
               
-              {/* Правая линия */}
               <div className="flex-1 flex justify-end items-start pt-[1.2em] pl-8">
                 <div className="w-full h-0.5 bg-white"></div>
               </div>
             </div>
           </div>
 
-          {/* Нижний блок - разделен на два */}
           <div className="grid grid-cols-2 gap-50 max-w-4xl w-full ">
-            
-            {/* Левая секция */}
             <div className="flex flex-col items-start gap-4 ml-8">
               <p className="order-success-subtitle text-white text-[20px] leading-[27px] font-normal">
                 Номер заказа: {orderNumber}
@@ -74,7 +267,6 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
               </button>
             </div>
 
-            {/* Правая секция */}
             <div className="flex flex-col items-start gap-4">
               <p className="order-success-subtitle text-[#d9cdbf] text-[20px] leading-[27px] font-normal">
                 Если у вас остались вопросы<br />напишите нам
@@ -106,27 +298,24 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
       <div className="lg:hidden relative z-20 min-h-screen">
         <div className="min-h-screen flex flex-col justify-center items-center px-4">
           
-          {/* 1. Верхний блок - может быть пустым или с декором */}
           <div className="flex-1 flex items-end justify-center pb-8">
-            {/* Верхняя вертикальная линия */}
             <div className="w-px h-[25vh] bg-white"></div>
           </div>
 
-          {/* 2. Средний блок - заголовок */}
           <div className="flex-shrink-0 text-center py-8">
             <h1 className="order-success-title text-white font-bold text-[30px] leading-[35px] mb-3 max-w-[300px] mx-auto">
-              ВАШ ЗАКАЗ УСПЕШНО ОПЛАЧЕН
+              {getTitle()}
             </h1>
             <p className="order-success-subtitle text-white text-[10px] leading-[10px] max-w-[300px] mx-auto">
-              Мы свяжемся с вами в ближайшее время
+              {getSubtitle()}
             </p>
+            
+            {renderPaymentStatus()}
           </div>
 
-          {/* 3. Нижний блок - два столбца с линией посередине */}
           <div className="flex-1 flex items-start justify-center pt-8 w-full">
             <div className="flex w-full max-w-sm relative">
               
-              {/* Левая секция - номер заказа и кнопки */}
               <div className="flex-1 flex flex-col items-center gap-3 pr-4">
                 <p className="text-white text-[10px] leading-[14px] font-normal text-center">
                   Номер заказа: {orderNumber}
@@ -147,10 +336,8 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702" }) 
                 </button>
               </div>
 
-              {/* Центральная линия */}
               <div className="absolute left-1/2 top-0 w-px h-[25vh] bg-white transform -translate-x-1/2"></div>
 
-              {/* Правая секция - контакты */}
               <div className="flex-1 flex flex-col items-center gap-3 pl-4">
                 <p className="text-white text-[10px] leading-[14px] font-normal text-center">
                   Если у вас остались вопросы<br />напишите нам
