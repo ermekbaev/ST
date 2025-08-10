@@ -278,10 +278,13 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
         productId: item.productId,
         productName: item.productName || `Товар ${item.productId}`,
         size: {
-          connect: [{ id: sizeId }] // ✅ ИСПРАВЛЕНО: Используем connect для связи
+          connect: [{ id: sizeId }]
         },
         product: {
-          connect: [{ id: item.productId }] // ✅ ДОБАВЛЕНО: Связь с продуктом
+          connect: [{ id: item.productId }]
+        },
+        orders: {
+          connect: [{ id: orderId }] // ← Эта строка создаст связь
         },
         quantity: item.quantity,
         priceAtTime: item.priceAtTime,
