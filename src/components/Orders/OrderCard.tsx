@@ -8,9 +8,23 @@ interface OrderCardProps {
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  // Обработчик ошибки загрузки изображения
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Получаем URL изображения товара
+  const getProductImage = () => {
+    if (imageError) {
+      return '/api/placeholder/98/50';
+    }
+    return order.items[0]?.image || '/api/placeholder/98/50';
   };
 
   return (
@@ -27,8 +41,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
             <div className="text-[20px] leading-[30px] font-black italic text-black">
               {order.id}
             </div>
-            <div className="w-[98px] h-[50px] bg-[#E5DDD4] flex items-center justify-center">
-              <span className="text-[20px] leading-[27px] text-black">png</span>
+            
+            {/* Фото товара */}
+            <div className="w-[98px] h-[50px] bg-[#E5DDD4] flex items-center justify-center overflow-hidden rounded">
+              <img 
+                src={getProductImage()}
+                alt={order.items[0]?.productName || 'Товар'}
+                className="w-full h-full object-cover"
+                onError={handleImageError}
+              />
             </div>
           </div>
 
@@ -79,7 +100,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
               </div>
               <div>
                 <div className="text-[20px] leading-[27px] text-black">
-                  {order.items[0]?.productName} количество {order.items[0]?.quantity}
+                  {order.items[0]?.productName || 'Товар'} количество {order.items[0]?.quantity || 1}
                 </div>
               </div>
             </div>
@@ -153,9 +174,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
               {order.id}
             </div>
             
-            {/* Миниатюра товара */}
-            <div className="w-[98px] h-[50px] bg-[#E5DDD4] flex items-center justify-center">
-              <span className="text-[20px] leading-[27px] text-black">png</span>
+            {/* Фото товара */}
+            <div className="w-[98px] h-[50px] bg-[#E5DDD4] flex items-center justify-center overflow-hidden rounded">
+              <img 
+                src={getProductImage()}
+                alt={order.items[0]?.productName || 'Товар'}
+                className="w-full h-full object-cover"
+                onError={handleImageError}
+              />
             </div>
             
             {/* Кнопка "ПОДРОБНЕЕ" */}
@@ -199,10 +225,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
             {/* БЛОК 2: Название товара сверху + количество снизу */}
             <div>
               <div className="text-[15px] leading-[20px] text-black mb-1">
-                {order.items[0]?.productName}
+                {order.items[0]?.productName || 'Товар'}
               </div>
               <div className="text-[15px] leading-[20px] text-[#8C8072]">
-                Количество {order.items[0]?.quantity}
+                Количество {order.items[0]?.quantity || 1}
               </div>
             </div>
 
@@ -245,7 +271,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
                 примечание к заказу
               </div>
               <div className="text-[10px] leading-[14px] text-[#8C8072] max-w-[300px]">
-                {order.notes || 'Текст текст текст текст текст текст текст'}
+                {order.notes || '—'}
               </div>
             </div>
 

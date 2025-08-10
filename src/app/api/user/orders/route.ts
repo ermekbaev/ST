@@ -9,6 +9,7 @@ interface OrderItem {
   quantity: number;
   size: string;
   priceAtTime: number;
+  productImage?: string; // Добавляем поле для фото товара
 }
 
 interface UserOrder {
@@ -20,6 +21,9 @@ interface UserOrder {
   deliveryMethod: string;
   paymentMethod: string;
   deliveryAddress?: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
   notes?: string;
   createdAt: string;
   items: OrderItem[];
@@ -70,11 +74,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ✅ Получаем заказы пользователя из Strapi
+    // ✅ ШАГ 1: Получаем заказы пользователя
     console.log(`🔍 Ищем заказы для пользователя ${userId}...`);
     
     const ordersResponse = await fetch(
-      `${STRAPI_URL}/api/orders?filters[user][id][$eq]=${userId}&populate[order_items]=*&sort[0]=createdAt:desc`,
+      `${STRAPI_URL}/api/orders?filters[user][id][$eq]=${userId}&populate=order_item&sort[0]=createdAt:desc`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -94,16 +98,70 @@ export async function GET(request: NextRequest) {
     const ordersData = await ordersResponse.json();
     console.log(`📦 Найдено заказов: ${ordersData.data?.length || 0}`);
 
-    // ✅ Преобразуем данные в формат для фронтенда
+    // ✅ ШАГ 2: Получаем все order-items с полными данными (фото, размеры)
+    const orderItemsResponse = await fetch(
+      `${STRAPI_URL}/api/order-items?populate=*`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    let orderItemsData: any = { data: [] };
+    if (orderItemsResponse.ok) {
+      orderItemsData = await orderItemsResponse.json();
+      console.log(`📦 Найдено позиций заказов с полными данными: ${orderItemsData.data?.length || 0}`);
+    }
+
+    // ✅ ШАГ 3: Создаем карту order-items для быстрого поиска по orderId
+    const orderItemsMap = new Map();
+    (orderItemsData.data || []).forEach((item: any) => {
+      if (item.orderId) {
+        orderItemsMap.set(item.orderId, item);
+      }
+    });
+
+    // ✅ ШАГ 4: Преобразуем данные, объединяя информацию
     const orders: UserOrder[] = (ordersData.data || []).map((order: any) => {
+      // Ищем полную информацию о позиции заказа из второго API
+      const fullOrderItem = orderItemsMap.get(order.id.toString());
+      
+      // Используем базовую информацию из первого API или полную из второго
+      const orderItemData = fullOrderItem || order.order_item;
+      
+      console.log(`🔍 Обрабатываем заказ ${order.orderNumber}:`, {
+        hasBasicOrderItem: !!order.order_item,
+        hasFullOrderItem: !!fullOrderItem,
+        productName: orderItemData?.productName,
+        hasProduct: !!orderItemData?.product,
+        hasSize: !!orderItemData?.size
+      });
+
       // Формируем товары заказа
-      const items: OrderItem[] = (order.order_items || []).map((item: any) => ({
-        id: item.id.toString(),
-        productName: item.productName || `Товар ${item.productId}`,
-        quantity: item.quantity || 1,
-        size: item.size || 'ONE SIZE',
-        priceAtTime: parseFloat(item.priceAtTime) || 0
-      }));
+      const items: OrderItem[] = [];
+      
+      if (orderItemData) {
+        items.push({
+          id: orderItemData.id.toString(),
+          // НАЗВАНИЕ: берем из productName или из связанного продукта
+          productName: orderItemData.productName || orderItemData.product?.name || `Товар ${orderItemData.productId}`,
+          quantity: orderItemData.quantity || 1,
+          // РАЗМЕР: берем из связанного size объекта
+          size: orderItemData.size?.value || orderItemData.size?.productName || 'ONE SIZE',
+          priceAtTime: parseFloat(orderItemData.priceAtTime) || 0,
+          // ФОТО: берем из связанного продукта (уже полный URL)
+          productImage: orderItemData.product?.mainPhoto || '/api/placeholder/98/50'
+        });
+
+        console.log(`✅ Товар для заказа ${order.orderNumber}:`, {
+          name: items[0].productName,
+          size: items[0].size,
+          hasImage: items[0].productImage !== '/api/placeholder/98/50'
+        });
+      } else {
+        console.log(`⚠️ Нет данных о товаре для заказа ${order.orderNumber}`);
+      }
 
       return {
         id: order.id.toString(),
@@ -114,6 +172,9 @@ export async function GET(request: NextRequest) {
         deliveryMethod: order.deliveryMethod || '',
         paymentMethod: order.paymentMethod || '',
         deliveryAddress: order.deliveryAddress || '',
+        customerName: order.customerName || '',
+        customerPhone: order.customerPhone || '',
+        customerEmail: order.customerEmail || '',
         notes: order.notes || '',
         createdAt: order.createdAt,
         items
@@ -141,43 +202,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// ✅ Вспомогательные функции для читаемых названий
-function getDeliveryMethodName(method: string): string {
-  const methods: Record<string, string> = {
-    'store_pickup': 'Самовывоз из магазина',
-    'courier_ts': 'Курьер TS',
-    'cdek_pickup': 'СДЭК до пункта выдачи',
-    'cdek_courier': 'СДЭК курьером'
-  };
-  return methods[method] || method;
-}
-
-function getPaymentMethodName(method: string): string {
-  const methods: Record<string, string> = {
-    'card': 'Онлайн картой',
-    'cash_vladivostok': 'Наличными во Владивостоке'
-  };
-  return methods[method] || method;
-}
-
-function getOrderStatusName(status: string): string {
-  const statuses: Record<string, string> = {
-    'pending': 'В обработке',
-    'confirmed': 'Подтвержден',
-    'shipped': 'Отправлен',
-    'delivered': 'Доставлен',
-    'cancelled': 'Отменен'
-  };
-  return statuses[status] || status;
-}
-
-function getPaymentStatusName(status: string): string {
-  const statuses: Record<string, string> = {
-    'pending': 'Ожидает оплаты',
-    'paid': 'Оплачен',
-    'failed': 'Ошибка оплаты'
-  };
-  return statuses[status] || status;
 }
