@@ -171,13 +171,14 @@ async function updateOrderPaymentStatus(orderNumber: string, updateData: {
       return false;
     }
 
-    const orderId = findResult.data[0].id;
-    console.log(`✅ Найден заказ с ID: ${orderId} (с токеном)`);
+    const order = findResult.data[0];
+    const documentId = order.documentId || order.id; // Используем documentId для Strapi v5
+    console.log(`✅ Найден заказ с documentId: ${documentId} (ID: ${order.id}) (с токеном)`);
 
-    console.log(`🔄 Обновляем заказ ID ${orderId} с данными:`, updateData);
+    console.log(`🔄 Обновляем заказ documentId ${documentId} с данными:`, updateData);
     
-    const updateResponse = await fetch(`${STRAPI_URL}/api/orders/${orderId}`, {
-      method: 'PUT',
+    const updateResponse = await fetch(`${STRAPI_URL}/api/orders/${documentId}`, {
+      method: 'PUT', // Возвращаем PUT
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${STRAPI_API_TOKEN}`
@@ -195,12 +196,13 @@ async function updateOrderPaymentStatus(orderNumber: string, updateData: {
       
       // 🔥 ДОБАВЛЕНО: Дополнительная отладка
       console.error('🔍 Отладка запроса обновления:', {
-        url: `${STRAPI_URL}/api/orders/${orderId}`,
+        url: `${STRAPI_URL}/api/orders/${documentId}`,
         method: 'PUT',
         hasToken: !!STRAPI_API_TOKEN,
         tokenPreview: STRAPI_API_TOKEN ? `${STRAPI_API_TOKEN.substring(0, 20)}...` : 'НЕТ',
         updateData,
-        orderId,
+        documentId,
+        orderId: order.id,
         orderNumber
       });
       
