@@ -191,20 +191,53 @@ function validateOrderData(data: CreateOrderData): { isValid: boolean; error?: s
   return { isValid: true };
 }
 
-// Сохранение заказа в Strapi
+// ✅ ДОБАВЛЕНО: Функция для поиска ID размера по значению и продукту
+async function findSizeId(productId: string, sizeValue: string): Promise<string | null> {
+  try {
+    console.log(`🔍 Ищем размер "${sizeValue}" для товара ${productId}...`);
+    
+    // Ищем размер по значению и связи с продуктом
+    const sizeResponse = await fetch(
+      `${STRAPI_URL}/api/sizes?filters[value][$eq]=${sizeValue}&filters[products][id][$eq]=${productId}&populate=*`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    if (!sizeResponse.ok) {
+      console.error(`❌ Ошибка поиска размера: ${sizeResponse.status}`);
+      return null;
+    }
+
+    const sizeData = await sizeResponse.json();
+    
+    if (sizeData.data && sizeData.data.length > 0) {
+      const sizeId = sizeData.data[0].id.toString();
+      console.log(`✅ Найден размер ID: ${sizeId} для значения "${sizeValue}"`);
+      return sizeId;
+    } else {
+      console.log(`❌ Размер "${sizeValue}" не найден для товара ${productId}`);
+      return null;
+    }
+    
+  } catch (error) {
+    console.error('❌ Ошибка поиска размера:', error);
+    return null;
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Сохранение заказа в Strapi
 async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']): Promise<string> {
   if (!STRAPI_API_TOKEN) {
     throw new Error('STRAPI_API_TOKEN не настроен');
   }
 
-//   const headers: HeadersInit = {
-//     'Content-Type': 'application/json',
-//     'Authorization': `Bearer ${STRAPI_API_TOKEN}`,
-//   };
-
   const headers: HeadersInit = {
-  'Content-Type': 'application/json',
-  // Убираем Authorization для Public роли
+    'Content-Type': 'application/json',
+    // Убираем Authorization для Public роли
   };
 
   console.log('🔄 Создаем основной заказ в Strapi...');
@@ -227,21 +260,38 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
 
   console.log(`✅ Основной заказ создан с ID: ${orderId}`);
 
-  // 2. Создаем позиции заказа
+  // 2. ✅ ИСПРАВЛЕНО: Создаем позиции заказа с правильными связями
   console.log(`🔄 Создаем ${items.length} позиций заказа...`);
   
   const itemPromises = items.map(async (item, index) => {
     try {
+      // ✅ ИСПРАВЛЕНО: Находим ID размера
+      const sizeId = await findSizeId(item.productId, item.size);
+      
+      if (!sizeId) {
+        console.error(`❌ Не найден размер "${item.size}" для товара ${item.productId}`);
+        return false;
+      }
+
       const itemData = {
         orderId: orderId.toString(), 
         productId: item.productId,
         productName: item.productName || `Товар ${item.productId}`,
-        size: item.size,
-        quantity: item.quantity, // ИСПРАВЛЕНО: не Quantity
+        size: {
+          connect: [{ id: sizeId }] // ✅ ИСПРАВЛЕНО: Используем connect для связи
+        },
+        product: {
+          connect: [{ id: item.productId }] // ✅ ДОБАВЛЕНО: Связь с продуктом
+        },
+        quantity: item.quantity,
         priceAtTime: item.priceAtTime,
       };
 
-      console.log(`🔄 Создаем позицию ${index + 1}:`, itemData);
+      console.log(`🔄 Создаем позицию ${index + 1}:`, {
+        ...itemData,
+        size: `connect size ID: ${sizeId}`,
+        product: `connect product ID: ${item.productId}`
+      });
 
       const itemResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
         method: 'POST',
