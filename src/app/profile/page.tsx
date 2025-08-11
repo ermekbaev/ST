@@ -66,8 +66,7 @@ const UserProfilePage: NextPage = () => {
   };
 
   const handleOrderHistory = () => {
-    console.log('Переход к истории заказов');
-    alert('История заказов будет добавлена в следующих обновлениях');
+    window.location.href = '/order-history';
   };
 
   const handleLogout = () => {

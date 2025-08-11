@@ -1,95 +1,197 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Order } from '@/types/orders';
+import { ExtendedOrder } from '@/types/orders';
 import OrderCard from '@/components/Orders/OrderCard';
 
 const OrderHistoryPage: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<ExtendedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Загрузка заказов из вашего API
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // Функция загрузки заказов
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Получаем токен
-        const token = localStorage.getItem('authToken');
-        
-        if (!token) {
-          setError('Необходима авторизация для просмотра заказов');
-          setLoading(false);
-          return;
-        }
-
-        // Загружаем заказы из вашего API
-        const response = await fetch('/api/user/orders', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Ошибка загрузки заказов');
-        }
-
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Ошибка получения данных');
-        }
-
-        // Преобразуем данные из вашего API в формат для компонентов
-        const transformedOrders: Order[] = (data.orders || []).map((apiOrder: any) => ({
-          id: apiOrder.orderNumber,
-          date: new Date(apiOrder.createdAt).toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          }),
-          status: getDisplayStatus(apiOrder.orderStatus, apiOrder.paymentStatus),
-          total: `${apiOrder.totalAmount.toLocaleString('ru-RU')} ₽`,
-          items: apiOrder.items.map((item: any) => ({
-            id: item.id,
-            productName: item.productName,
-            quantity: item.quantity,
-            image: item.productImage || '/api/placeholder/98/50' // Используем реальное фото или заглушку
-          })),
-          deliveryDetails: {
-            name: apiOrder.customerName || 'Пользователь',
-            address: apiOrder.deliveryAddress || 'Адрес не указан',
-            email: apiOrder.customerEmail || 'Email не указан'
-          },
-          deliveryMethod: getDeliveryMethodText(apiOrder.deliveryMethod),
-          paymentMethod: getPaymentMethodText(apiOrder.paymentMethod),
-          notes: apiOrder.notes || '',
-          orderTime: new Date(apiOrder.createdAt).toLocaleString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
-          canPay: apiOrder.orderStatus === 'pending' && apiOrder.paymentStatus === 'pending'
-        }));
-
-        setOrders(transformedOrders);
-        console.log(`✅ Загружено ${transformedOrders.length} заказов`);
-
-      } catch (err) {
-        console.error('❌ Ошибка загрузки заказов:', err);
-        setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
-      } finally {
+      // Получаем токен
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setError('Необходима авторизация для просмотра заказов');
         setLoading(false);
+        return;
+      }
+
+      // Загружаем заказы из вашего API
+      const response = await fetch('/api/user/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка загрузки заказов');
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Ошибка получения данных');
+      }
+
+      // Преобразуем данные из вашего API в формат для компонентов
+      const transformedOrders: ExtendedOrder[] = (data.orders || []).map((apiOrder: any) => ({
+        id: apiOrder.orderNumber,
+        orderNumber: apiOrder.orderNumber,
+        date: new Date(apiOrder.createdAt).toLocaleDateString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }),
+        status: getDisplayStatus(apiOrder.orderStatus, apiOrder.paymentStatus),
+        total: `${apiOrder.totalAmount.toLocaleString('ru-RU')} ₽`,
+        items: apiOrder.items.map((item: any) => ({
+          id: item.id,
+          productName: item.productName,
+          quantity: item.quantity,
+          image: item.productImage || '/api/placeholder/98/50'
+        })),
+        deliveryDetails: {
+          name: apiOrder.customerName || 'Пользователь',
+          address: apiOrder.deliveryAddress || 'Адрес не указан',
+          email: apiOrder.customerEmail || 'Email не указан'
+        },
+        deliveryMethod: getDeliveryMethodText(apiOrder.deliveryMethod),
+        paymentMethod: getPaymentMethodText(apiOrder.paymentMethod),
+        notes: apiOrder.notes || '',
+        orderTime: new Date(apiOrder.createdAt).toLocaleString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        canPay: apiOrder.orderStatus === 'pending' && apiOrder.paymentStatus === 'pending',
+        paymentStatus: apiOrder.paymentStatus,
+        orderStatus: apiOrder.orderStatus,
+        customerName: apiOrder.customerName,
+        customerEmail: apiOrder.customerEmail,
+        deliveryAddress: apiOrder.deliveryAddress
+      }));
+
+      setOrders(transformedOrders);
+      console.log(`✅ Загружено ${transformedOrders.length} заказов`);
+
+    } catch (err) {
+      console.error('❌ Ошибка загрузки заказов:', err);
+      setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Загрузка заказов при монтировании
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  // ✅ Используем существующий API для проверки статуса платежа
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      // Проверяем, есть ли данные о недавнем платеже
+      const retryPaymentId = localStorage.getItem('retryPaymentId');
+      const retryOrderNumber = localStorage.getItem('retryOrderNumber');
+      const paymentStartTime = localStorage.getItem('paymentStartTime');
+      
+      if (retryPaymentId && retryOrderNumber && paymentStartTime) {
+        const timeSincePayment = Date.now() - parseInt(paymentStartTime);
+        
+        // Проверяем только если прошло менее 10 минут
+        if (timeSincePayment < 10 * 60 * 1000) {
+          console.log('🔍 Проверяем статус недавнего платежа:', retryPaymentId);
+          
+          try {
+            // Используем существующий API для проверки статуса
+            const response = await fetch(`/api/payments/status?paymentId=${retryPaymentId}`);
+            const data = await response.json();
+            
+            if (data.success && data.payment) {
+              console.log('💳 Статус платежа:', data.payment.status, 'paid:', data.payment.paid);
+              
+              // Если платеж успешен, синхронизируем статус
+              if (data.payment.status === 'succeeded' && data.payment.paid) {
+                console.log('✅ Платеж успешен - синхронизируем статус');
+                
+                await fetch('/api/payments/sync-status', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    paymentId: retryPaymentId,
+                    orderNumber: retryOrderNumber
+                  })
+                });
+                
+                // Очищаем localStorage после успешной синхронизации
+                localStorage.removeItem('retryPaymentId');
+                localStorage.removeItem('retryOrderNumber');
+                localStorage.removeItem('paymentStartTime');
+                
+                // Обновляем заказы
+                loadOrders();
+              }
+            }
+          } catch (error) {
+            console.error('❌ Ошибка проверки статуса платежа:', error);
+          }
+        } else {
+          // Слишком много времени прошло - очищаем localStorage
+          localStorage.removeItem('retryPaymentId');
+          localStorage.removeItem('retryOrderNumber');
+          localStorage.removeItem('paymentStartTime');
+        }
       }
     };
 
-    loadOrders();
+    const handleFocus = () => {
+      console.log('🔄 Окно получило фокус');
+      
+      // Проверяем только при возврате с оплаты
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentReturn = urlParams.get('payment');
+      
+      if (paymentReturn === 'retry' || document.referrer.includes('yoomoney.ru') || document.referrer.includes('yookassa.ru')) {
+        console.log('↩️ Возврат с платежной системы - проверяем статус');
+        checkPaymentStatus();
+      }
+    };
+
+    // Проверяем при загрузке, если есть признаки возврата с оплаты
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'retry') {
+      checkPaymentStatus();
+      
+      // Очищаем URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
+
+  // Колбэк для обновления заказов
+  const handleOrderUpdate = () => {
+    console.log('🔄 Запрошено обновление заказов');
+    loadOrders();
+  };
 
   // Функции преобразования статусов
   const getDisplayStatus = (orderStatus: string, paymentStatus: string): string => {
@@ -130,10 +232,10 @@ const OrderHistoryPage: React.FC = () => {
   };
 
   const handleRetry = () => {
-    window.location.reload();
+    loadOrders(); // Используем функцию загрузки вместо перезагрузки страницы
   };
 
-  console.log(orders);
+  console.log('📋 Transformed orders:', orders);
   
 
   return (
@@ -209,7 +311,7 @@ const OrderHistoryPage: React.FC = () => {
                 <OrderCard 
                   key={`${order.id}-${index}`} 
                   order={order} 
-                  index={index} 
+                  index={index}
                 />
               ))}
             </div>

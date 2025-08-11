@@ -212,7 +212,7 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", pa
   };
 
   const handleTrackOrder = () => {
-    console.log('Отслеживание заказа:', orderNumber);
+    window.location.href = '/order-history';
   };
 
   return (
