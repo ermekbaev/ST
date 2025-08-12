@@ -181,7 +181,7 @@ export async function GET(
       updatedAt: item.updatedAt,
       
       description: `${brand} ${item.name} - ${category}`,
-      deliveryInfo: 'Доставка 1-3 дня по России'
+      deliveryInfo: 'Доставка 7-14 дня по России'
     };
     
     console.log(`✅ API: Товар ${id} обработан:`, {

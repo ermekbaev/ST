@@ -73,6 +73,35 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ============================================================================
+  // ФУНКЦИЯ СКАЧИВАНИЯ ДОКУМЕНТОВ
+  // ============================================================================
+  
+  const handleDownloadDocument = (docType: 'terms' | 'privacy' | 'offer') => {
+    const fileUrls = {
+      terms: '/downloads/user-agreement.doc',
+      privacy: '/downloads/privacy-policy.doc', 
+      offer: '/downloads/public-offer.doc'
+    };
+
+    const fileNames = {
+      terms: 'Пользовательское_соглашение.doc',
+      privacy: 'Политика_конфиденциальности.doc',
+      offer: 'Договор_оферты.doc'
+    };
+
+    // Создаем ссылку для скачивания
+    const link = document.createElement('a');
+    link.href = fileUrls[docType];
+    link.download = fileNames[docType];
+    link.style.display = 'none';
+    
+    // Добавляем в DOM, кликаем и удаляем
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // ============================================================================
   // ОБРАБОТЧИКИ КОЛИЧЕСТВА ТОВАРОВ
   // ============================================================================
   
@@ -425,17 +454,47 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
       {isMobile && (
         <div className="text-sm text-gray-600 leading-5">
           Оформляя заказ, Вы подтверждаете согласие с{' '}
-          <a href="/terms" className="underline hover:no-underline">
+          <button 
+            onClick={() => handleDownloadDocument('terms')}
+            className="underline hover:no-underline cursor-pointer inline-flex items-center"
+          >
             Пользовательским соглашением
-          </a>
+            <svg 
+              className="w-3 h-3 ml-1" 
+              fill="currentColor" 
+              viewBox="0 0 16 16"
+            >
+              <path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z"/>
+            </svg>
+          </button>
           ,{' '}
-          <a href="/privacy" className="underline hover:no-underline">
+          <button 
+            onClick={() => handleDownloadDocument('privacy')}
+            className="underline hover:no-underline cursor-pointer inline-flex items-center"
+          >
             Политикой конфиденциальности
-          </a>{' '}
-          и{' '}
-          <a href="/offer" className="underline hover:no-underline">
+            <svg 
+              className="w-3 h-3 ml-1" 
+              fill="currentColor" 
+              viewBox="0 0 16 16"
+            >
+              <path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z"/>
+            </svg>
+          </button>
+          {' '}и{' '}
+          <button 
+            onClick={() => handleDownloadDocument('offer')}
+            className="underline hover:no-underline cursor-pointer inline-flex items-center"
+          >
             Договором оферты
-          </a>
+            <svg 
+              className="w-3 h-3 ml-1" 
+              fill="currentColor" 
+              viewBox="0 0 16 16"
+            >
+              <path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z"/>
+            </svg>
+          </button>
           .
         </div>
       )}
@@ -456,17 +515,26 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
       {!isMobile && (
         <div className="checkout-terms-text">
           Оформляя заказ, Вы подтверждаете согласие с{' '}
-          <a href="/terms" className="underline hover:no-underline">
+          <button 
+            onClick={() => handleDownloadDocument('terms')}
+            className="underline hover:no-underline cursor-pointer inline-flex items-center"
+          >
             Пользовательским соглашением
-          </a>
+          </button>
           ,{' '}
-          <a href="/privacy" className="underline hover:no-underline">
+          <button 
+            onClick={() => handleDownloadDocument('privacy')}
+            className="underline hover:no-underline cursor-pointer inline-flex items-center"
+          >
             Политикой конфиденциальности
-          </a>{' '}
-          и{' '}
-          <a href="/offer" className="underline hover:no-underline">
+          </button>
+          {' '}и{' '}
+          <button 
+            onClick={() => handleDownloadDocument('offer')}
+            className="underline hover:no-underline cursor-pointer inline-flex items-center"
+          >
             Договором оферты
-          </a>
+          </button>
           .
         </div>
       )}

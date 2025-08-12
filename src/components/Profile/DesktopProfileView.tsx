@@ -110,43 +110,6 @@ export const DesktopProfileView: React.FC<DesktopProfileProps> = ({
               </p>
             </div>
           </div>
-
-          {/* Правый блок - только иконки редактирования */}
-          <div className="flex flex-col space-y-8 lg:space-y-15 ml-8">
-            
-            {/* Иконка для Имя, Фамилия */}
-            <button
-              onClick={() => handleEditField('name')}
-              className="w-[15px] h-[15px] hover:opacity-70 transition-opacity"
-            >
-              <div className="relative">
-                <div className="w-[11px] h-[11px] border border-black absolute top-[4px] left-0"></div>
-                <div className="w-[10px] h-[10px] border border-black absolute top-0 left-[5px]"></div>
-              </div>
-            </button>
-
-            {/* Иконка для Телефон */}
-            <button
-              onClick={() => handleEditField('phone')}
-              className="w-[15px] h-[15px] hover:opacity-70 transition-opacity"
-            >
-              <div className="relative">
-                <div className="w-[11px] h-[11px] border border-black absolute top-[4px] left-0"></div>
-                <div className="w-[10px] h-[10px] border border-black absolute top-0 left-[5px]"></div>
-              </div>
-            </button>
-
-            {/* Иконка для Почта */}
-            <button
-              onClick={() => handleEditField('email')}
-              className="w-[15px] h-[15px] hover:opacity-70 transition-opacity"
-            >
-              <div className="relative">
-                <div className="w-[11px] h-[11px] border border-black absolute top-[4px] left-0"></div>
-                <div className="w-[10px] h-[10px] border border-black absolute top-0 left-[5px]"></div>
-              </div>
-            </button>
-          </div>
         </div>
 
         {/* ЧЕКБОКС - взят из чекаута */}

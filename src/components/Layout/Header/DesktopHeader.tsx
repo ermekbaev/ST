@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, JSX } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCart } from '../../../contexts/CartContext';
 import AuthModal from '../../Auth/AuthModal';
 import SmartProfileIcon from '@/components/Auth/SmartProfileicon';
@@ -16,6 +17,7 @@ interface MegaMenuData {
 type MenuKey = 'обувь' | 'одежда' | 'аксессуары' | 'коллекции' | 'другое' | 'бренды' | 'информация';
 
 const DesktopHeader: React.FC = () => {
+  const router = useRouter(); // ✅ Добавляем useRouter
   const [mounted, setMounted] = useState<boolean>(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -37,6 +39,13 @@ const DesktopHeader: React.FC = () => {
         'слэды',
         'детская обувь'
       ],
+      links: {
+        'все': '/catalog',
+        'кеды и кроссовки': '/catalog?categories=Кросовки+и+кеды',
+        'ботинки и угги': '/catalog',
+        'слэды': '/catalog',
+        'детская обувь': '/catalog'
+      },
       subcategories: [
         'новые релизы',
         'эксклюзивы',
@@ -54,6 +63,14 @@ const DesktopHeader: React.FC = () => {
         'штаны и джинсы',
         'шорты'
       ],
+      links: {
+        'все': '/catalog',
+        'куртки и пуховики': '/catalog?categories=Пуховики+и+куртки',
+        'футболки и лонгсливы': '/catalog?categories=Футболки+и+поло',
+        'штаны и джинсы': '/catalog?categories=Штаны+и+брюки',
+        'шорты': '/catalog?categories=Шорты',
+        'худи и свитшоты': '/catalog?categories=Толстовки+и+свитшоты'
+      },
       subcategories: [
         'худи и свитшоты',
         'другая одежда'
@@ -75,6 +92,13 @@ const DesktopHeader: React.FC = () => {
         'рюкзаки и сумки',
         'кошельки'
       ],
+      links: {
+        'все': '/catalog?categories=Аксессуары',
+        'белье': '/catalog',
+        'головные уборы': '/catalog',
+        'рюкзаки и сумки': '/catalog?categories=Сумки+и+рюкзаки',
+        'кошельки': '/catalog'
+      },
       subcategories: [
         'очки',
         'другие аксессуары'
@@ -96,6 +120,13 @@ const DesktopHeader: React.FC = () => {
         'предметы интерьера',
         'другое всё'
       ],
+      links: {
+        'все': '/catalog?categories=Коллекция',
+        'другие аксессуары': '/catalog',
+        'фигурки': '/catalog',
+        'предметы интерьера': '/catalog',
+        'другое всё': '/catalog'
+      },
       subcategories: [
         'новые релизы',
         'эксклюзивы',
@@ -130,6 +161,13 @@ const DesktopHeader: React.FC = () => {
         'puma',
         'reebok'
       ],
+      links: {
+        'все': '/catalog',
+        'nike': '/catalog?brands=Nike',
+        'adidas': '/catalog?brands=Adidas',
+        'puma': '/catalog?brands=Puma',
+        'reebok': '/catalog?brands=Reebok'
+      },
       subcategories: [
         'новые релизы',
         'эксклюзивы',
@@ -171,7 +209,15 @@ const DesktopHeader: React.FC = () => {
     'информация'
   ];
 
-  // ✅ РАБОЧИЕ ОБРАБОТЧИКИ (из вашего кода)
+  // ✅ Функция для построения URL каталога с поиском
+  const buildCatalogUrl = (searchTerm: string) => {
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) {
+      params.append('search', searchTerm.trim());
+    }
+    return `/catalog${params.toString() ? `?${params.toString()}` : ''}`;
+  };
+
   const handleMenuEnter = useCallback((item: string): void => {
     if (megaMenuData[item as MenuKey] && !isSearchOpen) {
       setActiveMenu(item);
@@ -199,11 +245,17 @@ const DesktopHeader: React.FC = () => {
     }
   }, [isSearchOpen]);
 
+  // ✅ Обновляем handleSearchSubmit для реального поиска
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    console.log('Поиск:', searchQuery);
-    // Здесь будет логика поиска
-  }, [searchQuery]);
+    if (searchQuery.trim()) {
+      console.log('🔍 Поиск из хедера:', searchQuery.trim());
+      const url = buildCatalogUrl(searchQuery);
+      router.push(url);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
+  }, [searchQuery, router]);
 
   const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Escape') {
@@ -216,10 +268,10 @@ const DesktopHeader: React.FC = () => {
     toggleCart();
   }, [toggleCart]);
 
-const handleAuthIconClick = () => {
-  console.log('Клик по иконке профиля - показываем модальное окно');
-  setShowAuthModal(true);
-};
+  const handleAuthIconClick = () => {
+    console.log('Клик по иконке профиля - показываем модальное окно');
+    setShowAuthModal(true);
+  };
 
   const handleCloseAuthModal = useCallback((): void => {
     setShowAuthModal(false);
@@ -241,142 +293,140 @@ const handleAuthIconClick = () => {
     console.log(`Клик по навигации: ${item}`);
   }, []);
 
-// Замените функцию getMenuPosition в вашем DesktopHeader.tsx
-
-const getMenuPosition = useCallback((): React.CSSProperties => {
-  if (!activeMenu) return {};
-  
-  const activeIndex = menuItems.indexOf(activeMenu);
-  
-  // Проверяем ширину экрана
-  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1400;
-  
-  let centerOffset;
-  
-  if (activeIndex === menuItems.length - 1) { // информация
-    if (screenWidth >= 1400) {
-      centerOffset = (activeIndex - 3.5) * 120 + 50;
-    } else if (screenWidth >= 1200) {
-      centerOffset = (activeIndex - 3.5) * 100 + 30;
-    } else if (screenWidth >= 1024) {
-      centerOffset = (activeIndex - 3.5) * 70;
-    } else {
-      centerOffset = 0; // Центрируем на малых экранах
-    }
-  } else {
-    if (screenWidth >= 1400) {
-      centerOffset = (activeIndex - 3.5) * 120 + 200;
-    } else if (screenWidth >= 1200) {
-      centerOffset = (activeIndex - 3.5) * 100 + 150;
-    } else if (screenWidth >= 1024) {
-      centerOffset = (activeIndex - 3.5) * 70 + 80;
-    } else {
-      centerOffset = 0; // Центрируем на малых экранах
-    }
-  }
-  
-  // Ограничиваем сдвиг чтобы не выходить за границы
-  const maxOffset = Math.max(0, (screenWidth - 600) / 2 - 40);
-  const minOffset = -maxOffset;
-  centerOffset = Math.max(minOffset, Math.min(maxOffset, centerOffset));
-  
-  return {
-    transform: `translateX(${centerOffset}px)`,
-    // Предотвращаем выход за границы экрана
-    maxWidth: screenWidth < 900 ? 'calc(100vw - 30px)' : 'calc(100vw - 80px)',
-    // Добавляем центрирование по умолчанию
-    margin: '0 auto',
-    // Ограничиваем ширину контейнера
-    width: 'fit-content'
-  };
-}, [activeMenu, menuItems]);
-
-// И добавьте хук для отслеживания изменения размера экрана
-const [screenWidth, setScreenWidth] = useState(1400);
-
-useEffect(() => {
-  const handleResize = () => {
-    setScreenWidth(window.innerWidth);
-  };
-  
-  if (typeof window !== 'undefined') {
-    handleResize(); // Установить начальное значение
-    window.addEventListener('resize', handleResize);
+  const getMenuPosition = useCallback((): React.CSSProperties => {
+    if (!activeMenu) return {};
     
-    return () => window.removeEventListener('resize', handleResize);
-  }
-}, []);
+    const activeIndex = menuItems.indexOf(activeMenu);
+    
+    // Проверяем ширину экрана
+    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1400;
+    
+    let centerOffset;
+    
+    if (activeIndex === menuItems.length - 1) { // информация
+      if (screenWidth >= 1400) {
+        centerOffset = (activeIndex - 3.5) * 120 + 50;
+      } else if (screenWidth >= 1200) {
+        centerOffset = (activeIndex - 3.5) * 100 + 30;
+      } else if (screenWidth >= 1024) {
+        centerOffset = (activeIndex - 3.5) * 70;
+      } else {
+        centerOffset = 0; // Центрируем на малых экранах
+      }
+    } else {
+      if (screenWidth >= 1400) {
+        centerOffset = (activeIndex - 3.5) * 120 + 200;
+      } else if (screenWidth >= 1200) {
+        centerOffset = (activeIndex - 3.5) * 100 + 150;
+      } else if (screenWidth >= 1024) {
+        centerOffset = (activeIndex - 3.5) * 70 + 80;
+      } else {
+        centerOffset = 0; // Центрируем на малых экранах
+      }
+    }
+    
+    // Ограничиваем сдвиг чтобы не выходить за границы
+    const maxOffset = Math.max(0, (screenWidth - 600) / 2 - 40);
+    const minOffset = -maxOffset;
+    centerOffset = Math.max(minOffset, Math.min(maxOffset, centerOffset));
+    
+    return {
+      transform: `translateX(${centerOffset}px)`,
+      // Предотвращаем выход за границы экрана
+      maxWidth: screenWidth < 900 ? 'calc(100vw - 30px)' : 'calc(100vw - 80px)',
+      // Добавляем центрирование по умолчанию
+      margin: '0 auto',
+      // Ограничиваем ширину контейнера
+      width: 'fit-content'
+    };
+  }, [activeMenu, menuItems]);
 
-const renderMegaMenu = (): JSX.Element | null => {
-  if (!activeMenu || !megaMenuData[activeMenu as MenuKey]) {
-    return null;
-  }
+  // И добавьте хук для отслеживания изменения размера экрана
+  const [screenWidth, setScreenWidth] = useState(1400);
 
-  const menuData = megaMenuData[activeMenu as MenuKey];
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
+    };
+    
+    if (typeof window !== 'undefined') {
+      handleResize(); // Установить начальное значение
+      window.addEventListener('resize', handleResize);
+      
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
-  return (
-    <div 
-      className="mega-menu-container"
-      onMouseEnter={() => setActiveMenu(activeMenu)}
-      onMouseLeave={handleMenuLeave}
-    >
-      <div className="w-full py-8 lg:py-12">
-        <div 
-          className="mega-menu-inner w-4xl"
-          style={getMenuPosition()}
-        >
-          <div className="mb-8 lg:mb-16">
-            <div className="flex">
-              <h3 className="mega-menu-title ">
-                {menuData.title}
-              </h3>
-              <div className="">
-                <div className="w-full h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
-                <div className="ml-5 grid grid-cols-2">
-                  {menuData.categories.map((category: string, index: number) => (
-                    <a
-                      key={index}
-                      href={menuData.links?.[category] || '#'}
-                      className="mega-menu-link"
-                    >
-                      {category}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+  const renderMegaMenu = (): JSX.Element | null => {
+    if (!activeMenu || !megaMenuData[activeMenu as MenuKey]) {
+      return null;
+    }
 
-          {/* Секция КАТЕГОРИЯ только если это НЕ информация */}
-          {activeMenu !== 'информация' && (
-            <div>
+    const menuData = megaMenuData[activeMenu as MenuKey];
+
+    return (
+      <div 
+        className="mega-menu-container"
+        onMouseEnter={() => setActiveMenu(activeMenu)}
+        onMouseLeave={handleMenuLeave}
+      >
+        <div className="w-full py-8 lg:py-12">
+          <div 
+            className="mega-menu-inner w-4xl"
+            style={getMenuPosition()}
+          >
+            <div className="mb-8 lg:mb-16">
               <div className="flex">
-                <h3 className="mega-menu-title">
-                  КАТЕГОРИЯ
+                <h3 className="mega-menu-title ">
+                  {menuData.title}
                 </h3>
                 <div className="">
-                  <div className="w-auto h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
+                  <div className="w-full h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
                   <div className="ml-5 grid grid-cols-2">
-                    {menuData.subcategories.map((subcategory: string, index: number) => (
-                      <a key={index} href="#" className="mega-menu-link">
-                        {subcategory}
-                      </a>
-                    ))}
-                    {menuData.additional?.map((item: string, index: number) => (
-                      <a key={`additional-${index}`} href="#" className="mega-menu-link">
-                        {item}
+                    {menuData.categories.map((category: string, index: number) => (
+                      <a
+                        key={index}
+                        href={menuData.links?.[category] || '#'}
+                        className="mega-menu-link"
+                      >
+                        {category}
                       </a>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Секция КАТЕГОРИЯ только если это НЕ информация */}
+            {activeMenu !== 'информация' && (
+              <div>
+                <div className="flex">
+                  <h3 className="mega-menu-title">
+                    КАТЕГОРИЯ
+                  </h3>
+                  <div className="">
+                    <div className="w-auto h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
+                    <div className="ml-5 grid grid-cols-2">
+                      {menuData.subcategories.map((subcategory: string, index: number) => (
+                        <a key={index} href="#" className="mega-menu-link">
+                          {subcategory}
+                        </a>
+                      ))}
+                      {menuData.additional?.map((item: string, index: number) => (
+                        <a key={`additional-${index}`} href="#" className="mega-menu-link">
+                          {item}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   return (
     <header className="w-full bg-white border-b border-gray-200 relative">
@@ -390,7 +440,7 @@ const renderMegaMenu = (): JSX.Element | null => {
 
         {/* Навигация - точно по центру */}
         <nav className="flex-shrink-0 relative">
-          {/* Поисковая строка - анимация справа налево */}
+          {/* ✅ Поисковая строка с рабочим функционалом */}
           <div 
             className={`absolute top-1/2 right-0 transform -translate-y-1/2 h-10 flex items-center transition-all duration-500 ease-in-out z-20 ${
               isSearchOpen ? 'w-full opacity-100' : 'w-0 opacity-0'
@@ -403,14 +453,14 @@ const renderMegaMenu = (): JSX.Element | null => {
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="введите название товара"
+                placeholder="поиск товаров, брендов..."
                 className="w-full h-10 px-4 bg-brand-beige text-brand-dark placeholder-brand-gray focus:outline-none rounded-full text-sm border-0 brand-text-small"
                 style={{ border: 'none', outline: 'none' }}
               />
             </form>
           </div>
 
-          {/* ✅ РАБОЧАЯ НАВИГАЦИЯ */}
+          {/* Основная навигация */}
           <ul className={`flex items-center gap-8 text-sm text-brand-dark h-[27px] transition-opacity duration-300 ${
             isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}>
@@ -456,7 +506,7 @@ const renderMegaMenu = (): JSX.Element | null => {
         </div>
       </div>
 
-      {/* ✅ РАБОЧИЙ РЕНДЕРИНГ МЕГА-МЕНЮ */}
+      {/* Мега-меню */}
       {!isSearchOpen && renderMegaMenu()}
 
       {/* Модальное окно авторизации */}

@@ -64,17 +64,6 @@ export const MobileProfileView: React.FC<MobileProfileProps> = ({
             <p className="font-product text-[20px] leading-[27px] text-black">
               {user?.name}
             </p>
-            
-            {/* Иконка редактирования */}
-            <button
-              onClick={() => handleEditField('name')}
-              className="absolute right-0 top-[22px] w-[15px] h-[15px] hover:opacity-70 transition-opacity"
-            >
-              <div className="relative">
-                <div className="w-[11px] h-[11px] border border-black absolute top-[4px] left-0"></div>
-                <div className="w-[10px] h-[10px] border border-black absolute top-0 left-[5px]"></div>
-              </div>
-            </button>
           </div>
 
           {/* Блок Телефон */}
@@ -85,17 +74,6 @@ export const MobileProfileView: React.FC<MobileProfileProps> = ({
             <p className="font-product text-[20px] leading-[27px] text-black">
               {user?.phone}
             </p>
-            
-            {/* Иконка редактирования */}
-            <button
-              onClick={() => handleEditField('phone')}
-              className="absolute right-0 top-[22px] w-[15px] h-[15px] hover:opacity-70 transition-opacity"
-            >
-              <div className="relative">
-                <div className="w-[11px] h-[11px] border border-black absolute top-[4px] left-0"></div>
-                <div className="w-[10px] h-[10px] border border-black absolute top-0 left-[5px]"></div>
-              </div>
-            </button>
           </div>
 
           {/* Блок Почта */}
@@ -106,17 +84,6 @@ export const MobileProfileView: React.FC<MobileProfileProps> = ({
             <p className="font-product text-[20px] leading-[27px] text-black">
               {user?.email}
             </p>
-            
-            {/* Иконка редактирования */}
-            <button
-              onClick={() => handleEditField('email')}
-              className="absolute right-0 top-[22px] w-[15px] h-[15px] hover:opacity-70 transition-opacity"
-            >
-              <div className="relative">
-                <div className="w-[11px] h-[11px] border border-black absolute top-[4px] left-0"></div>
-                <div className="w-[10px] h-[10px] border border-black absolute top-0 left-[5px]"></div>
-              </div>
-            </button>
           </div>
         </div>
 

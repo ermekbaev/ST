@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import DesktopGallery from './DesktopGallery';
 import MobileGallery from './MobileGallery';
+import ImageLightbox from './ImageLightbox';
 
 export interface GalleryImage {
   id: string;
@@ -24,6 +25,8 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -48,9 +51,40 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     }
   };
 
-  // Управление клавиатурой (стрелки)
+  // Функции для лайтбокса
+  const openLightbox = (index?: number) => {
+    setLightboxImageIndex(index !== undefined ? index : currentImageIndex);
+    setIsLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setIsLightboxOpen(false);
+  };
+
+  const goToNextLightboxImage = () => {
+    setLightboxImageIndex((prev) => 
+      prev === images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const goToPrevLightboxImage = () => {
+    setLightboxImageIndex((prev) => 
+      prev === 0 ? images.length - 1 : prev - 1
+    );
+  };
+
+  const goToLightboxImage = (index: number) => {
+    if (index >= 0 && index < images.length) {
+      setLightboxImageIndex(index);
+    }
+  };
+
+  // Управление клавиатурой (стрелки) - только для основной галереи
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Если лайтбокс открыт, не обрабатываем события здесь
+      if (isLightboxOpen) return;
+      
       if (event.key === 'ArrowRight') {
         goToNextImage();
       } else if (event.key === 'ArrowLeft') {
@@ -62,7 +96,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [mounted, images.length]);
+  }, [mounted, images.length, isLightboxOpen]);
 
   // Показываем заглушку до монтирования
   if (!mounted) {
@@ -157,6 +191,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     onPrevImage: goToPrevImage,
     onNextImage: goToNextImage,
     onSelectImage: goToImage,
+    onOpenLightbox: openLightbox, // Новый пропс для открытия лайтбокса
   };
 
   return (
@@ -170,6 +205,18 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
       <div className="block lg:hidden">
         <MobileGallery {...galleryProps} />
       </div>
+
+      {/* Лайтбокс */}
+      <ImageLightbox
+        images={images}
+        currentIndex={lightboxImageIndex}
+        isOpen={isLightboxOpen}
+        onClose={closeLightbox}
+        onNext={goToNextLightboxImage}
+        onPrev={goToPrevLightboxImage}
+        onSelectImage={goToLightboxImage}
+        productName={productName}
+      />
     </div>
   );
 };

@@ -11,6 +11,7 @@ interface DesktopGalleryProps {
   onPrevImage: () => void;
   onNextImage: () => void;
   onSelectImage: (index: number) => void;
+  onOpenLightbox: (index?: number) => void; // Новый пропс
 }
 
 const DesktopGallery: React.FC<DesktopGalleryProps> = ({
@@ -20,6 +21,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
   onPrevImage,
   onNextImage,
   onSelectImage,
+  onOpenLightbox,
 }) => {
   const [imageLoadError, setImageLoadError] = useState<Record<string, boolean>>({});
   const [isHovered, setIsHovered] = useState(false);
@@ -42,6 +44,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
         className="relative group cursor-pointer overflow-hidden aspect-[5/3] rounded-lg"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={() => onOpenLightbox(currentImageIndex)} // Добавляем обработчик клика
       >
       {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
           <img
@@ -73,7 +76,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
           <>
             <button
               onClick={(e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Предотвращаем открытие лайтбокса
                 onPrevImage();
               }}
               className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center transition-all duration-300 ${
@@ -95,7 +98,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
 
             <button
               onClick={(e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Предотвращаем открытие лайтбокса
                 onNextImage();
               }}
               className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center transition-all duration-300 ${
@@ -131,6 +134,23 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
             {currentImageIndex + 1} / {images.length}
           </div>
         )}
+
+        {/* Иконка увеличения - появляется при ховере */}
+        <div 
+          className={`absolute top-4 right-4 w-8 h-8 flex items-center justify-center transition-opacity duration-300 rounded-full ${
+            isHovered ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{
+            background: 'rgba(0, 0, 0, 0.2)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)'
+          }}
+        >
+          <div className="relative w-4 h-4">
+            <div className="absolute w-3 h-3 border-2 border-white rounded-full top-0 left-0"></div>
+            <div className="absolute w-2 h-0.5 bg-white transform rotate-45 bottom-0 right-0"></div>
+          </div>
+        </div>
       </div>
 
       {/* Миниатюры под главным изображением */}
@@ -174,7 +194,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
 
                   {/* Оверлей для неактивных миниатюр */}
                   {!isActive && (
-                    <div className="absolute inset-0  bg-opacity-40 hover:bg-opacity-20 transition-all"></div>
+                    <div className="absolute inset-0 bg-opacity-40 hover:bg-opacity-20 transition-all"></div>
                   )}
                 </button>
               );

@@ -130,7 +130,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               description: `${productData.brand} ${productData.name} - ${productData.category}`,
               sizes: productSizes, // ← теперь с правильными ценами
               inStock: productData.availableStock > 0,
-              deliveryInfo: 'Доставка 1-3 дня по России'
+              deliveryInfo: 'Доставка 7-14 дня по России'
             };
             
             setProduct(productInfo);

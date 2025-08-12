@@ -16,35 +16,35 @@ const HeroSlider = () => {
   const slides = [
     {
       id: 1,
-      title: "ШИРОКИЙ АССОРТИМЕНТ ОРИГИНАЛЬНЫХ БРЕНДОВ",
-      imageDesktop: "/banners/Banner1-1.jpg", 
-      imageMobile: "/banners/Banner1-2.webp",  
-      link: "/catalog", 
-      alt: "Широкий ассортимент оригинальных брендов"
-    },
-    {
-      id: 2,
       title: "ДОЛЯМИ",
       imageDesktop: "/banners/Banner2-1.jpg", 
       imageMobile: "/banners/Banner2-2.webp",  
       link: "/catalog", 
-      alt: "Ассортимент кроссовок"
+      alt: "До-Ля-Ми"
     },
     {
-      id: 3,
+      id: 2,
       title: "100500",
       imageDesktop: "/banners/Banner3-1.jpg", 
       imageMobile: "/banners/Banner3-2.webp",  
       link: "/catalog", 
-      alt: "Индивидуальный заказ"
+      alt: "Скидки"
     },
     {
-      id: 4,
+      id: 3,
       title: "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ",
       imageDesktop: "/banners/Banner4-1.jpg", 
       imageMobile: "/banners/Banner4-2.webp",  
       link: "https://t.me/TIGRSHOPsupport", 
       alt: "Индивидуальный заказ"
+    },
+    {
+      id: 4,
+      title: "ШИРОКИЙ АССОРТИМЕНТ ОРИГИНАЛЬНЫХ БРЕНДОВ",
+      imageDesktop: "/banners/Banner1-1.jpg", 
+      imageMobile: "/banners/Banner1-2.webp",  
+      link: "/catalog", 
+      alt: "Каталог"
     },
     {
       id: 5,

@@ -11,6 +11,7 @@ interface MobileGalleryProps {
   onPrevImage: () => void;
   onNextImage: () => void;
   onSelectImage: (index: number) => void;
+  onOpenLightbox: (index?: number) => void; // Новый пропс
 }
 
 const MobileGallery: React.FC<MobileGalleryProps> = ({
@@ -20,10 +21,12 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
   onPrevImage,
   onNextImage,
   onSelectImage,
+  onOpenLightbox,
 }) => {
   const [imageLoadError, setImageLoadError] = useState<Record<string, boolean>>({});
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [lastTap, setLastTap] = useState<number>(0);
   const mainImageRef = useRef<HTMLDivElement>(null);
 
   const handleImageError = (imageId: string) => {
@@ -47,7 +50,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd || !images || images.length <= 1) return;
     
-    const distance = touchStart - touchEnd;
+    const distance = touchStart - touchStart;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
@@ -57,6 +60,23 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
     if (isRightSwipe) {
       onPrevImage();
     }
+  };
+
+  // Двойное нажатие для открытия лайтбокса
+  const handleTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    
+    if (lastTap && (now - lastTap) < DOUBLE_TAP_DELAY) {
+      // Двойное нажатие - открываем лайтбокс
+      onOpenLightbox(currentImageIndex);
+    } else {
+      // Одинарное нажатие - переключаем на следующее изображение
+      if (images && images.length > 1) {
+        onNextImage();
+      }
+    }
+    setLastTap(now);
   };
 
   const currentImage = images[currentImageIndex];
@@ -71,21 +91,19 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={() => {
-          // При клике переключаем на следующее изображение
-          if (images && images.length > 1) {
-            onNextImage();
-          }
-        }}
+        onClick={handleTap} // Изменили обработчик клика
       >
-        {!hasError && currentImage ? (
+        {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
           <img
-            src={currentImage.url}
+            src={currentImage.url || undefined}
             alt={currentImage.alt || productName}
             className="w-full h-full object-contain object-center"
             onError={() => handleImageError(currentImage.id)}
             onLoad={() => handleImageLoad(currentImage.id)}
             draggable={false}
+            style={{
+              backgroundColor: 'transparent'
+            }}
           />
         ) : (
           <div 
@@ -95,44 +113,53 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
             }}
           >
             <div className="text-center text-gray-600">
-              <div className="text-sm mb-1">{productName}</div>
+              <div className="text-lg mb-1">{productName}</div>
               <div className="text-xs">Изображение скоро</div>
             </div>
           </div>
         )}
 
-        {/* Индикаторы точек в правом верхнем углу */}
-        {images && images.length > 1 && (
-          <div className="absolute top-2 right-2 flex space-x-1">
-            {images.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentImageIndex 
-                    ? 'bg-white' 
-                    : 'bg-white bg-opacity-50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Счетчик изображений в левом нижнем углу */}
-        {images && images.length > 1 && (
+        {/* Индикатор количества изображений */}
+        {images.length > 1 && (
           <div 
-            className="absolute bottom-2 left-2 px-2 py-1 text-white text-xs rounded-xl"
+            className="absolute bottom-2 right-2 px-2 py-1 text-white text-xs rounded-full"
             style={{
-              background: 'rgba(0, 0, 0, 0.5)',
+              background: 'rgba(0, 0, 0, 0.6)',
               backdropFilter: 'blur(4px)'
             }}
           >
-            {currentImageIndex + 1}/{images.length}
+            {currentImageIndex + 1} / {images.length}
           </div>
         )}
+
+        {/* Иконка увеличения */}
+        <div 
+          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full"
+          style={{
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div className="relative w-3 h-3">
+            <div className="absolute w-2.5 h-2.5 border border-white rounded-full top-0 left-0"></div>
+            <div className="absolute w-1.5 h-0.5 bg-white transform rotate-45 bottom-0 right-0"></div>
+          </div>
+        </div>
+
+        {/* Подсказка о двойном нажатии (показывается кратковременно) */}
+        <div 
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 px-3 py-1 text-white text-xs rounded-full pointer-events-none opacity-0 animate-pulse"
+          style={{
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          Нажмите дважды для увеличения
+        </div>
       </div>
 
       {/* Миниатюры под главным изображением */}
-      {images && images.length > 1 && (
+      {images.length > 1 && (
         <div className="grid grid-cols-4 gap-1 mt-2">
           {images.slice(0, 4).map((image, index) => {
             const isActive = index === currentImageIndex;
@@ -192,9 +219,8 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
           })}
         </div>
       )}
-
     </div>
-  )
+  );
 };
 
 export default MobileGallery;

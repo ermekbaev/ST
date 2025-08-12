@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 const MobileHeader: React.FC = () => {
+  const router = useRouter(); // ✅ Добавляем useRouter
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -36,18 +38,47 @@ const MobileHeader: React.FC = () => {
   const menuData: Record<string, any> = {
     'обувь': {
       categories: ['все', 'кроссовки', 'ботинки', 'сандалии', 'туфли', 'угги'],
+      links: {
+        'все': '/catalog',
+        'кеды и кроссовки': '/catalog?categories=Кросовки+и+кеды',
+        'ботинки и угги': '/catalog',
+        'слэды': '/catalog',
+        'детская обувь': '/catalog'
+      },
       subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
     },
     'одежда': {
       categories: ['все', 'футболки', 'толстовки', 'куртки', 'джинсы', 'шорты'],
+      links: {
+        'все': '/catalog',
+        'куртки и пуховики': '/catalog?categories=Пуховики+и+куртки',
+        'футболки и лонгсливы': '/catalog?categories=Футболки+и+поло',
+        'штаны и джинсы': '/catalog?categories=Штаны+и+брюки',
+        'шорты': '/catalog?categories=Шорты',
+        'худи и свитшоты': '/catalog?categories=Толстовки+и+свитшоты'
+      },
       subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
     },
     'аксессуары': {
       categories: ['все', 'сумки', 'шапки', 'очки', 'часы', 'украшения'],
+      links: {
+        'все': '/catalog?categories=Аксессуары',
+        'белье': '/catalog',
+        'головные уборы': '/catalog',
+        'рюкзаки и сумки': '/catalog?categories=Сумки+и+рюкзаки',
+        'кошельки': '/catalog'
+      },
       subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
     },
     'коллекции': {
       categories: ['все', 'другие аксессуары', 'фигурки', 'предметы интерьера', 'другое всё'],
+      links: {
+        'все': '/catalog?categories=Коллекция',
+        'другие аксессуары': '/catalog',
+        'фигурки': '/catalog',
+        'предметы интерьера': '/catalog',
+        'другое всё': '/catalog'
+      },
       subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
     },
     'другое': {
@@ -56,6 +87,13 @@ const MobileHeader: React.FC = () => {
     },
     'бренды': {
       categories: ['все', 'nike', 'adidas', 'puma', 'reebok'],
+      links: {
+        'все': '/catalog',
+        'nike': '/catalog?brands=Nike',
+        'adidas': '/catalog?brands=Adidas',
+        'puma': '/catalog?brands=Puma',
+        'reebok': '/catalog?brands=Reebok'
+      },
       subcategories: ['новые релизы', 'эксклюзивы', 'мастхэв', 'хиты продаж', 'коллаборации']
     },
     'информация': {
@@ -68,6 +106,15 @@ const MobileHeader: React.FC = () => {
         { name: 'о нас', href: '/about' }
       ]
     }
+  };
+
+  // ✅ Функция для построения URL каталога с поиском
+  const buildCatalogUrl = (searchTerm: string) => {
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) {
+      params.append('search', searchTerm.trim());
+    }
+    return `/catalog${params.toString() ? `?${params.toString()}` : ''}`;
   };
 
   const handleSearchToggle = useCallback((): void => {
@@ -92,10 +139,17 @@ const MobileHeader: React.FC = () => {
     setOpenSection(null); // Сбрасываем открытые секции
   }, [isMobileMenuOpen]);
 
+  // ✅ Обновляем handleSearchSubmit для реального поиска
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    console.log('Поиск:', searchQuery);
-  }, [searchQuery]);
+    if (searchQuery.trim()) {
+      console.log('🔍 Mobile поиск из хедера:', searchQuery.trim());
+      const url = buildCatalogUrl(searchQuery);
+      router.push(url);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
+  }, [searchQuery, router]);
 
   const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Escape') {
@@ -121,9 +175,17 @@ const MobileHeader: React.FC = () => {
   }, [openSection]);
 
   const handleLinkClick = useCallback((href: string): void => {
-    window.location.href = href;
+    if (href === '#') return;
+    
+    if (href.startsWith('/')) {
+      // Внутренние ссылки
+      router.push(href);
+    } else {
+      // Внешние ссылки
+      window.location.href = href;
+    }
     setIsMobileMenuOpen(false);
-  }, []);
+  }, [router]);
 
   return (
     <>
@@ -136,7 +198,7 @@ const MobileHeader: React.FC = () => {
             </a>
           </div>
 
-          {/* Поисковая строка - расширяется от иконки поиска на всю ширину */}
+          {/* ✅ Поисковая строка с рабочим функционалом */}
           <div 
             className="absolute top-1/2 h-[60px] flex items-center transition-all duration-500 ease-in-out z-[90] overflow-hidden"
             style={{
@@ -158,7 +220,7 @@ const MobileHeader: React.FC = () => {
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="введите название товара"
+                placeholder="поиск товаров, брендов..."
                 className="w-full h-10 bg-transparent text-brand-dark placeholder-brand-gray focus:outline-none text-base border-0"
                 style={{ 
                   border: 'none', 
