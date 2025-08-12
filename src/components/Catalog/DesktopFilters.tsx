@@ -1,4 +1,4 @@
-// src/components/Catalog/DesktopFilters.tsx - ФИНАЛЬНАЯ ВЕРСИЯ
+// src/components/Catalog/DesktopFilters.tsx - ОБНОВЛЕННЫЙ с функцией сворачивания
 'use client';
 
 import React from 'react';
@@ -128,6 +128,7 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
                 options={brandsToShow}
                 selectedValues={filters.brands}
                 onChange={(value) => handleFilterChange('brands', value)}
+                maxVisible={8} // Показываем 8 брендов, остальные скрываем
               />
             )}
             <FilterDivider />
@@ -140,6 +141,7 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
           options={gendersToShow}
           selectedValues={filters.genders}
           onChange={(value) => handleFilterChange('genders', value)}
+          maxVisible={10} // Показываем все (их всего 4)
         />
 
         <FilterDivider />
@@ -162,6 +164,7 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
                 options={categoriesToShow}
                 selectedValues={filters.categories}
                 onChange={(value) => handleFilterChange('categories', value)}
+                maxVisible={6} // Показываем 6 категорий, остальные скрываем
               />
             )}
             <FilterDivider />
@@ -186,7 +189,8 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
                 options={sizesToShow}
                 selectedValues={filters.sizes}
                 onChange={(value) => handleFilterChange('sizes', value)}
-                showAll={true}
+                maxItems={18} // Показываем 18 размеров (3 ряда по 6)
+                showAll={false} // Включаем функцию сворачивания
               />
             )}
             <FilterDivider />

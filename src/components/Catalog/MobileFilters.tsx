@@ -1,9 +1,11 @@
-// src/components/Catalog/MobileFilters.tsx - ИСПРАВЛЕНО
+// src/components/Catalog/MobileFilters.tsx - ОБНОВЛЕННЫЙ с функцией сворачивания
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PriceFilter from './Filters/PriceFilter';
+import CheckboxFilter from './Filters/CheckboxFilter';
+import SizeFilter from './Filters/SizeFilter';
 import { useCatalogFilters } from '@/hooks/useCatalogFilters';
 
 interface FilterState {
@@ -190,121 +192,92 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
 
         <FilterDivider />
 
-        {/* Бренды */}
+        {/* Бренды - ОБНОВЛЕНО с функцией сворачивания */}
         {(brandsToShow.length > 0 || loading) && (
           <>
-            <div className="mb-6">
-              <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-                Бренды
-              </h4>
-              {loading ? (
+            {loading ? (
+              <div className="mb-6">
+                <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+                  Бренды
+                </h4>
                 <LoadingSkeleton />
-              ) : (
-                <div className="space-y-3">
-                  {brandsToShow.map((brand, index) => (
-                    <label key={index} className="flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filters.brands.includes(brand)}
-                        onChange={() => handleFilterChange('brands', brand)}
-                        className="w-[15px] h-[15px] border border-black mr-4"
-                      />
-                      <span className="text-black text-[15px] leading-[20px] font-product">
-                        {brand}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="mb-6">
+                <CheckboxFilter
+                  title="Бренды"
+                  options={brandsToShow}
+                  selectedValues={filters.brands}
+                  onChange={(value) => handleFilterChange('brands', value)}
+                  maxVisible={5} // На мобильном показываем 5 брендов
+                />
+              </div>
+            )}
             <FilterDivider />
           </>
         )}
 
-        {/* Пол */}
+        {/* Пол - ОБНОВЛЕНО с функцией сворачивания */}
         <div className="mb-6">
-          <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-            Пол
-          </h4>
-          <div className="space-y-3">
-            {gendersToShow.map((gender, index) => (
-              <label key={index} className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.genders.includes(gender)}
-                  onChange={() => handleFilterChange('genders', gender)}
-                  className="w-[15px] h-[15px] border border-black mr-4"
-                />
-                <span className="text-black text-[15px] leading-[20px] font-product">
-                  {gender}
-                </span>
-              </label>
-            ))}
-          </div>
+          <CheckboxFilter
+            title="Пол"
+            options={gendersToShow}
+            selectedValues={filters.genders}
+            onChange={(value) => handleFilterChange('genders', value)}
+            maxVisible={10} // Показываем все (их всего 4)
+          />
         </div>
 
         <FilterDivider />
 
-        {/* Категория */}
+        {/* Категория - ОБНОВЛЕНО с функцией сворачивания */}
         {(categoriesToShow.length > 0 || loading) && (
           <>
-            <div className="mb-6">
-              <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-                Категория
-              </h4>
-              {loading ? (
+            {loading ? (
+              <div className="mb-6">
+                <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+                  Категория
+                </h4>
                 <LoadingSkeleton count={4} />
-              ) : (
-                <div className="space-y-3">
-                  {categoriesToShow.map((category, index) => (
-                    <label key={index} className="flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filters.categories.includes(category)}
-                        onChange={() => handleFilterChange('categories', category)}
-                        className="w-[15px] h-[15px] border border-black mr-4"
-                      />
-                      <span className="text-black text-[15px] leading-[20px] font-product">
-                        {category}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="mb-6">
+                <CheckboxFilter
+                  title="Категория"
+                  options={categoriesToShow}
+                  selectedValues={filters.categories}
+                  onChange={(value) => handleFilterChange('categories', value)}
+                  maxVisible={4} // На мобильном показываем 4 категории
+                />
+              </div>
+            )}
             <FilterDivider />
           </>
         )}
 
-        {/* Размер */}
+        {/* Размер - ОБНОВЛЕНО с функцией сворачивания */}
         {(sizesToShow.length > 0 || loading) && (
-          <div className="mb-6">
-            <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
-              Размер
-            </h4>
-            
+          <div className="mb-6">            
             {loading ? (
-              <div className="animate-pulse grid grid-cols-6 gap-1">
-                {[...Array(12)].map((_, i) => (
-                  <div key={i} className="h-10 bg-gray-200 rounded"></div>
-                ))}
-              </div>
+              <>
+                <h4 className="text-black text-[15px] leading-[22px] font-product font-black italic mb-4">
+                  Размер
+                </h4>
+                <div className="animate-pulse grid grid-cols-6 gap-1">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                  ))}
+                </div>
+              </>
             ) : (
-              <div className="grid grid-cols-6 gap-1">
-                {sizesToShow.map((size, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleFilterChange('sizes', size)}
-                    className={`h-[40px] border border-[#595047] flex items-center justify-center text-[16px] leading-[20px] font-product transition-colors ${
-                      filters.sizes.includes(size)
-                        ? 'bg-[#595047] text-white'
-                        : 'bg-white text-[#595047] hover:bg-gray-50'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
+              <SizeFilter
+                title="Размер"
+                options={sizesToShow}
+                selectedValues={filters.sizes}
+                onChange={(value) => handleFilterChange('sizes', value)}
+                maxItems={12} // На мобильном показываем 12 размеров (4 ряда по 3)
+                showAll={false} // Включаем функцию сворачивания
+              />
             )}
           </div>
         )}
