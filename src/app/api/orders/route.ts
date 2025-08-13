@@ -1,4 +1,4 @@
-// src/app/api/orders/route.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ ВАШЕГО КОДА
+// src/app/api/orders/route.ts - ПОЛНАЯ ФИНАЛЬНАЯ ВЕРСИЯ СО ВСЕМИ ИСПРАВЛЕНИЯМИ
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -304,7 +304,7 @@ async function findSizeId(productId: string, sizeValue: string): Promise<string 
   }
 }
 
-// ✅ ИСПРАВЛЕНО: Сохранение заказа в Strapi с правильными связями
+// ✅ ИСПРАВЛЕНО: Сохранение заказа в Strapi с правильными связями (ПОСЛЕДОВАТЕЛЬНО)
 async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']): Promise<string> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -330,47 +330,58 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
 
   console.log(`✅ Основной заказ создан с ID: ${orderId}`);
 
-  // 2. ✅ ИСПРАВЛЕНО: Создаем позиции заказа с правильными связями
-  console.log(`🔄 Создаем ${items.length} позиций заказа...`);
+  // 2. ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Создаем позиции заказа ПОСЛЕДОВАТЕЛЬНО с обязательными связями
+  console.log(`\n🔄 === СОЗДАЕМ ${items.length} ПОЗИЦИЙ ЗАКАЗА ПОСЛЕДОВАТЕЛЬНО ===`);
   
   const createdOrderItems: string[] = [];
-  
-  const itemPromises = items.map(async (item, index) => {
+  let successCount = 0;
+
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
+    
     try {
-      // ✅ ИСПРАВЛЕНО: Находим ID размера правильным способом
+      console.log(`\n🔄 === СОЗДАЕМ ПОЗИЦИЮ ${index + 1}/${items.length} ===`);
+      
+      // Пытаемся найти размер
       const sizeId = await findSizeId(item.productId, item.size);
       
+      // ✅ НЕ блокируем создание если размер не найден
       if (!sizeId) {
-        console.error(`❌ Не найден размер "${item.size}" для товара ${item.productId}`);
-        return false;
+        console.warn(`⚠️ Размер "${item.size}" не найден для товара ${item.productId}, создаем без размера`);
       }
 
-      // ✅ ИСПРАВЛЕНО: Правильная структура данных для order-item
+      // ✅ Создаем позицию с ОБЯЗАТЕЛЬНОЙ связью product
       const itemData = {
-        orderId: orderId.toString(), // Простое строковое поле
-        productId: item.productId,   // Простое строковое поле
+        orderId: orderId.toString(),
+        productId: item.productId,
         productName: item.productName || `Товар ${item.productId}`,
         quantity: item.quantity,
         priceAtTime: item.priceAtTime,
-        // ✅ ИСПРАВЛЕНО: Связи через connect
-        size: {
-          connect: [{ id: parseInt(sizeId) }]
-        },
+        
+        // ✅ ОБЯЗАТЕЛЬНАЯ связь с product (ВСЕГДА!)
         product: {
           connect: [{ id: parseInt(item.productId) }]
         },
-        // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Обратная связь с заказом
+        
+        // ✅ Размер только если найден
+        ...(sizeId && {
+          size: {
+            connect: [{ id: parseInt(sizeId) }]
+          }
+        }),
+        
+        // ✅ Связь с заказом
         orders: {
           connect: [{ id: orderId }]
         }
       };
 
-      console.log(`🔄 Создаем позицию ${index + 1}:`, {
+      console.log(`🔄 Отправляем запрос создания позиции ${index + 1}:`, {
         orderId: itemData.orderId,
         productId: itemData.productId,
         productName: itemData.productName,
-        sizeId: sizeId,
-        connectingToOrder: orderId
+        hasProductConnection: true, // всегда true
+        hasSizeConnection: !!sizeId
       });
 
       const itemResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
@@ -382,27 +393,56 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
       if (!itemResponse.ok) {
         const errorText = await itemResponse.text();
         console.error(`❌ Ошибка создания позиции ${index + 1}:`, errorText);
-        return false;
+        
+        // ✅ FALLBACK: Пытаемся создать хотя бы базовую позицию
+        console.log(`🔄 Пытаемся создать fallback позицию ${index + 1} без связей...`);
+        
+        const fallbackData = {
+          orderId: orderId.toString(),
+          productId: item.productId,
+          productName: item.productName || `Товар ${item.productId}`,
+          quantity: item.quantity,
+          priceAtTime: item.priceAtTime
+        };
+        
+        const fallbackResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ data: fallbackData })
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackResult = await fallbackResponse.json();
+          console.log(`✅ Создана fallback позиция ${index + 1} с ID: ${fallbackResult.data.id} (БЕЗ СВЯЗЕЙ)`);
+          createdOrderItems.push(fallbackResult.data.id.toString());
+          successCount++;
+        } else {
+          const fallbackError = await fallbackResponse.text();
+          console.error(`❌ Fallback также не сработал для позиции ${index + 1}:`, fallbackError);
+        }
+      } else {
+        const itemResult = await itemResponse.json();
+        const orderItemId = itemResult.data.id;
+        console.log(`✅ Позиция ${index + 1} создана с ID: ${orderItemId} (СО СВЯЗЯМИ)`);
+        
+        createdOrderItems.push(orderItemId.toString());
+        successCount++;
       }
-
-      const itemResult = await itemResponse.json();
-      const orderItemId = itemResult.data.id;
-      console.log(`✅ Позиция ${index + 1} создана с ID:`, orderItemId);
       
-      // ✅ ДОБАВЛЯЕМ: Сохраняем ID созданной позиции
-      createdOrderItems.push(orderItemId.toString());
+      // Небольшая пауза между созданием позиций для стабильности
+      if (index < items.length - 1) {
+        console.log(`⏳ Пауза 200ms перед следующей позицией...`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
       
-      return true;
     } catch (error) {
-      console.error(`❌ Ошибка создания позиции ${index + 1}:`, error);
-      return false;
+      console.error(`❌ Критическая ошибка создания позиции ${index + 1}:`, error);
     }
-  });
+  }
 
-  const results = await Promise.all(itemPromises);
-  const successCount = results.filter(Boolean).length;
-  
-  console.log(`📦 Создано позиций заказа: ${successCount}/${items.length}`);
+  console.log(`\n📦 === ИТОГИ СОЗДАНИЯ ПОЗИЦИЙ ===`);
+  console.log(`✅ Создано позиций: ${successCount}/${items.length}`);
+  console.log(`📋 ID созданных позиций: [${createdOrderItems.join(', ')}]`);
 
   if (successCount === 0) {
     throw new Error('Не удалось создать ни одной позиции заказа');
@@ -411,23 +451,52 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
   // ✅ КЛЮЧЕВОЕ ДОБАВЛЕНИЕ: Обновляем заказ со связями на order-items
   if (createdOrderItems.length > 0) {
     await updateOrderWithItems(orderId, createdOrderItems);
+    
+    // ✅ ДОБАВЛЯЕМ: Проверяем результат связывания
+    await new Promise(resolve => setTimeout(resolve, 1000)); // пауза для обновления БД
+    await verifyOrderLinks(orderId.toString());
   }
 
   return orderId.toString();
 }
 
-// ✅ НОВАЯ ФУНКЦИЯ: Обновление заказа со связями на order-items
+// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: Обновление заказа со связями (используем ту же логику что в payments)
 async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Promise<void> {
   try {
     console.log(`🔄 Обновляем заказ ${orderId} со связями на позиции: [${orderItemIds.join(', ')}]`);
     
-    const updateData = {
-      order_item: {
-        connect: orderItemIds.map(id => ({ id: parseInt(id) }))
+    // ✅ ИСПОЛЬЗУЕМ ТУ ЖЕ ЛОГИКУ ЧТО В PAYMENTS API
+    let documentId = null;
+    
+    // Сначала ищем без токена
+    try {
+      const searchResponse = await fetch(`${STRAPI_URL}/api/orders?filters[id][$eq]=${orderId}`);
+      
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json();
+        if (searchData.data && searchData.data.length > 0) {
+          documentId = searchData.data[0].documentId;
+          console.log(`🔍 Найден documentId для заказа ${orderId}: ${documentId}`);
+        }
       }
+    } catch (error) {
+      console.warn('⚠️ Поиск documentId не удался:', error);
+    }
+    
+    if (!documentId) {
+      console.warn(`⚠️ DocumentId не найден для заказа ${orderId}, используем orderId`);
+      documentId = orderId;
+    }
+    
+    // ✅ ИСПРАВЛЕНИЕ: Правильное название поля для связи
+    const updateData = {
+      order_item: orderItemIds.map(id => ({ id: parseInt(id) }))
     };
 
-    const updateResponse = await fetch(`${STRAPI_URL}/api/orders/${orderId}`, {
+    console.log('🔄 Отправляем данные для связывания:', JSON.stringify(updateData, null, 2));
+
+    // ✅ ОБНОВЛЯЕМ ЧЕРЕЗ documentId
+    const updateResponse = await fetch(`${STRAPI_URL}/api/orders/${documentId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -438,13 +507,123 @@ async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Pr
     });
 
     if (updateResponse.ok) {
-      console.log(`✅ Заказ ${orderId} обновлен со связями на ${orderItemIds.length} позиций`);
+      const result = await updateResponse.json();
+      console.log(`✅ Заказ ${orderId} (documentId: ${documentId}) обновлен со связями на ${orderItemIds.length} позиций`);
+      console.log(`📋 Новый ID заказа: ${result.data?.id || 'не указан'}`);
     } else {
       const errorText = await updateResponse.text();
-      console.error(`❌ Ошибка обновления заказа ${orderId}:`, errorText);
+      console.error(`❌ Ошибка обновления заказа ${orderId} (documentId: ${documentId}):`, errorText);
+      
+      // ✅ АЛЬТЕРНАТИВНЫЙ СПОСОБ: Пробуем через connect
+      console.log('🔄 Пробуем альтернативный способ через connect...');
+      
+      const alternativeData = {
+        order_item: {
+          connect: orderItemIds.map(id => ({ id: parseInt(id) }))
+        }
+      };
+      
+      const altResponse = await fetch(`${STRAPI_URL}/api/orders/${documentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: alternativeData
+        })
+      });
+      
+      if (altResponse.ok) {
+        console.log(`✅ Заказ ${orderId} обновлен через альтернативный способ`);
+      } else {
+        const altError = await altResponse.text();
+        console.error(`❌ Альтернативный способ тоже не сработал:`, altError);
+        
+        // ✅ ФИНАЛЬНЫЙ СПОСОБ: Обновляем order-items напрямую
+        console.log('🔄 Пробуем обновить order-items напрямую...');
+        await updateOrderItemsDirectly(orderId, orderItemIds);
+      }
     }
   } catch (error) {
-    console.error(`❌ Ошибка обновления заказа ${orderId}:`, error);
+    console.error(`❌ Критическая ошибка обновления заказа ${orderId}:`, error);
+    
+    // Финальная попытка обновить order-items напрямую
+    console.log('🔄 Финальная попытка - обновляем order-items напрямую...');
+    await updateOrderItemsDirectly(orderId, orderItemIds);
+  }
+}
+
+// ✅ НОВАЯ ФУНКЦИЯ: Прямое обновление order-items
+async function updateOrderItemsDirectly(orderId: string, orderItemIds: string[]): Promise<void> {
+  try {
+    console.log(`🔧 Обновляем order-items напрямую для заказа ${orderId}...`);
+    
+    for (const itemId of orderItemIds) {
+      try {
+        const updateResponse = await fetch(`${STRAPI_URL}/api/order-items/${itemId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            data: {
+              orders: {
+                connect: [{ id: parseInt(orderId) }]
+              }
+            }
+          })
+        });
+        
+        if (updateResponse.ok) {
+          console.log(`✅ Order-item ${itemId} связан с заказом ${orderId}`);
+        } else {
+          console.warn(`⚠️ Не удалось связать order-item ${itemId} с заказом ${orderId}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Ошибка обновления order-item ${itemId}:`, error);
+      }
+      
+      // Пауза между обновлениями
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.log(`✅ Прямое обновление order-items завершено для заказа ${orderId}`);
+  } catch (error) {
+    console.error(`❌ Ошибка прямого обновления order-items:`, error);
+  }
+}
+
+// ✅ ДОПОЛНИТЕЛЬНАЯ ФУНКЦИЯ: Проверка связей после создания
+async function verifyOrderLinks(orderId: string): Promise<void> {
+  try {
+    console.log(`🔍 Проверяем связи для заказа ${orderId}...`);
+    
+    // Проверяем заказ с populate order_item
+    const orderResponse = await fetch(
+      `${STRAPI_URL}/api/orders/${orderId}?populate=order_item`,
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    
+    if (orderResponse.ok) {
+      const orderData = await orderResponse.json();
+      const orderItems = orderData.data?.order_item || [];
+      
+      console.log(`📊 Проверка заказа ${orderId}:`);
+      console.log(`  - Связанных order_items: ${orderItems.length}`);
+      
+      if (orderItems.length === 0) {
+        console.warn(`⚠️ У заказа ${orderId} нет связанных order_items!`);
+      } else {
+        console.log(`✅ У заказа ${orderId} есть ${orderItems.length} связанных позиций`);
+        orderItems.forEach((item: any, index: number) => {
+          console.log(`  ${index + 1}. ID: ${item.id}, Product: ${item.productName}`);
+        });
+      }
+    }
+  } catch (error) {
+    console.error(`❌ Ошибка проверки связей:`, error);
   }
 }
 

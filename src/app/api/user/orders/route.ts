@@ -29,12 +29,13 @@ interface UserOrder {
   items: OrderItem[];
 }
 
-// GET /api/user/orders - получить заказы авторизованного пользователя
+// src/app/api/user/orders/route.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ С ПРАВИЛЬНОЙ ПАГИНАЦИЕЙ
+
 export async function GET(request: NextRequest) {
   try {
     console.log('📋 API: Запрос истории заказов пользователя');
     
-    // ✅ Проверяем авторизацию
+    // ✅ Проверяем авторизацию (код остается тот же)
     const authHeader = request.headers.get('authorization');
     const userToken = authHeader?.replace('Bearer ', '') || null;
     
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ✅ Получаем данные пользователя
+    // ✅ Получаем данные пользователя (код остается тот же)
     let userId: string | null = null;
     try {
       const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
     console.log(`🔍 Ищем заказы для пользователя ${userId}...`);
     
     const ordersResponse = await fetch(
-      `${STRAPI_URL}/api/orders?filters[user][id][$eq]=${userId}&populate=order_item&sort[0]=createdAt:desc`,
+      `${STRAPI_URL}/api/orders?filters[user][id][$eq]=${userId}&populate=order_item&sort[0]=createdAt:desc&pagination[limit]=200`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -98,33 +99,63 @@ export async function GET(request: NextRequest) {
     const ordersData = await ordersResponse.json();
     console.log(`📦 Найдено заказов: ${ordersData.data?.length || 0}`);
 
-    // ✅ ШАГ 2: Получаем ВСЕ order-items для отладки
-    const orderItemsResponse = await fetch(
-      `${STRAPI_URL}/api/order-items?populate=*&pagination[limit]=100`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // ✅ ШАГ 2: ИСПРАВЛЕНО - Получаем ВСЕ order-items с правильной пагинацией
+    console.log('🔄 Загружаем ВСЕ order-items...');
+    
+    let allOrderItems: any[] = [];
+    let currentPage = 1;
+    const pageSize = 100;
+    let hasMorePages = true;
 
-    let orderItemsData: any = { data: [] };
-    if (orderItemsResponse.ok) {
-      orderItemsData = await orderItemsResponse.json();
-      console.log(`📦 Найдено позиций заказов: ${orderItemsData.data?.length || 0}`);
+    while (hasMorePages) {
+      console.log(`📥 Загружаем страницу ${currentPage} order-items...`);
       
-      // Показываем все order-items для отладки
-      console.log('🔍 ВСЕ ORDER-ITEMS:');
-      (orderItemsData.data || []).forEach((item: any) => {
-        console.log(`  - ID: ${item.id}, orderId: ${item.orderId}, productId: ${item.productId}, product: ${!!item.product}`);
-      });
+      const orderItemsResponse = await fetch(
+        `${STRAPI_URL}/api/order-items?populate=*&pagination[page]=${currentPage}&pagination[pageSize]=${pageSize}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!orderItemsResponse.ok) {
+        console.warn(`⚠️ Ошибка загрузки страницы ${currentPage} order-items`);
+        break;
+      }
+
+      const pageData = await orderItemsResponse.json();
+      const pageItems = pageData.data || [];
+      
+      console.log(`📦 Страница ${currentPage}: загружено ${pageItems.length} order-items`);
+      
+      allOrderItems = [...allOrderItems, ...pageItems];
+      
+      // Проверяем есть ли еще страницы
+      const pagination = pageData.meta?.pagination;
+      hasMorePages = pagination && currentPage < pagination.pageCount;
+      currentPage++;
+      
+      // Безопасность: не загружаем больше 20 страниц
+      if (currentPage > 20) {
+        console.warn('⚠️ Достигнут лимит страниц (20), прекращаем загрузку');
+        break;
+      }
     }
 
-    // ✅ ШАГ 3: Создаем карту order-items и проверяем близкие ID
+    console.log(`📦 ИТОГО загружено order-items: ${allOrderItems.length}`);
+    
+    // Показываем все order-items для отладки
+    console.log('🔍 ВСЕ ORDER-ITEMS:');
+    allOrderItems.forEach((item: any) => {
+      console.log(`  - ID: ${item.id}, orderId: ${item.orderId}, productId: ${item.productId}, product: ${!!item.product}`);
+    });
+
+    // ✅ ШАГ 3: Создаем карту order-items
     const orderItemsMap = new Map();
     const allOrderIds = (ordersData.data || []).map((o: any) => o.id);
     
-    (orderItemsData.data || []).forEach((item: any) => {
+    allOrderItems.forEach((item: any) => {
       if (item.orderId) {
         console.log(`🗂️ Добавляем в карту: orderId=${item.orderId}, productId=${item.productId}, hasProduct=${!!item.product}`);
         orderItemsMap.set(item.orderId, item);
@@ -134,7 +165,7 @@ export async function GET(request: NextRequest) {
     console.log(`🗺️ Карта order-items содержит ключи:`, Array.from(orderItemsMap.keys()));
     console.log(`🗺️ Заказы пользователя имеют ID:`, allOrderIds);
     
-    // НОВОЕ: Проверяем есть ли order-items с близкими ID
+    // ✅ ШАГ 4: Проверяем близкие ID для заказов без прямых совпадений
     console.log('\n🔍 ПОИСК СВЯЗЕЙ ПО БЛИЗКИМ ID:');
     allOrderIds.forEach((orderId: any) => {
       const orderIdStr = orderId.toString();
@@ -142,7 +173,7 @@ export async function GET(request: NextRequest) {
       
       if (!hasDirectMatch) {
         // Ищем order-items с ID близкими к orderId
-        const closeMatches = (orderItemsData.data || []).filter((item: any) => {
+        const closeMatches = allOrderItems.filter((item: any) => {
           const itemOrderId = parseInt(item.orderId);
           const targetOrderId = parseInt(orderIdStr);
           const diff = Math.abs(itemOrderId - targetOrderId);
@@ -162,7 +193,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // ✅ ШАГ 4: Преобразуем данные с получением продуктов по ID
+    // ✅ ШАГ 5: Преобразуем данные (остальной код остается тот же)
     const orders: UserOrder[] = [];
 
     for (const order of ordersData.data || []) {
@@ -199,7 +230,7 @@ export async function GET(request: NextRequest) {
           
           try {
             const productResponse = await fetch(
-              `${STRAPI_URL}/api/products/${orderItemData.productId}`,
+              `${STRAPI_URL}/api/products/${orderItemData.productId}?fields=mainPhoto`,
               {
                 headers: {
                   'Content-Type': 'application/json',
@@ -261,12 +292,12 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('✅ Заказы пользователя обработаны:', orders.length);
-    console.log('🔍 ИТОГОВЫЕ ДАННЫЕ ДЛЯ ФРОНТЕНДА:', JSON.stringify(orders, null, 2));
 
     return NextResponse.json({
       success: true,
       orders,
       count: orders.length,
+      totalOrderItems: allOrderItems.length,
       message: 'Заказы успешно загружены'
     });
 
