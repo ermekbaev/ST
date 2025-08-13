@@ -1,7 +1,7 @@
-// src/components/Checkout/NewOrderSummary.tsx
+// src/components/Checkout/NewOrderSummary.tsx - ИСПРАВЛЕНО
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
 
 interface CartItem {
@@ -15,6 +15,16 @@ interface CartItem {
   article?: string;
 }
 
+interface SimplePromoCode {
+  id: number;
+  code: string;
+  title: string;
+  discountType: 'percentage' | 'fixed_amount' | 'free_delivery';
+  discountValue: number;
+  minOrderAmount: number;
+  isActive: boolean;
+}
+
 interface NewOrderSummaryProps {
   cartItems: CartItem[];
   onSubmit: (data: any) => void;
@@ -22,7 +32,6 @@ interface NewOrderSummaryProps {
   selectedPayment: string;
   isMobile?: boolean;
   isProcessing?: boolean;
-  // ✅ ДОБАВЛЕНО: Функция для получения данных формы
   getFormData?: () => any;
 }
 
@@ -37,12 +46,6 @@ const DELIVERY_OPTIONS = [
   { id: 'cdek_courier', name: 'СДЭК - доставка курьером', price: 500 }
 ];
 
-const PROMO_CODES: Record<string, { type: 'amount' | 'percentage' | 'free_shipping'; discount: number }> = {
-  'SAVE10': { type: 'percentage', discount: 10 },
-  'FREESHIP': { type: 'free_shipping', discount: 0 },
-  'SAVE500': { type: 'amount', discount: 500 }
-};
-
 const MIN_ORDER_FREE_DELIVERY = 5000;
 
 // ============================================================================
@@ -55,51 +58,57 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
   selectedDelivery,
   selectedPayment,
   isMobile = false,
-  isProcessing = false, // ✅ ДОБАВЛЕНО: поддержка isProcessing
-  getFormData, // ✅ ДОБАВЛЕНО: функция для получения данных формы
+  isProcessing = false,
+  getFormData,
 }) => {
   // ============================================================================
-  // КОНТЕКСТ КОРЗИНЫ ДЛЯ УПРАВЛЕНИЯ ТОВАРАМИ
+  // КОНТЕКСТ КОРЗИНЫ
   // ============================================================================
   
   const { updateQuantity, removeFromCart } = useCart();
 
   // ============================================================================
-  // СОСТОЯНИЕ
+  // СОСТОЯНИЕ ПРОМОКОДОВ
   // ============================================================================
   
-  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [promoCodes, setPromoCodes] = useState<SimplePromoCode[]>([]);
+  const [appliedPromo, setAppliedPromo] = useState<SimplePromoCode | null>(null);
   const [promoInput, setPromoInput] = useState('');
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [isLoadingPromos, setIsLoadingPromos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ============================================================================
-  // ФУНКЦИЯ СКАЧИВАНИЯ ДОКУМЕНТОВ
+  // ЗАГРУЗКА ПРОМОКОДОВ ИЗ API
   // ============================================================================
   
-  const handleDownloadDocument = (docType: 'terms' | 'privacy' | 'offer') => {
-    const fileUrls = {
-      terms: '/downloads/user-agreement.doc',
-      privacy: '/downloads/privacy-policy.doc', 
-      offer: '/downloads/public-offer.doc'
+  useEffect(() => {
+    const loadPromoCodes = async () => {
+      try {
+        setIsLoadingPromos(true);
+        console.log('🎟️ Загружаем промокоды...');
+        
+        const response = await fetch('/api/promocodes');
+        const result = await response.json();
+        
+        if (result.success) {
+          setPromoCodes(result.promocodes || []);
+          console.log(`✅ Загружено ${result.promocodes?.length || 0} промокодов`);
+        } else {
+          console.error('❌ Ошибка загрузки промокодов:', result.error);
+          setPromoCodes([]);
+        }
+        
+      } catch (error) {
+        console.error('❌ Ошибка запроса промокодов:', error);
+        setPromoCodes([]);
+      } finally {
+        setIsLoadingPromos(false);
+      }
     };
 
-    const fileNames = {
-      terms: 'Пользовательское_соглашение.doc',
-      privacy: 'Политика_конфиденциальности.doc',
-      offer: 'Договор_оферты.doc'
-    };
-
-    // Создаем ссылку для скачивания
-    const link = document.createElement('a');
-    link.href = fileUrls[docType];
-    link.download = fileNames[docType];
-    link.style.display = 'none';
-    
-    // Добавляем в DOM, кликаем и удаляем
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+    loadPromoCodes();
+  }, []);
 
   // ============================================================================
   // ОБРАБОТЧИКИ КОЛИЧЕСТВА ТОВАРОВ
@@ -121,7 +130,7 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
   }, [removeFromCart]);
 
   // ============================================================================
-  // РАСЧЕТЫ ЦЕНЫ
+  // РАСЧЕТЫ ЦЕНЫ С ПРОМОКОДАМИ
   // ============================================================================
   
   const calculations = useMemo(() => {
@@ -139,19 +148,21 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
     
     // Применение промокода
     let promoDiscount = 0;
-    if (appliedPromo && PROMO_CODES[appliedPromo]) {
-      const promo = PROMO_CODES[appliedPromo];
-      switch (promo.type) {
-        case 'amount':
-          promoDiscount = Math.min(promo.discount, subtotal);
-          break;
-        case 'percentage':
-          promoDiscount = Math.floor(subtotal * (promo.discount / 100));
-          break;
-        case 'free_shipping':
-          promoDiscount = selectedDeliveryOption?.price || 0;
-          deliveryPrice = 0;
-          break;
+    if (appliedPromo) {
+      // Проверяем минимальную сумму заказа
+      if (subtotal >= appliedPromo.minOrderAmount) {
+        switch (appliedPromo.discountType) {
+          case 'fixed_amount':
+            promoDiscount = Math.min(appliedPromo.discountValue, subtotal);
+            break;
+          case 'percentage':
+            promoDiscount = Math.floor(subtotal * (appliedPromo.discountValue / 100));
+            break;
+          case 'free_delivery':
+            promoDiscount = selectedDeliveryOption?.price || 0;
+            deliveryPrice = 0;
+            break;
+        }
       }
     }
     
@@ -168,58 +179,170 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
   }, [cartItems, selectedDelivery, appliedPromo]);
 
   // ============================================================================
-  // ОБРАБОТЧИКИ СОБЫТИЙ
+  // ОБРАБОТЧИКИ ПРОМОКОДОВ
   // ============================================================================
   
   const handleApplyPromo = useCallback(() => {
     const code = promoInput.trim().toUpperCase();
-    if (PROMO_CODES[code]) {
-      setAppliedPromo(code);
-    } else {
-      alert('Промокод не найден');
+    setPromoError(null);
+    
+    if (!code) {
+      setPromoError('Введите промокод');
+      return;
     }
-  }, [promoInput]);
+    
+    // Ищем промокод в загруженном списке
+    const foundPromo = promoCodes.find(promo => promo.code === code);
+    
+    if (!foundPromo) {
+      setPromoError('Промокод не найден');
+      return;
+    }
+    
+    // Проверяем минимальную сумму заказа
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    if (subtotal < foundPromo.minOrderAmount) {
+      setPromoError(`Минимальная сумма заказа для этого промокода: ${foundPromo.minOrderAmount} ₽`);
+      return;
+    }
+    
+    // Применяем промокод
+    setAppliedPromo(foundPromo);
+    setPromoInput('');
+    setPromoError(null);
+    
+    console.log('✅ Промокод применен:', foundPromo.code);
+    
+    // Увеличиваем счетчик использования
+    fetch('/api/promocodes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ promoCodeId: foundPromo.id })
+    }).catch(err => console.log('Ошибка обновления счетчика:', err));
+    
+  }, [promoInput, promoCodes, cartItems]);
 
   const handleRemovePromo = useCallback(() => {
     setAppliedPromo(null);
     setPromoInput('');
+    setPromoError(null);
+    console.log('🗑️ Промокод удален');
   }, []);
 
-  // ✅ ИСПРАВЛЕНО: Убран костыль с document.getElementById
-  const handleSubmit = useCallback(async () => {
-    if (isSubmitting || isProcessing) return; // Предотвращаем двойную отправку
+  // ============================================================================
+  // ФУНКЦИЯ СКАЧИВАНИЯ ДОКУМЕНТОВ
+  // ============================================================================
+  
+  const handleDownloadDocument = (docType: 'terms' | 'privacy' | 'offer') => {
+    const fileUrls = {
+      terms: '/downloads/user-agreement.doc',
+      privacy: '/downloads/privacy-policy.doc', 
+      offer: '/downloads/public-offer.doc'
+    };
+
+    const fileNames = {
+      terms: 'Пользовательское_соглашение.doc',
+      privacy: 'Политика_конфиденциальности.doc',
+      offer: 'Договор_оферты.doc'
+    };
+
+    const link = document.createElement('a');
+    link.href = fileUrls[docType];
+    link.download = fileNames[docType];
+    link.style.display = 'none';
     
-    setIsSubmitting(true);
-    try {
-      let formData = {};
-      
-      if (getFormData) {
-        // Используем функцию из props, если она есть
-        formData = getFormData();
-      } else {
-        // Fallback: костыль с DOM (оставляем для совместимости)
-        const form = document.getElementById('checkout-form') as HTMLFormElement;
-        if (form) {
-          const formDataDOM = new FormData(form);
-          formData = Object.fromEntries(formDataDOM.entries());
-        }
-      }
-      
-      await onSubmit({
-        ...formData,
-        deliveryMethod: selectedDelivery,
-        paymentMethod: selectedPayment,
-        total: calculations.total
-      });
-    } catch (error) {
-      console.error('Ошибка отправки заказа:', error);
-    } finally {
-      setIsSubmitting(false);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getFormDataFromDOM = useCallback(() => {
+  console.log('🔍 Ищем форму checkout-form...');
+  
+  const form = document.getElementById('checkout-form') as HTMLFormElement;
+  if (!form) {
+    console.error('❌ Форма checkout-form не найдена в DOM');
+    console.log('🔍 Доступные формы:', document.querySelectorAll('form'));
+    return {};
+  }
+
+  console.log('✅ Форма найдена:', form);
+  
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+  
+  console.log('📋 Извлеченные данные формы:', data);
+  console.log('📝 Количество полей:', Object.keys(data).length);
+  
+  // Проверяем основные поля
+  const requiredFields = ['firstName', 'phone'];
+  const missingFields = requiredFields.filter(field => !data[field]);
+  
+  if (missingFields.length > 0) {
+    console.warn('⚠️ Отсутствуют обязательные поля:', missingFields);
+  }
+  
+  return data;
+}, []);
+
+
+const handleSubmit = useCallback(async () => {
+  if (isSubmitting || isProcessing) return;
+  
+  console.log('🚀 NewOrderSummary: Начинаем отправку заказа');
+  
+  setIsSubmitting(true);
+  try {
+    let formData = {};
+    
+    if (getFormData) {
+      // Используем функцию из props
+      formData = getFormData();
+    } else {
+      // Получаем данные из DOM
+      formData = getFormDataFromDOM();
     }
-  }, [onSubmit, selectedDelivery, selectedPayment, calculations.total, getFormData, isSubmitting, isProcessing]);
+    
+    console.log('📋 Данные формы:', formData);
+    console.log('💰 Наши расчеты:', calculations);
+    
+    // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Создаем полный объект с данными
+    const completeOrderData = {
+      // Данные формы
+      ...formData,
+      // Способы доставки и оплаты
+      deliveryMethod: selectedDelivery,
+      paymentMethod: selectedPayment,
+      // ✅ ФИНАЛЬНЫЕ РАСЧЕТЫ С ПРОМОКОДОМ
+      total: calculations.total,
+      subtotal: calculations.subtotal,
+      deliveryPrice: calculations.deliveryPrice,
+      promoDiscount: calculations.promoDiscount,
+      // Информация о промокоде
+      appliedPromoCode: appliedPromo ? {
+        code: appliedPromo.code,
+        discountAmount: calculations.promoDiscount,
+        discountType: appliedPromo.discountType
+      } : null
+    };
+    
+    console.log('📤 Отправляем ПОЛНЫЕ данные заказа:', completeOrderData);
+    console.log('💰 Финальная цена:', completeOrderData.total);
+    
+    await onSubmit(completeOrderData);
+    
+  } catch (error) {
+    console.error('❌ Ошибка отправки заказа:', error);
+  } finally {
+    setIsSubmitting(false);
+  }
+}, [onSubmit, selectedDelivery, selectedPayment, calculations, getFormData, getFormDataFromDOM, isSubmitting, isProcessing, appliedPromo]);
+
+
+
 
   // ============================================================================
-  // ОСНОВНОЙ РЕНДЕР - ТОЧНО КАК БЫЛО
+  // ОСНОВНОЙ РЕНДЕР
   // ============================================================================
 
   return (
@@ -254,14 +377,12 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
               {/* ИНФОРМАЦИЯ О ТОВАРЕ */}
               <div className={`checkout-order-item-info ${isMobile ? 'checkout-order-item-info--mobile' : ''}`}>
                 
-                {/* Название товара */}
                 <h4 className={`checkout-order-item-name ${
                   isMobile ? 'checkout-order-item-name--mobile' : ''
                 }`}>
                   {item.name}
                 </h4>
                 
-                {/* Размер (если есть) */}
                 {item.size && (
                   <p className={`checkout-order-item-size ${
                     isMobile ? 'checkout-order-item-size--mobile' : ''
@@ -270,14 +391,12 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
                   </p>
                 )}
 
-                {/* КОНТРОЛЫ И ЦЕНА */}
                 <div className={`checkout-order-item-controls ${
                   isMobile ? 'checkout-order-item-controls--mobile' : ''
                 }`}>
                   
                   {/* КОНТРОЛЫ КОЛИЧЕСТВА */}
                   {!isMobile ? (
-                    // Десктопная версия контролов
                     <div className="checkout-quantity-controls">
                       <button
                         type="button"
@@ -299,7 +418,6 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
                       </button>
                     </div>
                   ) : (
-                    // Мобильная версия контролов
                     <div className="checkout-order-item-price-section--mobile">
                       <div className="checkout-quantity-controls--mobile">
                         <button
@@ -324,7 +442,6 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
                     </div>
                   )}
                   
-                  {/* КНОПКА УДАЛЕНИЯ (только на мобиле) */}
                   {isMobile && (
                     <button
                       type="button"
@@ -335,24 +452,12 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
                     </button>
                   )}
                   
-                  {/* ЦЕНА ТОВАРА */}
                   <span className={`checkout-order-item-price ${
                     isMobile ? 'checkout-order-item-price--mobile' : ''
                   }`}>
                     {(item.price * item.quantity).toLocaleString('ru-RU')} ₽
                   </span>
                 </div>
-
-                {/* КНОПКА УДАЛЕНИЯ (только на десктопе) */}
-                {/* {!isMobile && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(item)}
-                    className="text-red-500 hover:text-red-700 text-sm mt-2 transition-colors"
-                  >
-                    ✕ Удалить
-                  </button>
-                )} */}
               </div>
             </div>
           ))}
@@ -364,36 +469,66 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
         <h3 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
           ПРОМОКОД
         </h3>
+        
+        {isLoadingPromos && (
+          <div className="text-sm text-gray-500">Загружаем промокоды...</div>
+        )}
+        
         {!appliedPromo ? (
-          <div className="checkout-promo-container">
-            <input
-              type="text"
-              value={promoInput}
-              onChange={(e) => setPromoInput(e.target.value)}
-              placeholder="Введите промокод"
-              className="checkout-promo-input"
-            />
-            <button
-              type="button"
-              onClick={handleApplyPromo}
-              className="checkout-promo-btn"
-              disabled={!promoInput.trim()}
-            >
-              Применить
-            </button>
+          <div className="space-y-3">
+            <div className="checkout-promo-container">
+              <input
+                type="text"
+                value={promoInput}
+                onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                onKeyPress={(e) => e.key === 'Enter' && handleApplyPromo()}
+                placeholder="Введите промокод"
+                className="checkout-promo-input"
+                disabled={isLoadingPromos}
+              />
+              <button
+                type="button"
+                onClick={handleApplyPromo}
+                className="checkout-promo-btn"
+                disabled={!promoInput.trim() || isLoadingPromos}
+              >
+                ПРИМЕНИТЬ
+              </button>
+            </div>
+            
+            {promoError && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+                {promoError}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded">
-            <span className="text-green-700 font-medium">
-              ✓ Промокод {appliedPromo} применен
-            </span>
-            <button
-              type="button"
-              onClick={handleRemovePromo}
-              className="text-red-600 hover:text-red-800"
-            >
-              Удалить
-            </button>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded">
+              <div>
+                <span className="text-green-700 font-medium">
+                  ✓ Промокод {appliedPromo.code} применен
+                </span>
+                {appliedPromo.title && (
+                  <div className="text-sm text-green-600">
+                    {appliedPromo.title}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleRemovePromo}
+                className="text-red-600 hover:text-red-800"
+              >
+                Удалить
+              </button>
+            </div>
+            
+            <div className="text-right">
+              <span className="text-lg font-semibold text-green-600">
+                -{calculations.promoDiscount} ₽
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -423,7 +558,7 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
 
         {calculations.promoDiscount > 0 && (
           <div className="flex justify-between text-green-600">
-            <span>Скидка:</span>
+            <span>Скидка по промокоду:</span>
             <span>-{calculations.promoDiscount} ₽</span>
           </div>
         )}
@@ -438,68 +573,7 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
         </div>
       </div>
 
-      {/* КНОПКА ОФОРМЛЕНИЯ ЗАКАЗА - на мобиле */}
-      {isMobile && (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting || isProcessing}
-          className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
-        </button>
-      )}
-
-      {/* СОГЛАСИЕ С УСЛОВИЯМИ - на мобиле после кнопки */}
-      {isMobile && (
-        <div className="text-sm text-gray-600 leading-5">
-          Оформляя заказ, Вы подтверждаете согласие с{' '}
-          <button 
-            onClick={() => handleDownloadDocument('terms')}
-            className="underline hover:no-underline cursor-pointer inline-flex items-center"
-          >
-            Пользовательским соглашением
-            <svg 
-              className="w-3 h-3 ml-1" 
-              fill="currentColor" 
-              viewBox="0 0 16 16"
-            >
-              <path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z"/>
-            </svg>
-          </button>
-          ,{' '}
-          <button 
-            onClick={() => handleDownloadDocument('privacy')}
-            className="underline hover:no-underline cursor-pointer inline-flex items-center"
-          >
-            Политикой конфиденциальности
-            <svg 
-              className="w-3 h-3 ml-1" 
-              fill="currentColor" 
-              viewBox="0 0 16 16"
-            >
-              <path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z"/>
-            </svg>
-          </button>
-          {' '}и{' '}
-          <button 
-            onClick={() => handleDownloadDocument('offer')}
-            className="underline hover:no-underline cursor-pointer inline-flex items-center"
-          >
-            Договором оферты
-            <svg 
-              className="w-3 h-3 ml-1" 
-              fill="currentColor" 
-              viewBox="0 0 16 16"
-            >
-              <path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z"/>
-            </svg>
-          </button>
-          .
-        </div>
-      )}
-
-      {/* КНОПКА ОФОРМЛЕНИЯ ЗАКАЗА - только на десктопе */}
+      {/* ✅ ИСПРАВЛЕНО: КНОПКА ТОЛЬКО НА ДЕСКТОПЕ */}
       {!isMobile && (
         <button
           type="button"
@@ -511,31 +585,19 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
         </button>
       )}
 
-      {/* СОГЛАСИЕ С УСЛОВИЯМИ - только на десктопе и в самом низу */}
+      {/* ✅ ИСПРАВЛЕНО: СОГЛАСИЕ ТОЛЬКО НА ДЕСКТОПЕ */}
       {!isMobile && (
         <div className="checkout-terms-text">
           Оформляя заказ, Вы подтверждаете согласие с{' '}
-          <button 
-            onClick={() => handleDownloadDocument('terms')}
-            className="underline hover:no-underline cursor-pointer inline-flex items-center"
-          >
+          <button onClick={() => handleDownloadDocument('terms')} className="underline hover:no-underline cursor-pointer">
             Пользовательским соглашением
-          </button>
-          ,{' '}
-          <button 
-            onClick={() => handleDownloadDocument('privacy')}
-            className="underline hover:no-underline cursor-pointer inline-flex items-center"
-          >
+          </button>,{' '}
+          <button onClick={() => handleDownloadDocument('privacy')} className="underline hover:no-underline cursor-pointer">
             Политикой конфиденциальности
-          </button>
-          {' '}и{' '}
-          <button 
-            onClick={() => handleDownloadDocument('offer')}
-            className="underline hover:no-underline cursor-pointer inline-flex items-center"
-          >
+          </button> и{' '}
+          <button onClick={() => handleDownloadDocument('offer')} className="underline hover:no-underline cursor-pointer">
             Договором оферты
-          </button>
-          .
+          </button>.
         </div>
       )}
     </div>

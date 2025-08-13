@@ -1,10 +1,10 @@
-// src/app/checkout/page.tsx - ОБНОВЛЕН С ПОДДЕРЖКОЙ ЮKASSA
+// src/app/checkout/page.tsx - ИСПРАВЛЕН ДЛЯ ПРОМОКОДОВ
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
-import { createPayment, formatCartItemsForPayment } from '@/services/paymentService'; // 🔥 ДОБАВЛЕНО
+import { createPayment, formatCartItemsForPayment } from '@/services/paymentService';
 import NewCheckoutForm from '@/components/Checkout/newChekoutForm';
 import NewOrderSummary from '@/components/Checkout/newCheckoutSummary';
 
@@ -13,7 +13,7 @@ const CheckoutPage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // 🔥 ДОБАВЛЕНО
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   
   const [selectedDelivery, setSelectedDelivery] = useState('store_pickup');
@@ -36,40 +36,39 @@ const CheckoutPage: React.FC = () => {
     }
   }, [items, router, isLoading, orderCompleted, isProcessing, isProcessingPayment]);
 
-  // 🔥 ИСПРАВЛЕННАЯ ФУНКЦИЯ: НЕ ОЧИЩАЕМ КОРЗИНУ ДО ОПЛАТЫ
+  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: Использует финальную цену с промокодом
   const processPayment = async (orderData: any, orderResponse: any) => {
     if (orderData.paymentMethod === 'card' && orderResponse.orderId) {
       console.log('💳 Инициируем оплату через ЮKassa');
+      console.log('💰 Финальная сумма для ЮKassa:', orderData.total);
       
       setIsProcessingPayment(true);
       
       try {
         const paymentData = {
-          amount: orderData.totalAmount,
+          // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: используем финальную цену С ПРОМОКОДОМ
+          amount: orderData.total, // ← Это цена уже С промокодом!
           orderId: orderResponse.orderId,
           customerEmail: orderData.customerInfo.email,
           customerPhone: orderData.customerInfo.phone,
           description: `Оплата заказа #${orderResponse.orderNumber || orderResponse.orderId} в Tigr Shop`,
-          // 🔥 ИСПРАВЛЕНО: Добавляем paymentId в return_url
           returnUrl: `${window.location.origin}/order-success?orderNumber=${orderResponse.orderNumber}`,
           items: formatCartItemsForPayment(items)
         };
 
-        console.log('🔥 Создаем платеж в ЮKassa:', paymentData);
+        console.log('🔥 Создаем платеж в ЮKassa на сумму:', paymentData.amount);
 
         const paymentResponse = await createPayment(paymentData);
         
         if (paymentResponse.success && paymentResponse.confirmationUrl) {
-          console.log('✅ Платеж создан, перенаправляем на ЮKassa:', paymentResponse.confirmationUrl);
+          console.log('✅ Платеж создан, перенаправляем на ЮKassa');
           
-          // 🔥 ИСПРАВЛЕНО: НЕ очищаем корзину и НЕ устанавливаем completed
-          // Корзина очистится только после УСПЕШНОЙ оплаты через webhook
-          
-          // Сохраняем ID платежа в localStorage для проверки при возврате
+          // Сохраняем данные
           localStorage.setItem('pendingPaymentId', paymentResponse.paymentId || '');
           localStorage.setItem('pendingOrderId', orderResponse.orderId || '');
+          localStorage.setItem('finalAmount', orderData.total.toString()); // Сохраняем финальную сумму
           
-          // Перенаправляем на страницу оплаты ЮKassa
+          // Перенаправляем на ЮKassa
           window.location.href = paymentResponse.confirmationUrl;
           return;
           
@@ -84,8 +83,8 @@ const CheckoutPage: React.FC = () => {
         throw error;
       }
     } else {
-      // Для других способов оплаты - обычное перенаправление
-      console.log('📦 Заказ создан без онлайн оплаты');
+      // Для других способов оплаты
+      console.log('📦 Заказ создан без онлайн оплаты на сумму:', orderData.total);
       clearCart();
       setOrderCompleted(true);
       
@@ -93,26 +92,15 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  // Функция расчета общей стоимости
-  const calculateTotal = () => {
-    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // Простая логика доставки (можно улучшить)
-    let deliveryPrice = 0;
-    if (selectedDelivery === 'cdek_pickup') deliveryPrice = 300;
-    if (selectedDelivery === 'cdek_courier') deliveryPrice = 500;
-    if (selectedDelivery === 'post_russia') deliveryPrice = 250;
-    if (selectedDelivery === 'boxberry') deliveryPrice = 350;
-    
-    return subtotal + deliveryPrice;
-  };
+  // ✅ УДАЛИЛИ calculateTotal() - теперь цену передает NewOrderSummary
 
-  // 🔥 ОБНОВЛЕННЫЙ ОБРАБОТЧИК ОТПРАВКИ ЗАКАЗА
+  // ✅ ОБНОВЛЕННЫЙ ОБРАБОТЧИК: Получает финальную цену от NewOrderSummary
   const handleOrderSubmit = async (orderData: any) => {
     if (isProcessing || isProcessingPayment) return;
     
-    console.log('🚀 НАЧИНАЕМ ОБРАБОТКУ ЗАКАЗА С ЮKASSA');
-    console.log('📋 Данные формы:', orderData);
+    console.log('🚀 НАЧИНАЕМ ОБРАБОТКУ ЗАКАЗА');
+    console.log('📋 Данные от NewOrderSummary:', orderData);
+    console.log('💰 Финальная цена с промокодом:', orderData.total);
     console.log('💳 Способ оплаты:', orderData.paymentMethod || selectedPayment);
     
     setIsProcessing(true);
@@ -127,7 +115,7 @@ const CheckoutPage: React.FC = () => {
         throw new Error('Корзина пуста');
       }
 
-      // Подготавливаем данные для API
+      // ✅ ИСПРАВЛЕНО: Используем финальную цену от NewOrderSummary
       const orderPayload = {
         customerInfo: {
           name: orderData.firstName.trim(),
@@ -142,18 +130,23 @@ const CheckoutPage: React.FC = () => {
           quantity: item.quantity,
           priceAtTime: item.price,
         })),
-        totalAmount: calculateTotal(),
+        // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: используем финальную цену с промокодом
+        totalAmount: orderData.total, // ← Цена С ПРОМОКОДОМ от NewOrderSummary!
         deliveryMethod: selectedDelivery,
-        paymentMethod: orderData.paymentMethod || selectedPayment, // 🔥 ВАЖНО: берем из формы
+        paymentMethod: orderData.paymentMethod || selectedPayment,
         deliveryAddress: orderData.city && orderData.address 
           ? `${orderData.city.trim()}, ${orderData.address.trim()}`
           : '',
         notes: orderData.notes?.trim() || '',
+        
+        // ✅ ДОПОЛНИТЕЛЬНО: Сохраняем данные о промокоде для отладки
+        originalTotal: orderData.subtotal + (orderData.deliveryPrice || 0),
+        promoDiscount: orderData.promoDiscount || 0,
+        appliedPromoCode: orderData.appliedPromoCode || null
       };
 
-      console.log('📤 Отправляем заказ в Strapi:', orderPayload);
-      console.log('💳 Проверяем способ оплаты:', orderPayload.paymentMethod);
-      console.log('❓ Это карта?', orderPayload.paymentMethod === 'card');
+      console.log('📤 Отправляем заказ в Strapi на сумму:', orderPayload.totalAmount);
+      console.log('🎟️ Примененный промокод:', orderPayload.appliedPromoCode?.code || 'НЕТ');
 
       // Отправляем в API заказов
       const token = localStorage.getItem('authToken');
@@ -174,9 +167,18 @@ const CheckoutPage: React.FC = () => {
 
       console.log('✅ Заказ создан в Strapi:', orderResponse);
 
-      // 🔥 НОВОЕ: Обрабатываем платеж через ЮKassa
-      console.log('🚀 Запускаем обработку платежа...');
-      await processPayment(orderPayload, orderResponse);
+      // ✅ ИСПРАВЛЕНО: Передаем orderData с финальной ценой
+      console.log('🚀 Запускаем обработку платежа на сумму:', orderData.total);
+      
+      // Передаем объект с финальной ценой
+      const paymentOrderData = {
+        ...orderPayload,
+        total: orderData.total, // ← Финальная цена для ЮKassa
+        customerInfo: orderPayload.customerInfo,
+        paymentMethod: orderPayload.paymentMethod
+      };
+      
+      await processPayment(paymentOrderData, orderResponse);
 
     } catch (error: any) {
       console.error('❌ Ошибка при обработке заказа:', error);
@@ -274,7 +276,7 @@ const CheckoutPage: React.FC = () => {
         </div>
       </main>
 
-      {/* 🔥 ДОБАВЛЕНО: Индикатор обработки платежа */}
+      {/* Индикатор обработки платежа */}
       {isProcessingPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg text-center max-w-sm mx-4">
