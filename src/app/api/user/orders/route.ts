@@ -1,279 +1,197 @@
-// src/app/api/user/orders/route.ts
+// src/app/api/user/orders/route.ts - ФИНАЛЬНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
-
-interface OrderItem {
-  id: string;
-  productName: string;
-  quantity: number;
-  size: string;
-  priceAtTime: number;
-  productImage?: string;
-}
-
-interface UserOrder {
-  id: string;
-  orderNumber: string;
-  totalAmount: number;
-  orderStatus: string;
-  paymentStatus: string;
-  deliveryMethod: string;
-  paymentMethod: string;
-  deliveryAddress?: string;
-  customerName: string;
-  customerPhone: string;
-  customerEmail?: string;
-  notes?: string;
-  createdAt: string;
-  items: OrderItem[];
-}
-
-// src/app/api/user/orders/route.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ С ПРАВИЛЬНОЙ ПАГИНАЦИЕЙ
 
 export async function GET(request: NextRequest) {
   try {
     console.log('📋 API: Запрос истории заказов пользователя');
     
-    // ✅ Проверяем авторизацию (код остается тот же)
+    // ✅ Проверяем авторизацию
     const authHeader = request.headers.get('authorization');
     const userToken = authHeader?.replace('Bearer ', '') || null;
     
     if (!userToken) {
-      console.log('❌ Токен не передан, доступ запрещен');
-      return NextResponse.json(
-        { success: false, error: 'Необходима авторизация' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Необходима авторизация' }, { status: 401 });
     }
 
-    // ✅ Получаем данные пользователя (код остается тот же)
-    let userId: string | null = null;
-    try {
-      const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${userToken}`,
-        },
-      });
+    // ✅ Получаем данные пользователя
+    const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
+      headers: { 'Authorization': `Bearer ${userToken}` },
+    });
 
-      if (!userResponse.ok) {
-        console.log('❌ Токен недействителен');
-        return NextResponse.json(
-          { success: false, error: 'Недействительный токен' },
-          { status: 401 }
-        );
-      }
-
-      const userData = await userResponse.json();
-      userId = userData.id;
-      console.log('✅ Пользователь найден:', userData.id, userData.email);
-    } catch (error) {
-      console.error('❌ Ошибка проверки пользователя:', error);
-      return NextResponse.json(
-        { success: false, error: 'Ошибка проверки авторизации' },
-        { status: 500 }
-      );
+    if (!userResponse.ok) {
+      return NextResponse.json({ success: false, error: 'Недействительный токен' }, { status: 401 });
     }
+
+    const userData = await userResponse.json();
+    const userId = userData.id;
+    console.log('✅ Пользователь найден:', userId);
 
     // ✅ ШАГ 1: Получаем заказы пользователя
-    console.log(`🔍 Ищем заказы для пользователя ${userId}...`);
-    
     const ordersResponse = await fetch(
-      `${STRAPI_URL}/api/orders?filters[user][id][$eq]=${userId}&populate=order_item&sort[0]=createdAt:desc&pagination[limit]=200`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      `${STRAPI_URL}/api/orders?filters[user][id][$eq]=${userId}&sort[0]=createdAt:desc&pagination[limit]=200`,
+      { headers: { 'Content-Type': 'application/json' } }
     );
-
-    if (!ordersResponse.ok) {
-      const errorText = await ordersResponse.text();
-      console.error('❌ Ошибка получения заказов из Strapi:', errorText);
-      return NextResponse.json(
-        { success: false, error: 'Ошибка загрузки заказов' },
-        { status: 500 }
-      );
-    }
 
     const ordersData = await ordersResponse.json();
     console.log(`📦 Найдено заказов: ${ordersData.data?.length || 0}`);
 
-    // ✅ ШАГ 2: ИСПРАВЛЕНО - Получаем ВСЕ order-items с правильной пагинацией
-    console.log('🔄 Загружаем ВСЕ order-items...');
-    
+    // ✅ ШАГ 2: Получаем ВСЕ order-items
     let allOrderItems: any[] = [];
     let currentPage = 1;
-    const pageSize = 100;
     let hasMorePages = true;
 
-    while (hasMorePages) {
-      console.log(`📥 Загружаем страницу ${currentPage} order-items...`);
-      
+    while (hasMorePages && currentPage <= 20) {
       const orderItemsResponse = await fetch(
-        `${STRAPI_URL}/api/order-items?populate=*&pagination[page]=${currentPage}&pagination[pageSize]=${pageSize}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        `${STRAPI_URL}/api/order-items?populate=*&pagination[page]=${currentPage}&pagination[pageSize]=100`,
+        { headers: { 'Content-Type': 'application/json' } }
       );
 
-      if (!orderItemsResponse.ok) {
-        console.warn(`⚠️ Ошибка загрузки страницы ${currentPage} order-items`);
-        break;
-      }
+      if (!orderItemsResponse.ok) break;
 
       const pageData = await orderItemsResponse.json();
       const pageItems = pageData.data || [];
       
-      console.log(`📦 Страница ${currentPage}: загружено ${pageItems.length} order-items`);
-      
       allOrderItems = [...allOrderItems, ...pageItems];
       
-      // Проверяем есть ли еще страницы
       const pagination = pageData.meta?.pagination;
       hasMorePages = pagination && currentPage < pagination.pageCount;
       currentPage++;
-      
-      // Безопасность: не загружаем больше 20 страниц
-      if (currentPage > 20) {
-        console.warn('⚠️ Достигнут лимит страниц (20), прекращаем загрузку');
-        break;
-      }
     }
 
     console.log(`📦 ИТОГО загружено order-items: ${allOrderItems.length}`);
-    
-    // Показываем все order-items для отладки
-    console.log('🔍 ВСЕ ORDER-ITEMS:');
-    allOrderItems.forEach((item: any) => {
-      console.log(`  - ID: ${item.id}, orderId: ${item.orderId}, productId: ${item.productId}, product: ${!!item.product}`);
-    });
 
-    // ✅ ШАГ 3: Создаем карту order-items
-    const orderItemsMap = new Map();
-    const allOrderIds = (ordersData.data || []).map((o: any) => o.id);
+    // ✅ ШАГ 3: УЛУЧШЕННОЕ СВЯЗЫВАНИЕ - ищем order-items для каждого заказа
+    console.log('\n🔍 === АНАЛИЗ СВЯЗЕЙ ЗАКАЗОВ И ORDER-ITEMS ===');
     
-    allOrderItems.forEach((item: any) => {
-      if (item.orderId) {
-        console.log(`🗂️ Добавляем в карту: orderId=${item.orderId}, productId=${item.productId}, hasProduct=${!!item.product}`);
-        orderItemsMap.set(item.orderId, item);
-      }
-    });
-
-    console.log(`🗺️ Карта order-items содержит ключи:`, Array.from(orderItemsMap.keys()));
-    console.log(`🗺️ Заказы пользователя имеют ID:`, allOrderIds);
+    // Показываем ID всех заказов
+    const orderIds = (ordersData.data || []).map((o: any) => o.id);
+    console.log('📋 ID заказов пользователя:', orderIds);
     
-    // ✅ ШАГ 4: Проверяем близкие ID для заказов без прямых совпадений
-    console.log('\n🔍 ПОИСК СВЯЗЕЙ ПО БЛИЗКИМ ID:');
-    allOrderIds.forEach((orderId: any) => {
-      const orderIdStr = orderId.toString();
-      const hasDirectMatch = orderItemsMap.has(orderIdStr);
-      
-      if (!hasDirectMatch) {
-        // Ищем order-items с ID близкими к orderId
-        const closeMatches = allOrderItems.filter((item: any) => {
-          const itemOrderId = parseInt(item.orderId);
-          const targetOrderId = parseInt(orderIdStr);
-          const diff = Math.abs(itemOrderId - targetOrderId);
-          return diff <= 5; // В пределах 5 ID
-        });
-        
-        console.log(`  Заказ ${orderIdStr}: прямого совпадения нет, близкие ID:`, 
-          closeMatches.map((item: any) => `orderId=${item.orderId} (diff=${Math.abs(parseInt(item.orderId) - parseInt(orderIdStr))})`));
-          
-        // Если есть единственное близкое совпадение, используем его
-        if (closeMatches.length === 1) {
-          console.log(`  ✅ Используем близкое совпадение: orderId=${closeMatches[0].orderId} для заказа ${orderIdStr}`);
-          orderItemsMap.set(orderIdStr, closeMatches[0]);
-        }
-      } else {
-        console.log(`  Заказ ${orderIdStr}: ✅ есть прямое совпадение`);
-      }
-    });
+    // Показываем orderId всех order-items
+    const orderItemOrderIds = allOrderItems.map((item: any) => item.orderId).filter(Boolean);
+    console.log('📋 orderId в order-items:', orderItemOrderIds);
 
-    // ✅ ШАГ 5: Преобразуем данные (остальной код остается тот же)
-    const orders: UserOrder[] = [];
+    // ✅ ШАГ 4: ОБРАБОТКА КАЖДОГО ЗАКАЗА
+    const orders: any[] = [];
 
     for (const order of ordersData.data || []) {
-      console.log(`\n🔍 === ОБРАБАТЫВАЕМ ЗАКАЗ ${order.orderNumber} (ID: ${order.id}) ===`);
+      console.log(`\n🔍 === ЗАКАЗ ${order.orderNumber} (ID: ${order.id}) ===`);
       
-      // Ищем полную информацию о позиции заказа
-      const fullOrderItem = orderItemsMap.get(order.id.toString());
-      const orderItemData = fullOrderItem || order.order_item;
-      
-      console.log(`📋 Информация о товаре:`, {
-        orderIdString: order.id.toString(),
-        hasBasicOrderItem: !!order.order_item,
-        hasFullOrderItem: !!fullOrderItem,
-        productId: orderItemData?.productId,
-        productName: orderItemData?.productName,
-        hasLinkedProduct: !!orderItemData?.product,
-        productMainPhoto: orderItemData?.product?.mainPhoto
-      });
+      // Ищем order-items для этого заказа разными способами
+      let orderItemData = null;
+      let matchMethod = 'none';
 
-      // Формируем товары заказа
-      const items: OrderItem[] = [];
+      // СПОСОБ 1: Точное совпадение orderId
+      const exactMatch = allOrderItems.find((item: any) => 
+        item.orderId === order.id.toString()
+      );
       
-      if (orderItemData) {
-        let productImage = '/api/placeholder/98/50';
+      if (exactMatch) {
+        orderItemData = exactMatch;
+        matchMethod = 'exact';
+        console.log(`✅ ${order.orderNumber}: Найдено точное совпадение orderId`);
+      }
+      
+      // СПОСОБ 2: Близкие ID (в пределах ±10)
+      if (!orderItemData) {
+        const closeMatches = allOrderItems.filter((item: any) => {
+          const itemOrderId = parseInt(item.orderId);
+          const targetOrderId = parseInt(order.id.toString());
+          const diff = Math.abs(itemOrderId - targetOrderId);
+          return diff <= 10 && diff > 0;
+        });
         
-        // Если есть связанный product с фото, используем его
+        if (closeMatches.length === 1) {
+          orderItemData = closeMatches[0];
+          matchMethod = 'close';
+          console.log(`✅ ${order.orderNumber}: Найдено близкое совпадение (orderId: ${closeMatches[0].orderId})`);
+        } else if (closeMatches.length > 1) {
+          // Берем самое близкое
+          closeMatches.sort((a: any, b: any) => {
+            const diffA = Math.abs(parseInt(a.orderId) - parseInt(order.id.toString()));
+            const diffB = Math.abs(parseInt(b.orderId) - parseInt(order.id.toString()));
+            return diffA - diffB;
+          });
+          orderItemData = closeMatches[0];
+          matchMethod = 'closest';
+          console.log(`✅ ${order.orderNumber}: Выбрано ближайшее совпадение (orderId: ${closeMatches[0].orderId})`);
+        }
+      }
+
+      // СПОСОБ 3: По времени создания (в пределах 5 минут)
+      if (!orderItemData) {
+        const orderTime = new Date(order.createdAt).getTime();
+        const timeMatches = allOrderItems.filter((item: any) => {
+          const itemTime = new Date(item.createdAt).getTime();
+          const timeDiff = Math.abs(orderTime - itemTime);
+          return timeDiff <= 5 * 60 * 1000; // 5 минут
+        });
+        
+        if (timeMatches.length === 1) {
+          orderItemData = timeMatches[0];
+          matchMethod = 'time';
+          console.log(`✅ ${order.orderNumber}: Найдено совпадение по времени`);
+        }
+      }
+
+      // ✅ ШАГ 5: ОБРАБОТКА ИЗОБРАЖЕНИЯ
+      let productImage = '/api/placeholder/98/50';
+      let imageSource = 'placeholder';
+
+      if (orderItemData) {
+        console.log(`📋 ${order.orderNumber}: OrderItem найден (${matchMethod}), productId: ${orderItemData.productId}`);
+        
+        // 1. Проверяем связанный product
         if (orderItemData.product?.mainPhoto) {
           productImage = orderItemData.product.mainPhoto;
-          console.log(`✅ Используем фото из связанного продукта: ${productImage.substring(0, 50)}...`);
+          imageSource = 'linked_product';
+          console.log(`✅ ${order.orderNumber}: Изображение из связанного продукта`);
         }
-        // НОВОЕ: Если нет связанного product, получаем его по productId
+        // 2. Загружаем продукт по API
         else if (orderItemData.productId) {
-          console.log(`🔍 Загружаем продукт по ID: ${orderItemData.productId}`);
+          console.log(`🔍 ${order.orderNumber}: Загружаем продукт ${orderItemData.productId}...`);
           
           try {
+            // ИСПРАВЛЕНО: Используем правильный endpoint с полями
             const productResponse = await fetch(
-              `${STRAPI_URL}/api/products/${orderItemData.productId}?fields=mainPhoto`,
-              {
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-              }
+              `${STRAPI_URL}/api/products/${orderItemData.productId}?fields[0]=mainPhoto&fields[1]=name`,
+              { headers: { 'Content-Type': 'application/json' } }
             );
+            
+            console.log(`📡 ${order.orderNumber}: Статус запроса продукта: ${productResponse.status}`);
             
             if (productResponse.ok) {
               const productData = await productResponse.json();
-              if (productData.data?.mainPhoto) {
-                productImage = productData.data.mainPhoto;
-                console.log(`✅ Получено фото продукта: ${productImage.substring(0, 50)}...`);
+              console.log(`📦 ${order.orderNumber}: Ответ продукта:`, {
+                hasData: !!productData.data,
+                attributes: productData.data?.attributes || productData.data,
+                mainPhoto: productData.data?.attributes?.mainPhoto || productData.data?.mainPhoto
+              });
+              
+              // ИСПРАВЛЕНО: Проверяем и attributes, и прямые поля
+              const mainPhoto = productData.data?.attributes?.mainPhoto || productData.data?.mainPhoto;
+              if (mainPhoto) {
+                productImage = mainPhoto;
+                imageSource = 'fetched_product';
+                console.log(`✅ ${order.orderNumber}: Изображение получено по API: ${mainPhoto.substring(0, 50)}...`);
               } else {
-                console.log(`⚠️ У продукта ${orderItemData.productId} нет mainPhoto`);
+                console.log(`⚠️ ${order.orderNumber}: У продукта нет mainPhoto`);
               }
             } else {
-              console.log(`⚠️ Продукт ${orderItemData.productId} не найден в API (статус: ${productResponse.status})`);
+              console.log(`❌ ${order.orderNumber}: Продукт не найден (${productResponse.status})`);
             }
           } catch (error) {
-            console.warn(`⚠️ Ошибка загрузки продукта ${orderItemData.productId}:`, error);
+            console.error(`❌ ${order.orderNumber}: Ошибка загрузки продукта:`, error);
           }
         }
-
-        items.push({
-          id: orderItemData.id.toString(),
-          productName: orderItemData.productName || orderItemData.product?.name || `Товар ${orderItemData.productId}`,
-          quantity: orderItemData.quantity || 1,
-          size: orderItemData.size?.value || 'ONE SIZE',
-          priceAtTime: parseFloat(orderItemData.priceAtTime) || 0,
-          productImage
-        });
-
-        console.log(`✅ Товар для заказа ${order.orderNumber}:`, {
-          name: items[0].productName,
-          size: items[0].size,
-          imageUrl: items[0].productImage,
-          hasRealImage: items[0].productImage !== '/api/placeholder/98/50'
-        });
       } else {
-        console.log(`⚠️ НЕТ ДАННЫХ О ТОВАРЕ для заказа ${order.orderNumber} (order_item отсутствует)`);
+        console.log(`❌ ${order.orderNumber}: OrderItem НЕ НАЙДЕН`);
       }
 
-      orders.push({
+      // ✅ ШАГ 6: СОЗДАЕМ ЗАКАЗ
+      const orderResult = {
         id: order.id.toString(),
         orderNumber: order.orderNumber,
         totalAmount: parseFloat(order.totalAmount) || 0,
@@ -287,29 +205,63 @@ export async function GET(request: NextRequest) {
         customerEmail: order.customerEmail || '',
         notes: order.notes || '',
         createdAt: order.createdAt,
-        items
+        items: orderItemData ? [{
+          id: orderItemData.id.toString(),
+          productName: orderItemData.productName || orderItemData.product?.name || orderItemData.product?.attributes?.name || `Товар ${orderItemData.productId}`,
+          quantity: orderItemData.quantity || 1,
+          size: orderItemData.size?.value || orderItemData.size?.attributes?.value || 'ONE SIZE',
+          priceAtTime: parseFloat(orderItemData.priceAtTime) || 0,
+          productImage
+        }] : [],
+        debug: {
+          orderItemFound: !!orderItemData,
+          matchMethod: matchMethod,
+          imageSource: imageSource,
+          productId: orderItemData?.productId,
+          hasLinkedProduct: !!orderItemData?.product,
+          orderItemOrderId: orderItemData?.orderId
+        }
+      };
+
+      console.log(`📋 ${order.orderNumber}: ИТОГОВЫЙ РЕЗУЛЬТАТ:`, {
+        hasItems: orderResult.items.length > 0,
+        matchMethod: matchMethod,
+        imageSource: imageSource,
+        isPlaceholder: orderResult.items[0]?.productImage === '/api/placeholder/98/50'
       });
+
+      orders.push(orderResult);
     }
 
-    console.log('✅ Заказы пользователя обработаны:', orders.length);
+    // ✅ ФИНАЛЬНАЯ СТАТИСТИКА
+    console.log('\n🎯 === ФИНАЛЬНАЯ СТАТИСТИКА ===');
+    const withImages = orders.filter(o => o.items.length > 0 && o.items[0].productImage !== '/api/placeholder/98/50').length;
+    const withPlaceholders = orders.filter(o => o.items.length > 0 && o.items[0].productImage === '/api/placeholder/98/50').length;
+    const withoutItems = orders.filter(o => o.items.length === 0).length;
+    
+    console.log(`📊 Заказов с фото: ${withImages}`);
+    console.log(`📊 Заказов с placeholder: ${withPlaceholders}`);
+    console.log(`📊 Заказов без товаров: ${withoutItems}`);
 
     return NextResponse.json({
       success: true,
       orders,
       count: orders.length,
       totalOrderItems: allOrderItems.length,
-      message: 'Заказы успешно загружены'
+      debug: {
+        ordersWithImages: withImages,
+        ordersWithPlaceholders: withPlaceholders,
+        ordersWithoutItems: withoutItems,
+        totalOrderItems: allOrderItems.length,
+        orderIds: orderIds,
+        orderItemOrderIds: orderItemOrderIds
+      }
     });
 
   } catch (error) {
-    console.error('❌ Ошибка получения заказов пользователя:', error);
-    
+    console.error('❌ Ошибка:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Внутренняя ошибка сервера',
-        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
-      },
+      { success: false, error: 'Внутренняя ошибка сервера' },
       { status: 500 }
     );
   }
