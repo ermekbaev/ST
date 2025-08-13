@@ -1,5 +1,6 @@
 // src/types/orders.ts - ОБНОВЛЕННЫЕ типы с поддержкой оплаты
 export interface OrderItem {
+  price: any;
   id: string;
   productName: string;
   quantity: number;

@@ -42,48 +42,65 @@ const OrderHistoryPage: React.FC = () => {
         throw new Error(data.error || 'Ошибка получения данных');
       }
 
-      // Преобразуем данные из вашего API в формат для компонентов
-      const transformedOrders: ExtendedOrder[] = (data.orders || []).map((apiOrder: any) => ({
-        id: apiOrder.orderNumber,
-        orderNumber: apiOrder.orderNumber,
-        date: new Date(apiOrder.createdAt).toLocaleDateString('ru-RU', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }),
-        status: getDisplayStatus(apiOrder.orderStatus, apiOrder.paymentStatus),
-        total: `${apiOrder.totalAmount.toLocaleString('ru-RU')} ₽`,
-        items: apiOrder.items.map((item: any) => ({
-          id: item.id,
-          productName: item.productName,
-          quantity: item.quantity,
-          image: item.productImage || '/api/placeholder/98/50'
-        })),
-        deliveryDetails: {
-          name: apiOrder.customerName || 'Пользователь',
-          address: apiOrder.deliveryAddress || 'Адрес не указан',
-          email: apiOrder.customerEmail || 'Email не указан'
-        },
-        deliveryMethod: getDeliveryMethodText(apiOrder.deliveryMethod),
-        paymentMethod: getPaymentMethodText(apiOrder.paymentMethod),
-        notes: apiOrder.notes || '',
-        orderTime: new Date(apiOrder.createdAt).toLocaleString('ru-RU', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        canPay: apiOrder.orderStatus === 'pending' && apiOrder.paymentStatus === 'pending',
-        paymentStatus: apiOrder.paymentStatus,
-        orderStatus: apiOrder.orderStatus,
-        customerName: apiOrder.customerName,
-        customerEmail: apiOrder.customerEmail,
-        deliveryAddress: apiOrder.deliveryAddress
-      }));
+      // ✅ ОБНОВЛЕНО: Преобразуем данные с поддержкой нескольких товаров
+      const transformedOrders: ExtendedOrder[] = (data.orders || []).map((apiOrder: any) => {
+        console.log(`🔄 Обрабатываем заказ ${apiOrder.orderNumber}: ${apiOrder.items.length} товаров`);
+        
+        return {
+          id: apiOrder.orderNumber,
+          orderNumber: apiOrder.orderNumber,
+          date: new Date(apiOrder.createdAt).toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }),
+          status: getDisplayStatus(apiOrder.orderStatus, apiOrder.paymentStatus),
+          total: `${apiOrder.totalAmount.toLocaleString('ru-RU')} ₽`,
+          // ✅ ИСПРАВЛЕНО: Обрабатываем все товары, а не только первый
+          items: apiOrder.items.map((item: any) => ({
+            id: item.id,
+            productName: item.productName,
+            quantity: item.quantity,
+            size: item.size || 'ONE SIZE',
+            price: item.priceAtTime,
+            image: item.productImage || '/api/placeholder/98/50'
+          })),
+          deliveryDetails: {
+            name: apiOrder.customerName || 'Пользователь',
+            address: apiOrder.deliveryAddress || 'Адрес не указан',
+            email: apiOrder.customerEmail || 'Email не указан'
+          },
+          deliveryMethod: getDeliveryMethodText(apiOrder.deliveryMethod),
+          paymentMethod: getPaymentMethodText(apiOrder.paymentMethod),
+          notes: apiOrder.notes || '',
+          orderTime: new Date(apiOrder.createdAt).toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          canPay: apiOrder.orderStatus === 'pending' && apiOrder.paymentStatus === 'pending',
+          paymentStatus: apiOrder.paymentStatus,
+          orderStatus: apiOrder.orderStatus,
+          customerName: apiOrder.customerName,
+          customerEmail: apiOrder.customerEmail,
+          deliveryAddress: apiOrder.deliveryAddress,
+          // ✅ ДОБАВЛЕНО: Информация о количестве товаров
+          totalItems: apiOrder.items.length
+        };
+      });
 
       setOrders(transformedOrders);
-      console.log(`✅ Загружено ${transformedOrders.length} заказов`);
+      
+      // Логируем статистику
+      const totalOrders = transformedOrders.length;
+      const totalItems = transformedOrders.reduce((sum, order) => sum + order.items.length, 0);
+      const ordersWithMultipleItems = transformedOrders.filter(order => order.items.length > 1).length;
+      
+      console.log(`✅ Загружено заказов: ${totalOrders}`);
+      console.log(`📦 Общее количество товаров: ${totalItems}`);
+      console.log(`🛍️ Заказов с несколькими товарами: ${ordersWithMultipleItems}`);
 
     } catch (err) {
       console.error('❌ Ошибка загрузки заказов:', err);

@@ -8,7 +8,8 @@ interface OrderCardProps {
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  // ✅ ИЗМЕНЕНО: imageError теперь объект для отслеживания ошибок каждого изображения
+  const [imageError, setImageError] = useState<{[key: string]: boolean}>({});
   
   // Состояние для оплаты
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
@@ -18,15 +19,23 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
     setIsExpanded(!isExpanded);
   };
 
-  const handleImageError = () => {
-    setImageError(true);
+  // ✅ ИЗМЕНЕНО: Обработка ошибок для конкретного товара
+  const handleImageError = (itemId: string) => {
+    setImageError(prev => ({ ...prev, [itemId]: true }));
   };
 
-  const getProductImage = () => {
-    if (imageError) {
+  // ✅ ИЗМЕНЕНО: Получение изображения для конкретного товара
+  const getProductImage = (item: any) => {
+    if (imageError[item.id]) {
       return '/api/placeholder/98/50';
     }
-    return order.items[0]?.image || '/api/placeholder/98/50';
+    return item.image || '/api/placeholder/98/50';
+  };
+
+  // ✅ ДОБАВЛЕНО: Получение главного изображения (первый товар)
+  const getMainProductImage = () => {
+    if (order.items.length === 0) return '/api/placeholder/98/50';
+    return getProductImage(order.items[0]);
   };
 
   // Определяем, можно ли оплатить заказ
@@ -132,19 +141,22 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
         {/* Основная строка заказа - 4 колонки */}
         <div className="grid grid-cols-4 gap-8 py-8 items-start">
           
-          {/* Колонка 1: Номер заказа + Фото */}
+          {/* Колонка 1: Номер заказа + Фото + Индикатор множественных товаров */}
           <div className="flex flex-col space-y-4">
-            <div className="text-[20px] leading-[30px] font-black italic text-black">
-              {order.orderNumber || order.id}
+            {/* ✅ ОБНОВЛЕНО: Номер заказа с индикатором количества товаров */}
+            <div className="flex items-center space-x-2">
+              <div className="text-[20px] leading-[30px] font-black italic text-black">
+                {order.orderNumber || order.id}
+              </div>
             </div>
             
-            {/* Фото товара */}
+            {/* ✅ ОБНОВЛЕНО: Фото главного товара */}
             <div className="w-[98px] h-[50px] bg-[#E5DDD4] flex items-center justify-center overflow-hidden rounded">
               <img 
-                src={getProductImage()}
+                src={getMainProductImage()}
                 alt={order.items[0]?.productName || 'Товар'}
                 className="w-full h-full object-contain bg-white"
-                onError={handleImageError}
+                onError={() => handleImageError(order.items[0]?.id || 'main')}
               />
             </div>
           </div>
@@ -179,24 +191,66 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
           </div>
         </div>
 
-        {/* Детальная информация - раскрывающаяся */}
+        {/* ✅ ОБНОВЛЕНО: Детальная информация - увеличена высота для множественных товаров */}
         <div 
           className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+            isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="grid grid-cols-4 gap-8 pb-8">
             
-            {/* Колонка 1: Дата оформления + Товар */}
+            {/* ✅ ПОЛНОСТЬЮ ОБНОВЛЕНО: Колонка 1: Дата оформления + Все товары */}
             <div className="space-y-4">
               <div>
                 <div className="text-[20px] leading-[30px] font-black italic text-black">
                   Оформлен: {order.date}
                 </div>
               </div>
-              <div>
-                <div className="text-[20px] leading-[27px] text-black">
-                  {order.items[0]?.productName || 'Товар'} количество {order.items[0]?.quantity || 1}
+              
+              {/* Секция товаров */}
+              <div className="space-y-3">
+                <div className="text-[20px] leading-[30px] font-black italic text-black uppercase mb-2">
+                  Товары ({order.items.length})
+                </div>
+                
+                {/* Список всех товаров */}
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {order.items.map((item, itemIndex) => (
+                    <div key={item.id} className="flex items-start space-x-3 p-2 bg-gray-50 rounded">
+                      {/* Номер товара */}
+                      <div className="w-6 h-6 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+                        {itemIndex + 1}
+                      </div>
+                      
+                      {/* Фото товара */}
+                      <div className="w-[60px] h-[40px] bg-[#E5DDD4] flex items-center justify-center overflow-hidden rounded flex-shrink-0">
+                        <img 
+                          src={getProductImage(item)}
+                          alt={item.productName}
+                          className="w-full h-full object-contain bg-white"
+                          onError={() => handleImageError(item.id)}
+                        />
+                      </div>
+                      
+                      {/* Информация о товаре */}
+                      <div className="flex-grow min-w-0">
+                        <div className="text-[16px] leading-[22px] text-black font-medium mb-1">
+                          {item.productName}
+                        </div>
+                        <div className="text-[14px] leading-[18px] text-[#8C8072]">
+                          Размер: <strong>{item.size || 'ONE SIZE'}</strong>
+                        </div>
+                        <div className="text-[14px] leading-[18px] text-[#8C8072]">
+                          Количество: <strong>{item.quantity}</strong>
+                        </div>
+                        {item.price && (
+                          <div className="text-[14px] leading-[18px] text-[#8C8072]">
+                            Цена: <strong>{item.price.toLocaleString()} ₽</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -281,18 +335,20 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
           
           {/* ЛЕВЫЙ БЛОК: Номер заказа + Фото + Кнопка подробнее */}
           <div className="flex flex-col space-y-3">
-            {/* Номер заказа */}
-            <div className="text-[15px] leading-[22px] font-black italic text-black">
-              {order.orderNumber || order.id}
+            {/* ✅ ОБНОВЛЕНО: Номер заказа с индикатором */}
+            <div className="flex items-center space-x-2">
+              <div className="text-[15px] leading-[22px] font-black italic text-black">
+                {order.orderNumber || order.id}
+              </div>
             </div>
             
-            {/* Фото товара */}
+            {/* ✅ ОБНОВЛЕНО: Фото товара */}
             <div className="w-[98px] h-[50px] bg-[#E5DDD4] flex items-center justify-center overflow-hidden rounded">
               <img 
-                src={getProductImage()}
+                src={getMainProductImage()}
                 alt={order.items[0]?.productName || 'Товар'}
                 className="w-full h-full object-cover"
-                onError={handleImageError}
+                onError={() => handleImageError(order.items[0]?.id || 'main')}
               />
             </div>
             
@@ -311,36 +367,71 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
           </div>
         </div>
 
-        {/* ДЕТАЛИ (раскрывающиеся 5-6 блоков) */}
+        {/* ✅ ОБНОВЛЕНО: ДЕТАЛИ - увеличена высота для множественных товаров */}
         <div 
           className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+            isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="space-y-4 pt-2">
             
             {/* БЛОК 1: Оформлен/дата + ИТОГО/цена */}
             <div className="space-y-2">
-              {/* Оформлен + дата (flex justify-around) */}
               <div className="flex justify-between items-center">
                 <span className="text-[15px] leading-[22px] font-black italic text-black">Оформлен:</span>
                 <span className="text-[15px] leading-[22px] font-black italic text-black">{order.date}</span>
               </div>
               
-              {/* ИТОГО + цена (flex justify-around) */}
               <div className="flex justify-between items-center">
                 <span className="text-[15px] leading-[22px] font-black italic text-black">ИТОГО</span>
                 <span className="text-[15px] leading-[22px] font-black italic text-black">{order.total}</span>
               </div>
             </div>
 
-            {/* БЛОК 2: Название товара сверху + количество снизу */}
+            {/* ✅ ПОЛНОСТЬЮ ОБНОВЛЕНО: БЛОК 2: Все товары в заказе */}
             <div>
-              <div className="text-[15px] leading-[20px] text-black mb-1">
-                {order.items[0]?.productName || 'Товар'}
+              <div className="text-[15px] leading-[22px] font-black italic text-black uppercase mb-2">
+                Товары в заказе ({order.items.length})
               </div>
-              <div className="text-[15px] leading-[20px] text-[#8C8072]">
-                Количество {order.items[0]?.quantity || 1}
+              
+              {/* Показываем все товары */}
+              <div className="space-y-3">
+                {order.items.map((item, itemIndex) => (
+                  <div key={item.id} className="flex items-start space-x-3 p-2 bg-gray-50 rounded">
+                    {/* Номер товара */}
+                    <div className="w-6 h-6 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center flex-shrink-0 font-bold">
+                      {itemIndex + 1}
+                    </div>
+                    
+                    {/* Фото товара */}
+                    <div className="w-[50px] h-[35px] bg-[#E5DDD4] flex items-center justify-center overflow-hidden rounded flex-shrink-0">
+                      <img 
+                        src={getProductImage(item)}
+                        alt={item.productName}
+                        className="w-full h-full object-contain bg-white"
+                        onError={() => handleImageError(item.id)}
+                      />
+                    </div>
+                    
+                    {/* Информация о товаре */}
+                    <div className="flex-grow min-w-0">
+                      <div className="text-[13px] leading-[18px] text-black font-medium mb-1">
+                        {item.productName}
+                      </div>
+                      <div className="text-[11px] leading-[15px] text-[#8C8072]">
+                        Размер: <strong>{item.size || 'ONE SIZE'}</strong>
+                      </div>
+                      <div className="text-[11px] leading-[15px] text-[#8C8072]">
+                        Количество: <strong>{item.quantity}</strong>
+                      </div>
+                      {item.price && (
+                        <div className="text-[11px] leading-[15px] text-[#8C8072]">
+                          Цена: <strong>{item.price.toLocaleString()} ₽</strong>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
