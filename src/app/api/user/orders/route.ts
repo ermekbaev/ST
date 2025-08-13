@@ -1,4 +1,4 @@
-// src/app/api/user/orders/route.ts - ОБНОВЛЕНО С ПРАВИЛЬНЫМ POPULATE
+// src/app/api/user/orders/route.ts - ИСПРАВЛЕНО С ПРАВИЛЬНОЙ ТИПИЗАЦИЕЙ
 import { NextRequest, NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     console.log(`🔍 Загружаем заказы для пользователя ${userId} с полным populate...`);
     
     let ordersData = null;
-    let workingPopulateField = 'order_items';
+    let workingPopulateField: string | null = 'order_items'; // ✅ ИСПРАВЛЕНО: правильная типизация
 
     try {
       // ✅ ИСПОЛЬЗУЕМ РАСШИРЕННЫЙ POPULATE ДЛЯ ЗАГРУЗКИ PRODUCT И SIZE
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
         }
 
         ordersData = await ordersResponse.json();
-        workingPopulateField = null;
+        workingPopulateField = null; // ✅ ИСПРАВЛЕНО: теперь null разрешен
         console.log('⚠️ Загружены заказы БЕЗ populate');
       }
     }
