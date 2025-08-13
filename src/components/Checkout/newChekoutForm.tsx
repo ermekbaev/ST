@@ -1,4 +1,4 @@
-// src/components/Checkout/NewCheckoutForm.tsx
+// src/components/Checkout/NewCheckoutForm.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React, { useState, useCallback } from 'react';
@@ -43,6 +43,8 @@ interface NewCheckoutFormProps {
   onPaymentChange: (paymentId: string) => void;
   isMobile?: boolean;
   isProcessing?: boolean;
+  // ✅ ДОБАВЛЕНО: Функция для получения данных промокодов
+  getPromoData?: () => any;
 }
 
 // ============================================================================
@@ -73,7 +75,8 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   onDeliveryChange,
   onPaymentChange,
   isMobile = false,
-  isProcessing = false, // ✅ ДОБАВЛЕНО: поддержка isProcessing
+  isProcessing = false,
+  getPromoData, // ✅ ДОБАВЛЕНО
 }) => {
   // ============================================================================
   // СОСТОЯНИЕ И ФОРМА
@@ -132,19 +135,57 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     onPaymentChange(paymentId); // ✅ Уведомляем родительский компонент
   }, [setValue, onPaymentChange]);
 
-  // ✅ ИСПРАВЛЕНО: Улучшена обработка отправки с проверкой состояния
+  // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Обработка отправки с промокодами
   const onFormSubmit = useCallback(async (data: CheckoutFormData) => {
-    if (isSubmitting || isProcessing) return; // Предотвращаем двойную отправку
+    if (isSubmitting || isProcessing) return;
+    
+    console.log('🚀 NewCheckoutForm (react-hook-form): Отправка заказа');
+    console.log('📋 Данные формы:', data);
+    console.log('📱 Мобильная версия:', isMobile);
     
     setIsSubmitting(true);
     try {
-      await onSubmit(data);
+      // ✅ УЛУЧШЕННОЕ получение данных о промокодах
+      let promoData = null;
+      if (getPromoData) {
+        console.log('🔍 Пытаемся получить данные промокодов...');
+        try {
+          promoData = getPromoData();
+          console.log('✅ Получены данные промокодов:', promoData);
+        } catch (error) {
+          console.warn('⚠️ Ошибка получения промокодов:', error);
+        }
+      } else {
+        console.warn('⚠️ getPromoData не передана в форму');
+      }
+      
+      // ✅ Объединяем данные формы с промокодами
+      const completeOrderData = {
+        ...data,
+        // Добавляем данные о промокодах если есть
+        ...(promoData && {
+          total: promoData.total,
+          subtotal: promoData.subtotal,
+          deliveryPrice: promoData.deliveryPrice,
+          promoDiscount: promoData.promoDiscount,
+          appliedPromoCode: promoData.appliedPromoCode
+        })
+      };
+      
+      console.log('📤 NewCheckoutForm отправляет данные:');
+      console.log('📋 Полные данные:', completeOrderData);
+      console.log('💰 Финальная цена:', completeOrderData.total || 'НЕ УСТАНОВЛЕНА');
+      console.log('🎟️ Промокод:', completeOrderData.appliedPromoCode?.code || 'НЕТ');
+      console.log('💸 Скидка:', completeOrderData.promoDiscount || 0);
+      
+      await onSubmit(completeOrderData);
+      
     } catch (error) {
-      console.error('Ошибка отправки формы:', error);
+      console.error('❌ Ошибка отправки формы:', error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [onSubmit, isSubmitting, isProcessing]);
+  }, [onSubmit, isSubmitting, isProcessing, getPromoData, isMobile]);
 
   // ============================================================================
   // РЕНДЕР КОМПОНЕНТОВ
@@ -298,15 +339,22 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         {renderPaymentOptions()}
       </div>
 
-      {/* ✅ ДОБАВЛЕНО: Только кнопка для мобильных (не меняет дизайн) */}
+      {/* ✅ КНОПКА ТОЛЬКО ДЛЯ МОБИЛЬНЫХ (теперь с промокодами!) */}
       {isMobile && (
-        <button
-          type="submit"
-          disabled={isSubmitting || isProcessing}
-          className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
-        </button>
+        <div className="space-y-4">
+          <button
+            type="submit"
+            disabled={isSubmitting || isProcessing}
+            className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+          </button>
+          
+          {/* Согласие с условиями */}
+          <div className="checkout-terms-text--mobile">
+            Оформляя заказ, Вы подтверждаете согласие с Пользовательским соглашением, Политикой конфиденциальности и Договором оферты.
+          </div>
+        </div>
       )}
 
     </form>

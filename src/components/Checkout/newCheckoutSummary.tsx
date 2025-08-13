@@ -1,7 +1,7 @@
-// src/components/Checkout/NewOrderSummary.tsx - ИСПРАВЛЕНО
+// src/components/Checkout/newCheckoutSummary.tsx - ИСПРАВЛЕНО
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useCart } from '@/contexts/CartContext';
 
 interface CartItem {
@@ -49,10 +49,10 @@ const DELIVERY_OPTIONS = [
 const MIN_ORDER_FREE_DELIVERY = 5000;
 
 // ============================================================================
-// ОСНОВНОЙ КОМПОНЕНТ
+// ОСНОВНОЙ КОМПОНЕНТ С forwardRef
 // ============================================================================
 
-const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({ 
+const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({ 
   cartItems, 
   onSubmit, 
   selectedDelivery,
@@ -60,7 +60,7 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
   isMobile = false,
   isProcessing = false,
   getFormData,
-}) => {
+}, ref) => {
   // ============================================================================
   // КОНТЕКСТ КОРЗИНЫ
   // ============================================================================
@@ -257,89 +257,112 @@ const NewOrderSummary: React.FC<NewOrderSummaryProps> = ({
   };
 
   const getFormDataFromDOM = useCallback(() => {
-  console.log('🔍 Ищем форму checkout-form...');
-  
-  const form = document.getElementById('checkout-form') as HTMLFormElement;
-  if (!form) {
-    console.error('❌ Форма checkout-form не найдена в DOM');
-    console.log('🔍 Доступные формы:', document.querySelectorAll('form'));
-    return {};
-  }
-
-  console.log('✅ Форма найдена:', form);
-  
-  const formData = new FormData(form);
-  const data = Object.fromEntries(formData.entries());
-  
-  console.log('📋 Извлеченные данные формы:', data);
-  console.log('📝 Количество полей:', Object.keys(data).length);
-  
-  // Проверяем основные поля
-  const requiredFields = ['firstName', 'phone'];
-  const missingFields = requiredFields.filter(field => !data[field]);
-  
-  if (missingFields.length > 0) {
-    console.warn('⚠️ Отсутствуют обязательные поля:', missingFields);
-  }
-  
-  return data;
-}, []);
-
-
-const handleSubmit = useCallback(async () => {
-  if (isSubmitting || isProcessing) return;
-  
-  console.log('🚀 NewOrderSummary: Начинаем отправку заказа');
-  
-  setIsSubmitting(true);
-  try {
-    let formData = {};
+    console.log('🔍 Ищем форму checkout-form...');
     
-    if (getFormData) {
-      // Используем функцию из props
-      formData = getFormData();
-    } else {
-      // Получаем данные из DOM
-      formData = getFormDataFromDOM();
+    const form = document.getElementById('checkout-form') as HTMLFormElement;
+    if (!form) {
+      console.error('❌ Форма checkout-form не найдена в DOM');
+      console.log('🔍 Доступные формы:', document.querySelectorAll('form'));
+      return {};
+    }
+
+    console.log('✅ Форма найдена:', form);
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    console.log('📋 Извлеченные данные формы:', data);
+    console.log('📝 Количество полей:', Object.keys(data).length);
+    
+    // Проверяем основные поля
+    const requiredFields = ['firstName', 'phone'];
+    const missingFields = requiredFields.filter(field => !data[field]);
+    
+    if (missingFields.length > 0) {
+      console.warn('⚠️ Отсутствуют обязательные поля:', missingFields);
     }
     
-    console.log('📋 Данные формы:', formData);
-    console.log('💰 Наши расчеты:', calculations);
-    
-    // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Создаем полный объект с данными
-    const completeOrderData = {
-      // Данные формы
-      ...formData,
-      // Способы доставки и оплаты
-      deliveryMethod: selectedDelivery,
-      paymentMethod: selectedPayment,
-      // ✅ ФИНАЛЬНЫЕ РАСЧЕТЫ С ПРОМОКОДОМ
+    return data;
+  }, []);
+
+  // ✅ ДОБАВЛЕНО: Функция для получения данных о промокодах
+  const getPromoCalculations = useCallback(() => {
+    return {
       total: calculations.total,
       subtotal: calculations.subtotal,
       deliveryPrice: calculations.deliveryPrice,
       promoDiscount: calculations.promoDiscount,
-      // Информация о промокоде
       appliedPromoCode: appliedPromo ? {
         code: appliedPromo.code,
         discountAmount: calculations.promoDiscount,
         discountType: appliedPromo.discountType
       } : null
     };
-    
-    console.log('📤 Отправляем ПОЛНЫЕ данные заказа:', completeOrderData);
-    console.log('💰 Финальная цена:', completeOrderData.total);
-    
-    await onSubmit(completeOrderData);
-    
-  } catch (error) {
-    console.error('❌ Ошибка отправки заказа:', error);
-  } finally {
-    setIsSubmitting(false);
-  }
-}, [onSubmit, selectedDelivery, selectedPayment, calculations, getFormData, getFormDataFromDOM, isSubmitting, isProcessing, appliedPromo]);
+  }, [calculations, appliedPromo]);
 
+  // ✅ ДОБАВЛЕНО: Экспонируем функции через ref
+  useImperativeHandle(ref, () => ({
+    getPromoCalculations
+  }), [getPromoCalculations]);
 
+  // ✅ ДОБАВЛЕНО: Отладочный эффект
+  useEffect(() => {
+    console.log('🎟️ NewOrderSummary: Промокоды изменились');
+    console.log('💰 Текущие расчеты:', calculations);
+    console.log('🏷️ Примененный промокод:', appliedPromo?.code || 'НЕТ');
+  }, [calculations, appliedPromo]);
 
+  const handleSubmit = useCallback(async () => {
+    if (isSubmitting || isProcessing) return;
+    
+    console.log('🚀 NewOrderSummary: Начинаем отправку заказа');
+    
+    setIsSubmitting(true);
+    try {
+      let formData = {};
+      
+      if (getFormData) {
+        // Используем функцию из props
+        formData = getFormData();
+      } else {
+        // Получаем данные из DOM
+        formData = getFormDataFromDOM();
+      }
+      
+      console.log('📋 Данные формы:', formData);
+      console.log('💰 Наши расчеты:', calculations);
+      
+      // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Создаем полный объект с данными
+      const completeOrderData = {
+        // Данные формы
+        ...formData,
+        // Способы доставки и оплаты
+        deliveryMethod: selectedDelivery,
+        paymentMethod: selectedPayment,
+        // ✅ ФИНАЛЬНЫЕ РАСЧЕТЫ С ПРОМОКОДОМ
+        total: calculations.total,
+        subtotal: calculations.subtotal,
+        deliveryPrice: calculations.deliveryPrice,
+        promoDiscount: calculations.promoDiscount,
+        // Информация о промокоде
+        appliedPromoCode: appliedPromo ? {
+          code: appliedPromo.code,
+          discountAmount: calculations.promoDiscount,
+          discountType: appliedPromo.discountType
+        } : null
+      };
+      
+      console.log('📤 Отправляем ПОЛНЫЕ данные заказа:', completeOrderData);
+      console.log('💰 Финальная цена:', completeOrderData.total);
+      
+      await onSubmit(completeOrderData);
+      
+    } catch (error) {
+      console.error('❌ Ошибка отправки заказа:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [onSubmit, selectedDelivery, selectedPayment, calculations, getFormData, getFormDataFromDOM, isSubmitting, isProcessing, appliedPromo]);
 
   // ============================================================================
   // ОСНОВНОЙ РЕНДЕР
@@ -602,6 +625,9 @@ const handleSubmit = useCallback(async () => {
       )}
     </div>
   );
-};
+});
+
+// ✅ ДОБАВЛЕНО: Устанавливаем displayName для React DevTools
+NewOrderSummary.displayName = 'NewOrderSummary';
 
 export default NewOrderSummary;

@@ -1,12 +1,12 @@
-// src/app/checkout/page.tsx - ИСПРАВЛЕН ДЛЯ ПРОМОКОДОВ
+// src/app/checkout/page.tsx - ИСПРАВЛЕНО
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import { createPayment, formatCartItemsForPayment } from '@/services/paymentService';
-import NewCheckoutForm from '@/components/Checkout/newChekoutForm';
 import NewOrderSummary from '@/components/Checkout/newCheckoutSummary';
+import NewCheckoutForm from '@/components/Checkout/newChekoutForm';
 
 const CheckoutPage: React.FC = () => {
   const { items, clearCart } = useCart();
@@ -18,6 +18,9 @@ const CheckoutPage: React.FC = () => {
   
   const [selectedDelivery, setSelectedDelivery] = useState('store_pickup');
   const [selectedPayment, setSelectedPayment] = useState('card');
+
+  // ✅ ДОБАВЛЕНО: Ref для NewOrderSummary
+  const orderSummaryRef = useRef<any>(null);
 
   // Загрузка данных
   useEffect(() => {
@@ -36,7 +39,36 @@ const CheckoutPage: React.FC = () => {
     }
   }, [items, router, isLoading, orderCompleted, isProcessing, isProcessingPayment]);
 
-  // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ: Использует финальную цену с промокодом
+  // ✅ ДОБАВЛЕНО: Функция для получения данных промокодов
+  const getPromoData = () => {
+    console.log('🔍 getPromoData вызвана');
+    console.log('📋 orderSummaryRef.current:', !!orderSummaryRef.current);
+    
+    if (orderSummaryRef.current?.getPromoCalculations) {
+      console.log('✅ getPromoCalculations найдена, получаем данные...');
+      const promoData = orderSummaryRef.current.getPromoCalculations();
+      console.log('🎟️ Данные промокодов:', promoData);
+      return promoData;
+    } else {
+      console.warn('❌ getPromoCalculations НЕ найдена в orderSummaryRef.current');
+      console.log('🔍 Доступные методы в ref:', Object.keys(orderSummaryRef.current || {}));
+      return null;
+    }
+  };
+
+  // ✅ СОХРАНЯЕМ ФУНКЦИЮ calculateTotal как fallback
+  const calculateTotal = () => {
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    let deliveryPrice = 0;
+    if (selectedDelivery === 'cdek_pickup') deliveryPrice = 300;
+    if (selectedDelivery === 'cdek_courier') deliveryPrice = 500;
+    if (selectedDelivery === 'post_russia') deliveryPrice = 250;
+    if (selectedDelivery === 'boxberry') deliveryPrice = 350;
+    
+    return subtotal + deliveryPrice;
+  };
+
   const processPayment = async (orderData: any, orderResponse: any) => {
     if (orderData.paymentMethod === 'card' && orderResponse.orderId) {
       console.log('💳 Инициируем оплату через ЮKassa');
@@ -46,8 +78,7 @@ const CheckoutPage: React.FC = () => {
       
       try {
         const paymentData = {
-          // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: используем финальную цену С ПРОМОКОДОМ
-          amount: orderData.total, // ← Это цена уже С промокодом!
+          amount: orderData.total, // Используем финальную цену с промокодом
           orderId: orderResponse.orderId,
           customerEmail: orderData.customerInfo.email,
           customerPhone: orderData.customerInfo.phone,
@@ -63,12 +94,10 @@ const CheckoutPage: React.FC = () => {
         if (paymentResponse.success && paymentResponse.confirmationUrl) {
           console.log('✅ Платеж создан, перенаправляем на ЮKassa');
           
-          // Сохраняем данные
           localStorage.setItem('pendingPaymentId', paymentResponse.paymentId || '');
           localStorage.setItem('pendingOrderId', orderResponse.orderId || '');
-          localStorage.setItem('finalAmount', orderData.total.toString()); // Сохраняем финальную сумму
+          localStorage.setItem('finalAmount', orderData.total.toString());
           
-          // Перенаправляем на ЮKassa
           window.location.href = paymentResponse.confirmationUrl;
           return;
           
@@ -83,7 +112,6 @@ const CheckoutPage: React.FC = () => {
         throw error;
       }
     } else {
-      // Для других способов оплаты
       console.log('📦 Заказ создан без онлайн оплаты на сумму:', orderData.total);
       clearCart();
       setOrderCompleted(true);
@@ -92,16 +120,12 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  // ✅ УДАЛИЛИ calculateTotal() - теперь цену передает NewOrderSummary
-
-  // ✅ ОБНОВЛЕННЫЙ ОБРАБОТЧИК: Получает финальную цену от NewOrderSummary
+  // ✅ ОБНОВЛЕННЫЙ ОБРАБОТЧИК: Использует промокоды ИЛИ fallback
   const handleOrderSubmit = async (orderData: any) => {
     if (isProcessing || isProcessingPayment) return;
     
     console.log('🚀 НАЧИНАЕМ ОБРАБОТКУ ЗАКАЗА');
-    console.log('📋 Данные от NewOrderSummary:', orderData);
-    console.log('💰 Финальная цена с промокодом:', orderData.total);
-    console.log('💳 Способ оплаты:', orderData.paymentMethod || selectedPayment);
+    console.log('📋 Данные от формы:', orderData);
     
     setIsProcessing(true);
     
@@ -115,7 +139,14 @@ const CheckoutPage: React.FC = () => {
         throw new Error('Корзина пуста');
       }
 
-      // ✅ ИСПРАВЛЕНО: Используем финальную цену от NewOrderSummary
+      // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем промокоды если есть, иначе fallback
+      const finalTotal = orderData.total && orderData.total > 0 
+        ? orderData.total           // ← Цена С ПРОМОКОДОМ
+        : calculateTotal();         // ← Fallback если промокоды не работают
+
+      console.log('💰 Финальная цена:', finalTotal);
+      console.log('🎟️ Источник цены:', orderData.total && orderData.total > 0 ? 'С промокодами' : 'Fallback');
+
       const orderPayload = {
         customerInfo: {
           name: orderData.firstName.trim(),
@@ -130,8 +161,7 @@ const CheckoutPage: React.FC = () => {
           quantity: item.quantity,
           priceAtTime: item.price,
         })),
-        // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: используем финальную цену с промокодом
-        totalAmount: orderData.total, // ← Цена С ПРОМОКОДОМ от NewOrderSummary!
+        totalAmount: finalTotal, // ✅ Гарантированно правильная сумма
         deliveryMethod: selectedDelivery,
         paymentMethod: orderData.paymentMethod || selectedPayment,
         deliveryAddress: orderData.city && orderData.address 
@@ -139,7 +169,7 @@ const CheckoutPage: React.FC = () => {
           : '',
         notes: orderData.notes?.trim() || '',
         
-        // ✅ ДОПОЛНИТЕЛЬНО: Сохраняем данные о промокоде для отладки
+        // Дополнительно: данные о промокоде если есть
         originalTotal: orderData.subtotal + (orderData.deliveryPrice || 0),
         promoDiscount: orderData.promoDiscount || 0,
         appliedPromoCode: orderData.appliedPromoCode || null
@@ -167,13 +197,10 @@ const CheckoutPage: React.FC = () => {
 
       console.log('✅ Заказ создан в Strapi:', orderResponse);
 
-      // ✅ ИСПРАВЛЕНО: Передаем orderData с финальной ценой
-      console.log('🚀 Запускаем обработку платежа на сумму:', orderData.total);
-      
-      // Передаем объект с финальной ценой
+      // Передаем данные для платежа
       const paymentOrderData = {
         ...orderPayload,
-        total: orderData.total, // ← Финальная цена для ЮKassa
+        total: finalTotal, // ← Финальная цена для ЮKassa
         customerInfo: orderPayload.customerInfo,
         paymentMethod: orderPayload.paymentMethod
       };
@@ -229,12 +256,14 @@ const CheckoutPage: React.FC = () => {
                 onPaymentChange={setSelectedPayment}
                 isMobile={false}
                 isProcessing={isProcessing || isProcessingPayment}
+                getPromoData={getPromoData} // ✅ ДОБАВЛЕНО
               />
             </div>
                      
             {/* Правая колонка - Сводка заказа */}
             <div className="bg-white pl-[20px] pr-[70px] py-8">
               <NewOrderSummary
+                ref={orderSummaryRef} // ✅ ДОБАВЛЕНО
                 cartItems={cartItems}
                 onSubmit={handleOrderSubmit}
                 selectedDelivery={selectedDelivery}
@@ -248,7 +277,20 @@ const CheckoutPage: React.FC = () => {
 
         {/* Mobile Layout - 1 колонка с белым фоном */}
         <div className="lg:hidden bg-white min-h-screen">
-          {/* Форма сверху */}
+          {/* Сводка заказа СВЕРХУ */}
+          <div className="bg-white px-[10px] py-6">
+            <NewOrderSummary
+              ref={orderSummaryRef} // ✅ ДОБАВЛЕНО
+              cartItems={cartItems}
+              onSubmit={handleOrderSubmit}
+              selectedDelivery={selectedDelivery}
+              selectedPayment={selectedPayment}
+              isMobile={true}
+              isProcessing={isProcessing || isProcessingPayment}
+            />
+          </div>
+          
+          {/* Форма СНИЗУ */}
           <div className="px-[10px] py-6 space-y-6">
             <NewCheckoutForm
               cartItems={cartItems}
@@ -259,18 +301,7 @@ const CheckoutPage: React.FC = () => {
               onPaymentChange={setSelectedPayment}
               isMobile={true}
               isProcessing={isProcessing || isProcessingPayment}
-            />
-          </div>
-                   
-          {/* Белый блок снизу */}
-          <div className="bg-white px-[10px] py-6">
-            <NewOrderSummary
-              cartItems={cartItems}
-              onSubmit={handleOrderSubmit}
-              selectedDelivery={selectedDelivery}
-              selectedPayment={selectedPayment}
-              isMobile={true}
-              isProcessing={isProcessing || isProcessingPayment}
+              getPromoData={getPromoData} // ✅ ДОБАВЛЕНО
             />
           </div>
         </div>
