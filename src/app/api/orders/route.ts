@@ -31,6 +31,7 @@ interface CreateOrderData {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔄 API /orders вызван (асинхронная версия)');
     
     const body: CreateOrderData = await request.json();
     
@@ -88,17 +89,33 @@ export async function POST(request: NextRequest) {
       })
     };
 
+    console.log('💾 Сохраняем заказ в Strapi...');
     const orderId = await saveOrderToStrapi(orderData, body.items);
+    
+    console.log('✅ Заказ создан:', orderNumber);
 
-    await sendAdminNotification(orderNumber, body, orderData);
-
-    return NextResponse.json({
+    // 🔥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Возвращаем ответ НЕМЕДЛЕННО
+    const response = NextResponse.json({
       success: true,
       orderId,
       orderNumber,
       message: 'Заказ успешно создан',
       userOrder: !!userId
     });
+
+    // 🔥 АСИНХРОННО отправляем email ПОСЛЕ ответа клиенту
+    setImmediate(async () => {
+      try {
+        console.log('📧 Отправляем email асинхронно...');
+        await sendAdminNotificationAsync(orderNumber, body, orderData);
+        console.log('✅ Email отправлен успешно');
+      } catch (emailError) {
+        console.error('⚠️ Ошибка email (не критично):', emailError);
+        // Email ошибки не влияют на заказ
+      }
+    });
+
+    return response;
 
   } catch (error) {
     console.error('❌ Ошибка создания заказа:', error);
@@ -111,6 +128,77 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+// 🔥 АСИНХРОННАЯ отправка email с таймаутами и повторными попытками
+async function sendAdminNotificationAsync(orderNumber: string, orderData: CreateOrderData, savedData: any): Promise<void> {
+  const MAX_RETRIES = 3;
+  const TIMEOUT_MS = 10000; // 10 секунд максимум
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`📧 Попытка отправки email ${attempt}/${MAX_RETRIES}...`);
+      
+      // Создаем транспортер с жесткими таймаутами
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.mail.ru',
+        port: 465,
+        secure: true,
+        auth: {
+          user: EMAIL_USER,
+          pass: EMAIL_PASS, 
+        },
+        // 🔥 ЖЕСТКИЕ ТАЙМАУТЫ для предотвращения блокировки
+        connectionTimeout: 5000,   // 5 секунд на подключение
+        greetingTimeout: 3000,     // 3 секунды на приветствие
+        socketTimeout: 5000,       // 5 секунд на сокет
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      const messageText = formatAdminNotification(orderNumber, orderData, savedData);
+      const messageHtml = formatAdminNotificationHtml(orderNumber, orderData, savedData);
+
+      const mailOptions = {
+        from: EMAIL_FROM,
+        to: ADMIN_EMAIL,
+        subject: `🛍️ Новый заказ №${orderNumber} - ${orderData.totalAmount.toLocaleString('ru-RU')}₽`,
+        text: messageText,
+        html: messageHtml,
+      };
+
+      // 🔥 Отправляем с общим таймаутом
+      await Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email timeout')), TIMEOUT_MS)
+        )
+      ]);
+
+      console.log(`✅ Email отправлен успешно на попытке ${attempt}`);
+      return; // Успешно отправили, выходим
+
+    } catch (error) {
+      console.error(`❌ Попытка ${attempt} не удалась:`, error);
+      
+      if (attempt === MAX_RETRIES) {
+        console.error('❌ Все попытки отправки email исчерпаны');
+        
+        // В качестве последнего средства - выводим в логи
+        console.log('\n📧 === EMAIL НЕ ОТПРАВЛЕН - ДУБЛИРУЕМ В ЛОГИ ===');
+        console.log(formatAdminNotification(orderNumber, orderData, savedData));
+        console.log('=== КОНЕЦ EMAIL ДУБЛИРОВАНИЯ ===\n');
+        
+        return;
+      }
+      
+      // Ждем перед следующей попыткой (экспоненциальная задержка)
+      const delay = attempt * 2000; // 2с, 4с, 6с
+      console.log(`⏳ Ждем ${delay}ms перед попыткой ${attempt + 1}...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
 }
 
@@ -463,40 +551,6 @@ async function findSizeId(productId: string, sizeValue: string): Promise<string 
     
   } catch (error) {
     return null;
-  }
-}
-
-async function sendAdminNotification(orderNumber: string, orderData: CreateOrderData, savedData: any): Promise<void> {
-  try {
-    
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.mail.ru',
-      port: 465,
-      secure: true,
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS, 
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-
-    const messageText = formatAdminNotification(orderNumber, orderData, savedData);
-    const messageHtml = formatAdminNotificationHtml(orderNumber, orderData, savedData);
-
-    const mailOptions = {
-      from: EMAIL_FROM,
-      to: ADMIN_EMAIL,
-      subject: `🛍️ Новый заказ №${orderNumber} - ${orderData.totalAmount.toLocaleString('ru-RU')}₽`,
-      text: messageText,
-      html: messageHtml,
-    };
-
-    const result = await transporter.sendMail(mailOptions);
-    
-  } catch (error) {
-    console.error('❌ Ошибка отправки email:', error);
   }
 }
 
