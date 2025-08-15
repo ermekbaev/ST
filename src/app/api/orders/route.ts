@@ -1,10 +1,15 @@
-// src/app/api/orders/route.ts - ИСПРАВЛЕНО ПОД НОВЫЕ СВЯЗИ STRAPI
+// src/app/api/orders/route.ts - ИСПРАВЛЕНО ПОД НОВЫЕ СВЯЗИ STRAPI + EMAIL УВЕДОМЛЕНИЯ
 import { NextRequest, NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
-const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+// 🔄 ЗАМЕНИЛИ Telegram на Email настройки
+const EMAIL_USER = process.env.EMAIL_USER || 'adiletermekbaev176@gmail.com';
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'adiletermekbaev176@gmail.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'adiletermekbaev176@gmail.com';
 
 interface CreateOrderData {
   customerInfo: {
@@ -110,7 +115,7 @@ export async function POST(request: NextRequest) {
     
     console.log(`✅ Заказ сохранен в Strapi с ID: ${orderId}`, userId ? '(авторизованный)' : '(гостевой)');
 
-    // Отправляем уведомление админу
+    // 🔄 ИЗМЕНЕНО: Отправляем email уведомление админу вместо Telegram
     await sendAdminNotification(orderNumber, body, orderData);
 
     return NextResponse.json({
@@ -432,8 +437,6 @@ async function verifyOrderLinks(orderId: string): Promise<void> {
   }
 }
 
-// Остальные функции остаются без изменений...
-
 // Генерация номера заказа
 function generateOrderNumber(): string {
   const now = new Date();
@@ -551,25 +554,73 @@ async function findSizeId(productId: string, sizeValue: string): Promise<string 
   }
 }
 
-// Отправка уведомления админу
+// 🔄 ИЗМЕНЕНО: Отправка email уведомления админу (вместо Telegram)
 async function sendAdminNotification(orderNumber: string, orderData: CreateOrderData, savedData: any): Promise<void> {
   try {
-    const message = formatAdminNotification(orderNumber, orderData, savedData);
+    console.log('📧 Отправляем email уведомление админу...');
     
-    console.log('📧 Отправляем уведомление админу...');
-    
-    if (TELEGRAM_BOT_TOKEN && ADMIN_TELEGRAM_CHAT_ID) {
-      await sendTelegramNotification(message);
-    } else {
-      console.log('📧 УВЕДОМЛЕНИЕ АДМИНУ (Telegram не настроен):\n', message);
+    // Проверяем настройки email
+    if (!EMAIL_PASS) {
+      console.log('⚠️ Email не настроен (нет EMAIL_PASS), выводим в консоль:');
+      console.log('\n🎯 ==================== EMAIL УВЕДОМЛЕНИЕ ====================');
+      console.log('📧 ДЛЯ:', ADMIN_EMAIL);
+      console.log('📋 ТЕМА: 🛍️ Новый заказ №' + orderNumber);
+      console.log('============================================================');
+      console.log(formatAdminNotification(orderNumber, orderData, savedData));
+      console.log('============================================================');
+      console.log('💡 Настройте EMAIL_PASS в .env.local для автоматической отправки');
+      console.log('============================================================\n');
+      return;
     }
 
+    // Создаем транспортер для Gmail
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.mail.ru',
+      port: 465,
+      secure: true,
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS, // обычный пароль, НЕ App Password
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Форматируем сообщение
+    const messageText = formatAdminNotification(orderNumber, orderData, savedData);
+    const messageHtml = formatAdminNotificationHtml(orderNumber, orderData, savedData);
+
+    // Настройки письма
+    const mailOptions = {
+      from: EMAIL_FROM,
+      to: ADMIN_EMAIL,
+      subject: `🛍️ Новый заказ №${orderNumber} - ${orderData.totalAmount.toLocaleString('ru-RU')}₽`,
+      text: messageText,
+      html: messageHtml,
+    };
+
+    // Отправляем email
+    const result = await transporter.sendMail(mailOptions);
+    
+    console.log('✅ Email успешно отправлен на', ADMIN_EMAIL);
+    console.log('📧 Message ID:', result.messageId);
+
   } catch (error) {
-    console.error('❌ Ошибка отправки уведомления админу:', error);
+    console.error('❌ Ошибка отправки email:', error);
+    
+    // Fallback - выводим в консоль
+    console.log('\n📧 Fallback - выводим уведомление в консоль:');
+    console.log('🎯 ==================== EMAIL УВЕДОМЛЕНИЕ ====================');
+    console.log('📧 ДЛЯ:', ADMIN_EMAIL);
+    console.log('📋 ТЕМА: 🛍️ Новый заказ №' + orderNumber);
+    console.log('============================================================');
+    console.log(formatAdminNotification(orderNumber, orderData, savedData));
+    console.log('============================================================\n');
   }
 }
 
-// Форматирование уведомления
+// Форматирование уведомления (как в Telegram)
 function formatAdminNotification(orderNumber: string, orderData: CreateOrderData, savedData: any): string {
   const { customerInfo, items, totalAmount, deliveryMethod, paymentMethod } = orderData;
   
@@ -604,31 +655,107 @@ function formatAdminNotification(orderNumber: string, orderData: CreateOrderData
   return message;
 }
 
-// Отправка в Telegram
-async function sendTelegramNotification(message: string): Promise<void> {
-  try {
-    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: ADMIN_TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML'
-      })
-    });
+// Форматирование HTML версии email
+function formatAdminNotificationHtml(orderNumber: string, orderData: CreateOrderData, savedData: any): string {
+  const { customerInfo, items, totalAmount, deliveryMethod, paymentMethod } = orderData;
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Новый заказ ${orderNumber}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
+        .content { padding: 30px; }
+        .order-info { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .customer-info { margin-bottom: 25px; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .items-table th, .items-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .items-table th { background-color: #f1f2f6; font-weight: bold; }
+        .total { font-size: 18px; font-weight: bold; text-align: right; margin: 20px 0; color: #27ae60; }
+        .delivery-payment { display: flex; justify-content: space-between; margin: 20px 0; }
+        .delivery-payment > div { flex: 1; margin: 0 10px; background-color: #f8f9fa; padding: 15px; border-radius: 5px; }
+        .timestamp { text-align: center; color: #7f8c8d; font-size: 14px; margin-top: 30px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🛍️ НОВЫЙ ЗАКАЗ!</h1>
+          <h2>Заказ №${orderNumber}</h2>
+        </div>
+        
+        <div class="content">
+          <div class="customer-info">
+            <h3>👤 Информация о клиенте:</h3>
+            <p><strong>Имя:</strong> ${customerInfo.name}</p>
+            <p><strong>Телефон:</strong> ${customerInfo.phone}</p>
+            ${customerInfo.email ? `<p><strong>Email:</strong> ${customerInfo.email}</p>` : ''}
+          </div>
 
-    if (response.ok) {
-      console.log('✅ Уведомление отправлено в Telegram');
-    } else {
-      const errorText = await response.text();
-      console.error('❌ Ошибка отправки в Telegram:', errorText);
-    }
-  } catch (error) {
-    console.error('❌ Ошибка Telegram API:', error);
-  }
+          <h3>📦 Заказанные товары (${items.length} шт.):</h3>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>№</th>
+                <th>Товар</th>
+                <th>Размер</th>
+                <th>Кол-во</th>
+                <th>Цена</th>
+                <th>Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((item, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item.productName || item.productId}</td>
+                  <td>${item.size}</td>
+                  <td>${item.quantity}</td>
+                  <td>${item.priceAtTime.toLocaleString('ru-RU')}₽</td>
+                  <td>${(item.priceAtTime * item.quantity).toLocaleString('ru-RU')}₽</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="total">
+            💰 Итого: ${totalAmount.toLocaleString('ru-RU')}₽
+          </div>
+
+          <div class="delivery-payment">
+            <div>
+              <h4>🚚 Доставка:</h4>
+              <p>${getDeliveryMethodName(deliveryMethod)}</p>
+              ${savedData.deliveryAddress ? `<p><strong>Адрес:</strong> ${savedData.deliveryAddress}</p>` : ''}
+            </div>
+            <div>
+              <h4>💳 Оплата:</h4>
+              <p>${getPaymentMethodName(paymentMethod)}</p>
+            </div>
+          </div>
+
+          ${savedData.notes ? `
+            <div class="order-info">
+              <h4>📝 Примечания:</h4>
+              <p>${savedData.notes}</p>
+            </div>
+          ` : ''}
+
+          <div class="timestamp">
+            ⏰ ${new Date().toLocaleString('ru-RU')}
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
+
+// 🔄 УДАЛЯЕМ старую функцию sendTelegramNotification (больше не нужна)
 
 // Вспомогательные функции для читаемых названий
 function getDeliveryMethodName(method: string): string {
