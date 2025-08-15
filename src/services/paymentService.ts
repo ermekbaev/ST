@@ -1,4 +1,3 @@
-// src/services/paymentService.ts
 export interface CreatePaymentData {
   amount: number;
   orderId: string;
@@ -38,12 +37,8 @@ export interface PaymentStatusResponse {
   error?: string;
 }
 
-/**
- * Создание платежа через ЮKassa
- */
 export const createPayment = async (data: CreatePaymentData): Promise<PaymentResponse> => {
   try {
-    console.log('💳 Создаем платеж для заказа:', data.orderId);
     
     const response = await fetch('/api/payments/create', {
       method: 'POST',
@@ -75,13 +70,8 @@ export const createPayment = async (data: CreatePaymentData): Promise<PaymentRes
   }
 };
 
-/**
- * Проверка статуса платежа
- */
 export const checkPaymentStatus = async (paymentId: string): Promise<PaymentStatusResponse> => {
   try {
-    console.log('🔍 Проверяем статус платежа:', paymentId);
-    
     const response = await fetch(`/api/payments/status?paymentId=${paymentId}`);
     const result = await response.json();
 
@@ -93,7 +83,6 @@ export const checkPaymentStatus = async (paymentId: string): Promise<PaymentStat
       };
     }
 
-    console.log('✅ Статус платежа:', result.payment?.status);
     return result;
 
   } catch (error) {
@@ -105,13 +94,8 @@ export const checkPaymentStatus = async (paymentId: string): Promise<PaymentStat
   }
 };
 
-/**
- * Возврат платежа (для админки)
- */
 export const refundPayment = async (paymentId: string, amount?: number, reason?: string) => {
   try {
-    console.log('💸 Создаем возврат для платежа:', paymentId);
-    
     const response = await fetch('/api/payments/refund', {
       method: 'POST',
       headers: {
@@ -135,44 +119,26 @@ export const refundPayment = async (paymentId: string, amount?: number, reason?:
   }
 };
 
-/**
- * Утилита для форматирования суммы
- */
 export const formatAmount = (amount: number): string => {
   return (amount / 100).toFixed(2);
 };
 
-/**
- * Утилита для преобразования суммы в копейки
- */
 export const amountToKopecks = (rubles: number): number => {
   return Math.round(rubles * 100);
 };
 
-/**
- * Проверка, является ли платеж успешным
- */
 export const isPaymentSuccessful = (status: string): boolean => {
   return status === 'succeeded';
 };
 
-/**
- * Проверка, ожидает ли платеж обработки
- */
 export const isPaymentPending = (status: string): boolean => {
   return status === 'pending' || status === 'waiting_for_capture';
 };
 
-/**
- * Проверка, отменен ли платеж
- */
 export const isPaymentCanceled = (status: string): boolean => {
   return status === 'canceled';
 };
 
-/**
- * Получение человекопонятного статуса платежа
- */
 export const getPaymentStatusText = (status: string): string => {
   const statusMap: Record<string, string> = {
     pending: 'Ожидает оплаты',
@@ -184,9 +150,6 @@ export const getPaymentStatusText = (status: string): string => {
   return statusMap[status] || 'Неизвестный статус';
 };
 
-/**
- * Преобразование товаров корзины в формат для ЮKassa
- */
 export const formatCartItemsForPayment = (cartItems: any[]): CreatePaymentData['items'] => {
   return cartItems.map(item => ({
     name: item.name || `${item.brand} ${item.model}`.trim() || 'Товар',

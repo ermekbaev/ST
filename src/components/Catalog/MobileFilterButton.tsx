@@ -1,4 +1,3 @@
-// src/components/Catalog/MobileFilterButton.tsx
 'use client';
 
 import React from 'react';

@@ -209,7 +209,6 @@ const DesktopHeader: React.FC = () => {
     'информация'
   ];
 
-  // ✅ Функция для построения URL каталога с поиском
   const buildCatalogUrl = (searchTerm: string) => {
     const params = new URLSearchParams();
     if (searchTerm.trim()) {
@@ -245,7 +244,6 @@ const DesktopHeader: React.FC = () => {
     }
   }, [isSearchOpen]);
 
-  // ✅ Обновляем handleSearchSubmit для реального поиска
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (searchQuery.trim()) {

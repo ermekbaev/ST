@@ -1,4 +1,3 @@
-// src/components/Catalog/Filters/SizeFilter.tsx - ОБНОВЛЕННЫЙ с функцией сворачивания
 'use client';
 
 import React, { useState } from 'react';
@@ -20,10 +19,8 @@ const SizeFilter: React.FC<SizeFilterProps> = ({
   maxItems = 18,
   showAll = false
 }) => {
-  // Состояние для управления сворачиванием/разворачиванием
   const [isExpanded, setIsExpanded] = useState(showAll);
   
-  // Определяем какие размеры показывать
   const displaySizes = isExpanded ? options : options.slice(0, maxItems);
   const hasMore = options.length > maxItems;
   const hiddenCount = options.length - maxItems;

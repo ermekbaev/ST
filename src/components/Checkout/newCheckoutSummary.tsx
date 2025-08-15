@@ -1,4 +1,3 @@
-// src/components/Checkout/newCheckoutSummary.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
@@ -86,7 +85,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     const loadPromoCodes = async () => {
       try {
         setIsLoadingPromos(true);
-        console.log('🎟️ Загружаем промокоды...');
         
         const response = await fetch('/api/promocodes');
         const result = await response.json();
@@ -134,22 +132,17 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
   // ============================================================================
   
   const calculations = useMemo(() => {
-    // Базовая стоимость товаров
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    // Стоимость доставки
     const selectedDeliveryOption = DELIVERY_OPTIONS.find(opt => opt.id === selectedDelivery);
     let deliveryPrice = selectedDeliveryOption?.price || 0;
     
-    // Бесплатная доставка при достижении минимума
     if (subtotal >= MIN_ORDER_FREE_DELIVERY && deliveryPrice > 0) {
       deliveryPrice = 0;
     }
     
-    // Применение промокода
     let promoDiscount = 0;
     if (appliedPromo) {
-      // Проверяем минимальную сумму заказа
       if (subtotal >= appliedPromo.minOrderAmount) {
         switch (appliedPromo.discountType) {
           case 'fixed_amount':
@@ -191,7 +184,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
       return;
     }
     
-    // Ищем промокод в загруженном списке
     const foundPromo = promoCodes.find(promo => promo.code === code);
     
     if (!foundPromo) {
@@ -199,21 +191,18 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
       return;
     }
     
-    // Проверяем минимальную сумму заказа
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     if (subtotal < foundPromo.minOrderAmount) {
       setPromoError(`Минимальная сумма заказа для этого промокода: ${foundPromo.minOrderAmount} ₽`);
       return;
     }
     
-    // Применяем промокод
     setAppliedPromo(foundPromo);
     setPromoInput('');
     setPromoError(null);
     
     console.log('✅ Промокод применен:', foundPromo.code);
     
-    // Увеличиваем счетчик использования
     fetch('/api/promocodes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -257,7 +246,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
   };
 
   const getFormDataFromDOM = useCallback(() => {
-    console.log('🔍 Ищем форму checkout-form...');
     
     const form = document.getElementById('checkout-form') as HTMLFormElement;
     if (!form) {
@@ -265,27 +253,16 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
       console.log('🔍 Доступные формы:', document.querySelectorAll('form'));
       return {};
     }
-
-    console.log('✅ Форма найдена:', form);
     
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     
-    console.log('📋 Извлеченные данные формы:', data);
-    console.log('📝 Количество полей:', Object.keys(data).length);
-    
-    // Проверяем основные поля
     const requiredFields = ['firstName', 'phone'];
     const missingFields = requiredFields.filter(field => !data[field]);
-    
-    if (missingFields.length > 0) {
-      console.warn('⚠️ Отсутствуют обязательные поля:', missingFields);
-    }
     
     return data;
   }, []);
 
-  // ✅ ДОБАВЛЕНО: Функция для получения данных о промокодах
   const getPromoCalculations = useCallback(() => {
     return {
       total: calculations.total,
@@ -300,12 +277,10 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     };
   }, [calculations, appliedPromo]);
 
-  // ✅ ДОБАВЛЕНО: Экспонируем функции через ref
   useImperativeHandle(ref, () => ({
     getPromoCalculations
   }), [getPromoCalculations]);
 
-  // ✅ ДОБАВЛЕНО: Отладочный эффект
   useEffect(() => {
     console.log('🎟️ NewOrderSummary: Промокоды изменились');
     console.log('💰 Текущие расчеты:', calculations);
@@ -315,36 +290,27 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
   const handleSubmit = useCallback(async () => {
     if (isSubmitting || isProcessing) return;
     
-    console.log('🚀 NewOrderSummary: Начинаем отправку заказа');
-    
     setIsSubmitting(true);
     try {
       let formData = {};
       
       if (getFormData) {
-        // Используем функцию из props
         formData = getFormData();
       } else {
-        // Получаем данные из DOM
         formData = getFormDataFromDOM();
       }
       
       console.log('📋 Данные формы:', formData);
       console.log('💰 Наши расчеты:', calculations);
       
-      // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Создаем полный объект с данными
       const completeOrderData = {
-        // Данные формы
         ...formData,
-        // Способы доставки и оплаты
         deliveryMethod: selectedDelivery,
         paymentMethod: selectedPayment,
-        // ✅ ФИНАЛЬНЫЕ РАСЧЕТЫ С ПРОМОКОДОМ
         total: calculations.total,
         subtotal: calculations.subtotal,
         deliveryPrice: calculations.deliveryPrice,
         promoDiscount: calculations.promoDiscount,
-        // Информация о промокоде
         appliedPromoCode: appliedPromo ? {
           code: appliedPromo.code,
           discountAmount: calculations.promoDiscount,
@@ -352,8 +318,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
         } : null
       };
       
-      console.log('📤 Отправляем ПОЛНЫЕ данные заказа:', completeOrderData);
-      console.log('💰 Финальная цена:', completeOrderData.total);
       
       await onSubmit(completeOrderData);
       

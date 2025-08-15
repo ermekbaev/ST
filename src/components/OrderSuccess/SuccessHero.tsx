@@ -1,4 +1,3 @@
-// src/components/OrderSuccess/SuccessHero.tsx - ИСПРАВЛЕН: БЕЗ ОШИБОК ПРИ ОТСУТСТВИИ PAYMENTID
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -23,12 +22,9 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", pa
   const [isLoadingPayment, setIsLoadingPayment] = useState(false); // 🔥 ИСПРАВЛЕНО: изначально false
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  // 🔥 ИСПРАВЛЕНО: Проверка статуса платежа ТОЛЬКО если есть paymentId
   useEffect(() => {
     const checkPayment = async () => {
-      // 🔥 ВАЖНО: Проверяем только если есть paymentId
       if (!paymentId) {
-        console.log('📋 Нет paymentId - заказ без онлайн оплаты');
         setIsLoadingPayment(false);
         return;
       }
@@ -36,8 +32,6 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", pa
       setIsLoadingPayment(true);
       
       try {
-        console.log('🔍 Проверяем статус платежа:', paymentId);
-        
         const response = await checkPaymentStatus(paymentId);
         
         if (response.success && response.payment) {
@@ -58,14 +52,12 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", pa
       setIsLoadingPayment(false);
     };
 
-    // Проверяем статус через небольшую задержку только если есть paymentId
     if (paymentId) {
       const timer = setTimeout(checkPayment, 1000);
       return () => clearTimeout(timer);
     }
   }, [paymentId]);
 
-  // Автоматическая проверка статуса каждые 10 секунд для pending платежей
   useEffect(() => {
     if (paymentInfo?.status === 'pending' && paymentId) {
       const interval = setInterval(async () => {
@@ -91,13 +83,11 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", pa
     }
   }, [paymentInfo?.status, paymentId]);
 
-  // 🔥 ИСПРАВЛЕНО: Функция получения заголовка
   const getTitle = () => {
     if (isLoadingPayment) {
       return 'ПРОВЕРЯЕМ СТАТУС ОПЛАТЫ';
     }
     
-    // 🔥 НОВОЕ: Если нет paymentId - показываем стандартное сообщение
     if (!paymentId) {
       return 'ВАШ ЗАКАЗ ПРИНЯТ';
     }
@@ -122,13 +112,11 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", pa
     return 'ВАШ ЗАКАЗ ПРИНЯТ';
   };
 
-  // 🔥 ИСПРАВЛЕНО: Функция получения подзаголовка
   const getSubtitle = () => {
     if (isLoadingPayment) {
       return 'Это займет несколько секунд...';
     }
     
-    // 🔥 НОВОЕ: Если нет paymentId - стандартное сообщение
     if (!paymentId) {
       return 'Мы свяжемся с вами в ближайшее время';
     }
@@ -153,12 +141,9 @@ const SuccessHero: React.FC<SuccessHeroProps> = ({ orderNumber = "TS-127702", pa
     return 'Мы свяжемся с вами в ближайшее время';
   };
 
-  // 🔥 ИСПРАВЛЕНО: Функция для отображения статуса платежа
   const renderPaymentStatus = () => {
-    // 🔥 ВАЖНО: Не показываем статус если нет paymentId или есть ошибка загрузки
     if (!paymentId || isLoadingPayment) return null;
     
-    // 🔥 ИСПРАВЛЕНО: Показываем ошибку только если она связана с конкретным платежом
     if (paymentError && paymentId) {
       return (
         <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-500 rounded">

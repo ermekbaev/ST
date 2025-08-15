@@ -1,26 +1,21 @@
-// src/components/Checkout/NewCheckoutForm.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React, { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 
 interface CheckoutFormData {
-  // Личные данные
   firstName: string;
   email: string;
   phone: string;
   city: string;
 
-  // Адрес доставки
   address: string;
   region: string;
   postalCode: string;
 
-  // Получатель
   recipientFirstName: string;
   recipientPhone: string;
 
-  // Выбор методов
   deliveryMethod: string;
   paymentMethod: string;
 }
@@ -43,7 +38,6 @@ interface NewCheckoutFormProps {
   onPaymentChange: (paymentId: string) => void;
   isMobile?: boolean;
   isProcessing?: boolean;
-  // ✅ ДОБАВЛЕНО: Функция для получения данных промокодов
   getPromoData?: () => any;
 }
 
@@ -84,7 +78,6 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ✅ ПРОСТАЯ ФОРМА БЕЗ ВНЕШНИХ ЗАВИСИМОСТЕЙ
   const form = useForm<CheckoutFormData>({
     defaultValues: {
       firstName: '',
@@ -108,7 +101,6 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   // СИНХРОНИЗАЦИЯ С РОДИТЕЛЬСКИМ КОМПОНЕНТОМ
   // ============================================================================
   
-  // Устанавливаем значения из props в форму
   React.useEffect(() => {
     setValue('deliveryMethod', selectedDelivery);
     setValue('paymentMethod', selectedPayment);
@@ -135,7 +127,6 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     onPaymentChange(paymentId); // ✅ Уведомляем родительский компонент
   }, [setValue, onPaymentChange]);
 
-  // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Обработка отправки с промокодами
   const onFormSubmit = useCallback(async (data: CheckoutFormData) => {
     if (isSubmitting || isProcessing) return;
     
@@ -145,13 +136,10 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     
     setIsSubmitting(true);
     try {
-      // ✅ УЛУЧШЕННОЕ получение данных о промокодах
       let promoData = null;
       if (getPromoData) {
-        console.log('🔍 Пытаемся получить данные промокодов...');
         try {
           promoData = getPromoData();
-          console.log('✅ Получены данные промокодов:', promoData);
         } catch (error) {
           console.warn('⚠️ Ошибка получения промокодов:', error);
         }
@@ -159,10 +147,8 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         console.warn('⚠️ getPromoData не передана в форму');
       }
       
-      // ✅ Объединяем данные формы с промокодами
       const completeOrderData = {
         ...data,
-        // Добавляем данные о промокодах если есть
         ...(promoData && {
           total: promoData.total,
           subtotal: promoData.subtotal,
@@ -171,12 +157,6 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
           appliedPromoCode: promoData.appliedPromoCode
         })
       };
-      
-      console.log('📤 NewCheckoutForm отправляет данные:');
-      console.log('📋 Полные данные:', completeOrderData);
-      console.log('💰 Финальная цена:', completeOrderData.total || 'НЕ УСТАНОВЛЕНА');
-      console.log('🎟️ Промокод:', completeOrderData.appliedPromoCode?.code || 'НЕТ');
-      console.log('💸 Скидка:', completeOrderData.promoDiscount || 0);
       
       await onSubmit(completeOrderData);
       
@@ -191,7 +171,6 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   // РЕНДЕР КОМПОНЕНТОВ
   // ============================================================================
 
-  // ✅ ОСТАВЛЕНО: Точно как было, только добавлена простая валидация
   const renderInput = (
     name: keyof CheckoutFormData, 
     placeholder: string, 
@@ -200,7 +179,6 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     <div>
       <input
         {...register(name, {
-          // ✅ ДОБАВЛЕНО: Только базовая валидация, без изменения поведения
           required: `${placeholder} обязательно для заполнения`,
         })}
         type={type}

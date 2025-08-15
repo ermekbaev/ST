@@ -1,4 +1,3 @@
-// src/components/Product/Sections/ProductActions.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';

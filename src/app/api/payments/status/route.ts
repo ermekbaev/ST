@@ -1,4 +1,3 @@
-// src/app/api/payments/status/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { YooCheckout } from '@a2seven/yoo-checkout';
 
@@ -14,7 +13,6 @@ export async function GET(request: NextRequest) {
 
     console.log('🔍 Проверка статуса платежа:', paymentId);
 
-    // Валидация параметров
     if (!paymentId) {
       return NextResponse.json({
         success: false,
@@ -22,7 +20,6 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Проверяем формат Payment ID (должен быть UUID)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(paymentId)) {
       return NextResponse.json({
@@ -31,7 +28,6 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Получаем информацию о платеже от ЮKassa
     const payment = await checkout.getPayment(paymentId);
 
     console.log('✅ Статус платежа получен:', {
@@ -41,7 +37,6 @@ export async function GET(request: NextRequest) {
       amount: payment.amount?.value
     });
 
-    // Возвращаем только необходимую информацию
     return NextResponse.json({
       success: true,
       payment: {
@@ -52,7 +47,6 @@ export async function GET(request: NextRequest) {
         paid: payment.paid,
         created_at: payment.created_at,
         captured_at: payment.captured_at,
-        // Дополнительная информация для отладки (только в development)
         ...(process.env.NODE_ENV === 'development' && {
           debug: {
             payment_method: payment.payment_method,
@@ -64,9 +58,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ Ошибка получения статуса платежа:', error);
     
-    // Обработка специфичных ошибок ЮKassa
     let errorMessage = 'Ошибка получения статуса платежа';
     let statusCode = 500;
     

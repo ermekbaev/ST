@@ -10,7 +10,6 @@ const MobileHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
 
-  // Блокировка скролла при открытом мобильном меню
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -34,7 +33,6 @@ const MobileHeader: React.FC = () => {
     'информация'
   ];
 
-  // Данные для подменю как в десктопной версии
   const menuData: Record<string, any> = {
     'обувь': {
       categories: ['все', 'кроссовки', 'ботинки', 'сандалии', 'туфли', 'угги'],
@@ -108,7 +106,6 @@ const MobileHeader: React.FC = () => {
     }
   };
 
-  // ✅ Функция для построения URL каталога с поиском
   const buildCatalogUrl = (searchTerm: string) => {
     const params = new URLSearchParams();
     if (searchTerm.trim()) {
@@ -139,7 +136,6 @@ const MobileHeader: React.FC = () => {
     setOpenSection(null); // Сбрасываем открытые секции
   }, [isMobileMenuOpen]);
 
-  // ✅ Обновляем handleSearchSubmit для реального поиска
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -160,13 +156,11 @@ const MobileHeader: React.FC = () => {
 
   const handleMenuItemClick = useCallback((item: string): void => {
     if (item === 'sale') {
-      // Для sale переходим сразу в каталог
       window.location.href = '/catalog';
       setIsMobileMenuOpen(false);
       return;
     }
 
-    // Для остальных разделов переключаем раскрытие
     if (openSection === item) {
       setOpenSection(null);
     } else {
@@ -178,10 +172,8 @@ const MobileHeader: React.FC = () => {
     if (href === '#') return;
     
     if (href.startsWith('/')) {
-      // Внутренние ссылки
       router.push(href);
     } else {
-      // Внешние ссылки
       window.location.href = href;
     }
     setIsMobileMenuOpen(false);

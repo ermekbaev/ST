@@ -1,4 +1,3 @@
-// src/components/Catalog/CatalogSearch.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React from 'react';

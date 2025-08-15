@@ -1,4 +1,3 @@
-// src/components/UI/Breadcrumbs/Breadcrumbs.tsx
 'use client';
 
 import React from 'react';
@@ -19,7 +18,6 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
   const handleLinkClick = (href?: string) => {
     if (href) {
       console.log(`Переход на: ${href}`);
-      // Здесь будет роутинг: router.push(href)
     }
   };
 
@@ -30,7 +28,6 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
         fontFamily: 'Random Grotesque, Arial, sans-serif'
       }}
     >
-      {/* Desktop версия - БЕЗ отступов, так как они применяются на уровне страницы */}
       <div className="hidden lg:block">
         <div className="flex items-center gap-8 mb-8">
           {/* Хлебные крошки */}

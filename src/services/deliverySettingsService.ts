@@ -1,4 +1,3 @@
-// src/services/deliverySettingsService.ts - УЛУЧШЕННАЯ ВЕРСИЯ
 import { DeliveryOption, PaymentOption, PromoCode } from '@/types/checkout';
 
 interface GeneralSettings {
@@ -16,7 +15,6 @@ export interface DeliverySettingsData {
 
 const SHEET_ID = '1naTkxDrQFfj_d7Q2U46GOj24hSqTAqrt_Yz1ImaKyVc';
 
-// Настройки по умолчанию
 const DEFAULT_SETTINGS: DeliverySettingsData = {
   deliveryOptions: [
     {

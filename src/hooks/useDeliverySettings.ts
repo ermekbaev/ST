@@ -1,4 +1,3 @@
-// src/hooks/useDeliverySettings.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ
 import { useState, useEffect } from 'react';
 import { DeliveryOption, PaymentOption, PromoCode } from '@/types/checkout';
 import { getDeliverySettings, DeliverySettingsData } from '@/services/deliverySettingsService';
@@ -36,9 +35,6 @@ export const useDeliverySettings = (): DeliverySettings => {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Загружаем настройки доставки из Google Таблицы...');
-      
-      // ✅ ИСПРАВЛЕНО: используем реальный API
       const settings: DeliverySettingsData = await getDeliverySettings(forceRefresh);
 
       setDeliveryOptions(settings.deliveryOptions);
@@ -46,14 +42,6 @@ export const useDeliverySettings = (): DeliverySettings => {
       setPromoCodes(settings.promoCodes);
       setGeneralSettings(settings.generalSettings);
 
-      console.log('✅ Настройки доставки загружены из API:', {
-        deliveryOptions: settings.deliveryOptions.length,
-        paymentOptions: settings.paymentOptions.length,
-        promoCodes: settings.promoCodes.length
-      });
-
-      // Отладочная информация по ценам
-      console.log('💰 Цены доставки:');
       settings.deliveryOptions.forEach(option => {
         console.log(`  ${option.name}: ${option.price}₽`);
       });

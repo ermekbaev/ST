@@ -1,4 +1,3 @@
-// src/components/Product/Gallery/ProductGallery.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -32,7 +31,6 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     setMounted(true);
   }, []);
 
-  // Функции навигации по изображениям
   const goToNextImage = () => {
     setCurrentImageIndex((prev) => 
       prev === images.length - 1 ? 0 : prev + 1
@@ -51,7 +49,6 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     }
   };
 
-  // Функции для лайтбокса
   const openLightbox = (index?: number) => {
     setLightboxImageIndex(index !== undefined ? index : currentImageIndex);
     setIsLightboxOpen(true);
@@ -79,10 +76,8 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     }
   };
 
-  // Управление клавиатурой (стрелки) - только для основной галереи
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Если лайтбокс открыт, не обрабатываем события здесь
       if (isLightboxOpen) return;
       
       if (event.key === 'ArrowRight') {
@@ -98,7 +93,6 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     }
   }, [mounted, images.length, isLightboxOpen]);
 
-  // Показываем заглушку до монтирования
   if (!mounted) {
     return (
       <div className={`w-full ${className}`}>

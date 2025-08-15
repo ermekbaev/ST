@@ -1,4 +1,3 @@
-// src/app/bank/page.tsx
 import BankPage from '../../components/Pages/BankPage';
 
 export const metadata = {

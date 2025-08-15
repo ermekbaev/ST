@@ -1,4 +1,3 @@
-// src/components/Catalog/Filters/PriceFilter.tsx
 'use client';
 
 import React from 'react';

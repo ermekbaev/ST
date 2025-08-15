@@ -1,15 +1,13 @@
-// src/app/api/orders/route.ts - ИСПРАВЛЕНО ПОД НОВЫЕ СВЯЗИ STRAPI + EMAIL УВЕДОМЛЕНИЯ
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL;
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
-// 🔄 ЗАМЕНИЛИ Telegram на Email настройки
-const EMAIL_USER = process.env.EMAIL_USER || 'adiletermekbaev176@gmail.com';
+const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'adiletermekbaev176@gmail.com';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'adiletermekbaev176@gmail.com';
+const EMAIL_FROM = process.env.EMAIL_FROM;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 interface CreateOrderData {
   customerInfo: {
@@ -31,23 +29,14 @@ interface CreateOrderData {
   notes?: string;
 }
 
-// POST /api/orders - создать заказ
 export async function POST(request: NextRequest) {
   try {
-    console.log('📝 API: Получен запрос на создание заказа');
     
     const body: CreateOrderData = await request.json();
     
-    // Получаем токен пользователя
     const authHeader = request.headers.get('authorization');
     const userToken = authHeader?.replace('Bearer ', '') || null;
     
-    console.log('🔍 Отладка токена:', {
-      hasUserToken: !!userToken,
-      tokenPreview: userToken ? `${userToken.substring(0, 20)}...` : 'НЕТ ТОКЕНА'
-    });
-
-    // Получаем данные пользователя если токен есть
     let userId: string | null = null;
     if (userToken) {
       try {
@@ -61,7 +50,6 @@ export async function POST(request: NextRequest) {
         if (userResponse.ok) {
           const userData = await userResponse.json();
           userId = userData.id.toString();
-          console.log('✅ Пользователь найден:', userData.id, userData.email);
         } else {
           console.log('⚠️ Токен недействителен, создаем гостевой заказ');
         }
@@ -70,7 +58,6 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Базовая валидация
     const validation = validateOrderData(body);
     if (!validation.isValid) {
       console.error('❌ Валидация заказа не прошла:', validation.error);
@@ -80,11 +67,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Генерируем номер заказа
     const orderNumber = generateOrderNumber();
-    console.log('🔢 Сгенерирован номер заказа:', orderNumber);
 
-    // ✅ ИСПРАВЛЕНО: Подготавливаем данные для Strapi с правильной связью пользователя
     const orderData = {
       orderNumber,
       customerName: body.customerInfo.name,
@@ -97,7 +81,6 @@ export async function POST(request: NextRequest) {
       notes: body.notes || '',
       orderStatus: 'pending',
       paymentStatus: body.paymentMethod === 'cash_vladivostok' ? 'pending' : 'pending',
-      // Правильная связь с пользователем
       ...(userId && { 
         user: {
           connect: [{ id: parseInt(userId) }]
@@ -105,17 +88,8 @@ export async function POST(request: NextRequest) {
       })
     };
 
-    console.log('💾 Сохраняем заказ в Strapi...', {
-      isUserOrder: !!userId,
-      userId: userId || 'guest'
-    });
-
-    // Сохраняем заказ в Strapi
     const orderId = await saveOrderToStrapi(orderData, body.items);
-    
-    console.log(`✅ Заказ сохранен в Strapi с ID: ${orderId}`, userId ? '(авторизованный)' : '(гостевой)');
 
-    // 🔄 ИЗМЕНЕНО: Отправляем email уведомление админу вместо Telegram
     await sendAdminNotification(orderNumber, body, orderData);
 
     return NextResponse.json({
@@ -140,15 +114,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ✅ ИСПРАВЛЕНО: Сохранение заказа в Strapi под новые связи
 async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']): Promise<string> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
-  console.log('🔄 Создаем основной заказ в Strapi...');
-
-  // 1. Создаем основной заказ
   const orderResponse = await fetch(`${STRAPI_URL}/api/orders`, {
     method: 'POST',
     headers,
@@ -164,11 +134,6 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
   const orderResult = await orderResponse.json();
   const orderId = orderResult.data.id;
 
-  console.log(`✅ Основной заказ создан с ID: ${orderId}`);
-
-  // 2. ✅ ИСПРАВЛЕНО: Создаем позиции заказа с новой связью
-  console.log(`\n🔄 === СОЗДАЕМ ${items.length} ПОЗИЦИЙ ЗАКАЗА ===`);
-  
   const createdOrderItems: string[] = [];
   let successCount = 0;
 
@@ -176,16 +141,12 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
     const item = items[index];
     
     try {
-      console.log(`\n🔄 === СОЗДАЕМ ПОЗИЦИЮ ${index + 1}/${items.length} ===`);
-      
-      // Пытаемся найти размер
       const sizeId = await findSizeId(item.productId, item.size);
       
       if (!sizeId) {
         console.warn(`⚠️ Размер "${item.size}" не найден для товара ${item.productId}, создаем без размера`);
       }
 
-      // ✅ ИСПРАВЛЕНО: Правильная структура для новых связей
       const itemData = {
         orderId: orderId.toString(),
         productId: item.productId,
@@ -193,32 +154,20 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
         quantity: item.quantity,
         priceAtTime: item.priceAtTime,
         
-        // ✅ ИСПРАВЛЕНО: Связь с product
         product: {
           connect: [{ id: parseInt(item.productId) }]
         },
         
-        // ✅ ИСПРАВЛЕНО: Связь с заказом через новое поле
         order: {
           connect: [{ id: orderId }]
         },
         
-        // Размер только если найден
         ...(sizeId && {
           size: {
             connect: [{ id: parseInt(sizeId) }]
           }
         })
       };
-
-      console.log(`🔄 Отправляем запрос создания позиции ${index + 1}:`, {
-        orderId: itemData.orderId,
-        productId: itemData.productId,
-        productName: itemData.productName,
-        hasProductConnection: true,
-        hasOrderConnection: true,
-        hasSizeConnection: !!sizeId
-      });
 
       const itemResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
         method: 'POST',
@@ -227,12 +176,6 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
       });
 
       if (!itemResponse.ok) {
-        const errorText = await itemResponse.text();
-        console.error(`❌ Ошибка создания позиции ${index + 1}:`, errorText);
-        
-        // ✅ FALLBACK: Пытаемся создать хотя бы базовую позицию
-        console.log(`🔄 Пытаемся создать fallback позицию ${index + 1} без связей...`);
-        
         const fallbackData = {
           orderId: orderId.toString(),
           productId: item.productId,
@@ -265,7 +208,6 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
         successCount++;
       }
       
-      // Небольшая пауза между созданием позиций для стабильности
       if (index < items.length - 1) {
         console.log(`⏳ Пауза 200ms перед следующей позицией...`);
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -276,19 +218,13 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
     }
   }
 
-  console.log(`\n📦 === ИТОГИ СОЗДАНИЯ ПОЗИЦИЙ ===`);
-  console.log(`✅ Создано позиций: ${successCount}/${items.length}`);
-  console.log(`📋 ID созданных позиций: [${createdOrderItems.join(', ')}]`);
-
   if (successCount === 0) {
     throw new Error('Не удалось создать ни одной позиции заказа');
   }
 
-  // ✅ ИСПРАВЛЕНО: Обновляем заказ с новым полем связи
   if (createdOrderItems.length > 0) {
     await updateOrderWithItems(orderId, createdOrderItems);
     
-    // Проверяем результат связывания
     await new Promise(resolve => setTimeout(resolve, 1000));
     await verifyOrderLinks(orderId.toString());
   }
@@ -296,12 +232,10 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
   return orderId.toString();
 }
 
-// ✅ ИСПРАВЛЕНО: Обновление заказа с новым названием поля связи
 async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Promise<void> {
   try {
     console.log(`🔄 Обновляем заказ ${orderId} со связями на позиции: [${orderItemIds.join(', ')}]`);
     
-    // Получаем documentId заказа
     let documentId = null;
     
     try {
@@ -323,8 +257,6 @@ async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Pr
       documentId = orderId;
     }
     
-    // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем новое название поля для связи
-    // Проверим разные варианты названий полей
     const possibleFieldNames = ['order_items', 'orderItems', 'order_item'];
     
     for (const fieldName of possibleFieldNames) {
@@ -350,15 +282,12 @@ async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Pr
         const result = await updateResponse.json();
         console.log(`✅ Заказ ${orderId} обновлен через поле "${fieldName}" со связями на ${orderItemIds.length} позиций`);
         console.log(`📋 Новый ID заказа: ${result.data?.id || 'не указан'}`);
-        return; // Успешно обновили, выходим
+        return; 
       } else {
         const errorText = await updateResponse.text();
         console.warn(`⚠️ Не удалось обновить через поле "${fieldName}":`, errorText);
       }
     }
-    
-    // Если ни один вариант не сработал, пробуем connect
-    console.log('🔄 Пробуем через connect...');
     
     for (const fieldName of possibleFieldNames) {
       const connectData = {
@@ -386,19 +315,14 @@ async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Pr
       }
     }
     
-    console.error(`❌ Все попытки обновления заказа ${orderId} не удались`);
-    
   } catch (error) {
     console.error(`❌ Критическая ошибка обновления заказа ${orderId}:`, error);
   }
 }
 
-// ✅ ИСПРАВЛЕНО: Проверка связей с учетом нового поля
 async function verifyOrderLinks(orderId: string): Promise<void> {
   try {
-    console.log(`🔍 Проверяем связи для заказа ${orderId}...`);
     
-    // Проверяем разные варианты populate
     const populateOptions = ['order_items', 'orderItems', 'order_item'];
     
     for (const populateField of populateOptions) {
@@ -422,7 +346,7 @@ async function verifyOrderLinks(orderId: string): Promise<void> {
             orderItems.forEach((item: any, index: number) => {
               console.log(`  ${index + 1}. ID: ${item.id}, Product: ${item.productName}`);
             });
-            return; // Нашли рабочее поле, выходим
+            return;
           }
         }
       } catch (error) {
@@ -430,14 +354,11 @@ async function verifyOrderLinks(orderId: string): Promise<void> {
       }
     }
     
-    console.warn(`⚠️ У заказа ${orderId} не найдены связанные order_items ни в одном поле!`);
-    
   } catch (error) {
     console.error(`❌ Ошибка проверки связей:`, error);
   }
 }
 
-// Генерация номера заказа
 function generateOrderNumber(): string {
   const now = new Date();
   const year = now.getFullYear().toString().slice(-2);
@@ -445,10 +366,9 @@ function generateOrderNumber(): string {
   const day = now.getDate().toString().padStart(2, '0');
   const random = Math.floor(Math.random() * 999).toString().padStart(3, '0');
   
-  return `ORD${year}${month}${day}${random}`;
+  return `TS-${year}${month}${day}${random}`;
 }
 
-// Валидация данных заказа
 function validateOrderData(data: CreateOrderData): { isValid: boolean; error?: string } {
   if (!data.customerInfo?.name?.trim()) {
     return { isValid: false, error: 'Не указано имя покупателя' };
@@ -489,12 +409,9 @@ function validateOrderData(data: CreateOrderData): { isValid: boolean; error?: s
   return { isValid: true };
 }
 
-// Поиск размеров
 async function findSizeId(productId: string, sizeValue: string): Promise<string | null> {
   try {
-    console.log(`🔍 Ищем размер "${sizeValue}" для товара ${productId}...`);
     
-    // Метод 1: Получаем товар с размерами
     const productResponse = await fetch(
       `${STRAPI_URL}/api/products?filters[id][$eq]=${productId}&populate=sizes`,
       {
@@ -517,14 +434,12 @@ async function findSizeId(productId: string, sizeValue: string): Promise<string 
           );
           
           if (targetSize) {
-            console.log(`✅ Найден размер ID: ${targetSize.id} для значения "${sizeValue}"`);
             return targetSize.id.toString();
           }
         }
       }
     }
 
-    // Метод 2: Прямой поиск размера
     const sizeResponse = await fetch(
       `${STRAPI_URL}/api/sizes?filters[value][$eq]=${sizeValue}&populate=*`,
       {
@@ -540,58 +455,36 @@ async function findSizeId(productId: string, sizeValue: string): Promise<string 
       
       if (sizeData.data && sizeData.data.length > 0) {
         const firstSize = sizeData.data[0];
-        console.log(`✅ Найден размер ID через прямой поиск: ${firstSize.id} для значения "${sizeValue}"`);
         return firstSize.id.toString();
       }
     }
 
-    console.log(`❌ Размер "${sizeValue}" не найден для товара ${productId}`);
     return null;
     
   } catch (error) {
-    console.error('❌ Ошибка поиска размера:', error);
     return null;
   }
 }
 
-// 🔄 ИЗМЕНЕНО: Отправка email уведомления админу (вместо Telegram)
 async function sendAdminNotification(orderNumber: string, orderData: CreateOrderData, savedData: any): Promise<void> {
   try {
-    console.log('📧 Отправляем email уведомление админу...');
     
-    // Проверяем настройки email
-    if (!EMAIL_PASS) {
-      console.log('⚠️ Email не настроен (нет EMAIL_PASS), выводим в консоль:');
-      console.log('\n🎯 ==================== EMAIL УВЕДОМЛЕНИЕ ====================');
-      console.log('📧 ДЛЯ:', ADMIN_EMAIL);
-      console.log('📋 ТЕМА: 🛍️ Новый заказ №' + orderNumber);
-      console.log('============================================================');
-      console.log(formatAdminNotification(orderNumber, orderData, savedData));
-      console.log('============================================================');
-      console.log('💡 Настройте EMAIL_PASS в .env.local для автоматической отправки');
-      console.log('============================================================\n');
-      return;
-    }
-
-    // Создаем транспортер для Gmail
     const transporter = nodemailer.createTransport({
       host: 'smtp.mail.ru',
       port: 465,
       secure: true,
       auth: {
         user: EMAIL_USER,
-        pass: EMAIL_PASS, // обычный пароль, НЕ App Password
+        pass: EMAIL_PASS, 
       },
       tls: {
         rejectUnauthorized: false
       }
     });
 
-    // Форматируем сообщение
     const messageText = formatAdminNotification(orderNumber, orderData, savedData);
     const messageHtml = formatAdminNotificationHtml(orderNumber, orderData, savedData);
 
-    // Настройки письма
     const mailOptions = {
       from: EMAIL_FROM,
       to: ADMIN_EMAIL,
@@ -600,27 +493,13 @@ async function sendAdminNotification(orderNumber: string, orderData: CreateOrder
       html: messageHtml,
     };
 
-    // Отправляем email
     const result = await transporter.sendMail(mailOptions);
     
-    console.log('✅ Email успешно отправлен на', ADMIN_EMAIL);
-    console.log('📧 Message ID:', result.messageId);
-
   } catch (error) {
     console.error('❌ Ошибка отправки email:', error);
-    
-    // Fallback - выводим в консоль
-    console.log('\n📧 Fallback - выводим уведомление в консоль:');
-    console.log('🎯 ==================== EMAIL УВЕДОМЛЕНИЕ ====================');
-    console.log('📧 ДЛЯ:', ADMIN_EMAIL);
-    console.log('📋 ТЕМА: 🛍️ Новый заказ №' + orderNumber);
-    console.log('============================================================');
-    console.log(formatAdminNotification(orderNumber, orderData, savedData));
-    console.log('============================================================\n');
   }
 }
 
-// Форматирование уведомления (как в Telegram)
 function formatAdminNotification(orderNumber: string, orderData: CreateOrderData, savedData: any): string {
   const { customerInfo, items, totalAmount, deliveryMethod, paymentMethod } = orderData;
   
@@ -655,7 +534,6 @@ function formatAdminNotification(orderNumber: string, orderData: CreateOrderData
   return message;
 }
 
-// Форматирование HTML версии email
 function formatAdminNotificationHtml(orderNumber: string, orderData: CreateOrderData, savedData: any): string {
   const { customerInfo, items, totalAmount, deliveryMethod, paymentMethod } = orderData;
   
@@ -755,9 +633,6 @@ function formatAdminNotificationHtml(orderNumber: string, orderData: CreateOrder
   `;
 }
 
-// 🔄 УДАЛЯЕМ старую функцию sendTelegramNotification (больше не нужна)
-
-// Вспомогательные функции для читаемых названий
 function getDeliveryMethodName(method: string): string {
   const methods = {
     'store_pickup': 'Самовывоз из магазина',

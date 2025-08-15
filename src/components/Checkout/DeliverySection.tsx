@@ -1,4 +1,3 @@
-// src/components/Checkout/DeliverySection.tsx
 'use client';
 
 import React from 'react';
@@ -25,7 +24,6 @@ const DeliverySection: React.FC<DeliverySectionProps> = ({
 }) => {
   const { register, watch, setValue } = form;
   
-  // Фоллбэк к стандартным опциям если не переданы или пустые
   const defaultOptions: DeliveryOption[] = [
     { id: 'store_pickup', name: 'Доставить в магазин TS', price: 0, estimatedDays: '5-7 дней' },
     { id: 'courier_ts', name: 'Доставка курьером TS', price: 0, estimatedDays: '5-7 дней' },
@@ -35,7 +33,6 @@ const DeliverySection: React.FC<DeliverySectionProps> = ({
     { id: 'boxberry', name: 'BoxBerry', price: 350, estimatedDays: '4-6 дней' }
   ];
 
-  // Используем API данные если есть, иначе фоллбэк
   const options = deliveryOptions && deliveryOptions.length > 0 ? deliveryOptions : defaultOptions;
   const selectedDelivery = watch('deliveryMethod');
 

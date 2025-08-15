@@ -1,4 +1,3 @@
-// src/app/product/[id]/page.tsx - ВАШ КОД с минимальными исправлениями
 'use client';
 
 import React, { useState, useEffect, use } from 'react';
@@ -29,23 +28,18 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [notificationProduct, setNotificationProduct] = useState('');
   const { addToCart, openCart } = useCart();
 
-  // Используем React.use() для разворачивания Promise params
   const resolvedParams = use(params);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Загрузка данных товара
   useEffect(() => {
     if (mounted) {
       const loadProduct = async () => {
         try {
           setLoading(true);
           
-          console.log('🚀 Загружаем товар с ID:', resolvedParams.id);
-          
-          // API запрос к новому Strapi API
           const response = await fetch(`/api/products/${resolvedParams.id}`);
           
           if (!response.ok) {
@@ -59,67 +53,42 @@ export default function ProductPage({ params }: ProductPageProps) {
           
           const result = await response.json();
           
-          console.log('📦 Получен ответ от Strapi API:', {
-            hasProduct: !!result.product,
-            error: result.error
-          });
-          
-          // ИСПРАВЛЕНО: новый формат API - result.product вместо result.data
           if (result.product) {
             const productData = result.product;
             
-            console.log('✅ Данные товара получены:', {
-              name: productData.name,
-              price: productData.price,
-              sizes: productData.sizes,
-              allSizes: productData.allSizes, // ДОБАВИЛИ проверку
-              mainPhoto: productData.mainPhoto,
-              additionalPhotos: productData.additionalPhotos
-            });
-            
-            // ИСПРАВЛЕНО: Обработка размеров с индивидуальными ценами
             let productSizes: ProductSize[] = [];
 
             if (productData.allSizes && Array.isArray(productData.allSizes)) {
-              // Если API вернуло размеры с ценами (новый формат)
               productSizes = productData.allSizes.map((sizeData: any) => ({
                 size: sizeData.size,
-                price: sizeData.price, // ← РЕАЛЬНАЯ ЦЕНА РАЗМЕРА
+                price: sizeData.price, 
                 available: sizeData.available,
                 originalPrice: sizeData.originalPrice
               }));
               
-              console.log('📏 Используем размеры с ценами из API:', productSizes.map(s => `${s.size}: ${s.price}₽`));
               
             } else if (productData.sizes && Array.isArray(productData.sizes)) {
-              // Fallback: старый формат API
               if (typeof productData.sizes[0] === 'string') {
-                // Размеры как строки - используем одну цену
                 productSizes = productData.sizes.map((sizeValue: string) => ({
                   size: sizeValue,
                   price: productData.price,
                   available: true
                 }));
-                console.log('⚠️ Используем fallback размеры с одинаковой ценой');
               } else {
-                // Размеры как объекты
                 productSizes = productData.sizes.map((sizeData: any) => ({
                   size: sizeData.size || sizeData.value,
                   price: sizeData.price || productData.price,
                   available: sizeData.available !== false,
                   originalPrice: sizeData.originalPrice
                 }));
-                console.log('📏 Используем размеры как объекты из API');
               }
             } else {
-              // Последний fallback
               productSizes = [
                 { size: productData.size || '41', price: productData.price, available: true }
               ];
               console.log('⚠️ Используем дефолтный размер');
             }
             
-            // Преобразуем данные в нужный формат для компонента
             const productInfo: ProductInfoType = {
               id: productData.id,
               name: productData.name,
@@ -135,20 +104,16 @@ export default function ProductPage({ params }: ProductPageProps) {
             
             setProduct(productInfo);
             
-            // Создаем изображения для галереи
             const productImages: GalleryImage[] = [];
             
-            // Добавляем главное фото
             if (productData.mainPhoto && productData.mainPhoto.trim()) {
               productImages.push({
                 id: 'main_photo',
                 url: productData.mainPhoto.trim(),
                 alt: `${productData.name} - главное фото`
               });
-              console.log('📸 Добавлено главное фото:', productData.mainPhoto.substring(0, 80) + '...');
             }
             
-            // Добавляем дополнительные фото
             if (productData.additionalPhotos && Array.isArray(productData.additionalPhotos)) {
               productData.additionalPhotos.forEach((photoUrl: string, index: number) => {
                 if (photoUrl && photoUrl.trim() && (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'))) {
@@ -157,14 +122,12 @@ export default function ProductPage({ params }: ProductPageProps) {
                     url: photoUrl.trim(),
                     alt: `${productData.name} - дополнительное фото ${index + 1}`
                   });
-                  console.log(`📸 Добавлено дополнительное фото ${index + 1}:`, photoUrl.substring(0, 80) + '...');
                 } else {
                   console.warn(`⚠️ Пропущен невалидный URL дополнительного фото ${index + 1}:`, photoUrl);
                 }
               });
             }
             
-            // Если НЕТ валидных изображений, добавляем placeholder
             if (productImages.length === 0) {
               console.log('📷 Нет валидных изображений, добавляем placeholder');
               productImages.push({
@@ -176,7 +139,6 @@ export default function ProductPage({ params }: ProductPageProps) {
             
             setImages(productImages);
             
-            console.log(`📸 Итого изображений для отображения: ${productImages.length}`);
             productImages.forEach((img, i) => {
               console.log(`  ${i + 1}: ${img.id} - ${img.url ? img.url.substring(0, 60) + '...' : 'PLACEHOLDER'}`);
             });
@@ -205,13 +167,9 @@ export default function ProductPage({ params }: ProductPageProps) {
   const handleAddToCart = (size: string) => {
     if (!product) return;
     
-    // ИСПРАВЛЕНО: Получаем правильную цену размера
     const selectedSizeInfo = product.sizes.find(s => s.size === size);
     const price = selectedSizeInfo?.price || product.price;
     
-    console.log(`💰 Цена для размера ${size}: ${price}₽`, selectedSizeInfo);
-    
-    // Создаем объект товара для корзины
     const cartItem = {
       id: product.id,
       article: product.article,
@@ -220,19 +178,15 @@ export default function ProductPage({ params }: ProductPageProps) {
       size: size, 
       category: product.category,
       gender: 'Унисекс',
-      price: price, // ← правильная цена размера
+      price: price, 
       photo: images[0]?.url || '/images/placeholder.jpg'
     };
     
-    // Добавляем в корзину без alert
     addToCart(cartItem);
     
-    // Показываем уведомление
     setNotificationProduct(`${product.name} • Размер ${size}`);
     setShowNotification(true);
     
-    // Логируем в консоль
-    console.log(`Товар добавлен в корзину: ${product.name}, размер: ${size}, цена: ${price.toLocaleString()} ₽`);
   };
 
   const handleContinueShopping = () => {
@@ -245,7 +199,6 @@ export default function ProductPage({ params }: ProductPageProps) {
     window.location.href = '/';
   };
 
-  // Хлебные крошки
   const breadcrumbItems = [
     { label: 'Каталог', href: '/' },
     { label: product?.category || 'Категория', href: `/#${product?.category}` },

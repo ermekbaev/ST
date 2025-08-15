@@ -1,4 +1,3 @@
-// src/app/api/promocodes/route.ts - ДЛЯ STRAPI V5
 import { NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -13,10 +12,8 @@ export interface SimplePromoCode {
   isActive: boolean;
 }
 
-// GET /api/promocodes - для Strapi v5
 export async function GET() {
   try {
-    console.log('🎟️ Загружаем промокоды из Strapi v5...');
 
     const response = await fetch(`${STRAPI_URL}/api/promocodes`, {
       headers: {
@@ -37,17 +34,13 @@ export async function GET() {
     const data = await response.json();
     const rawPromocodes = data.data || [];
 
-    console.log(`📊 Получено ${rawPromocodes.length} промокодов из Strapi v5`);
 
-    // ✅ ИСПРАВЛЕНО: Для Strapi v5 данные НЕ вложены в attributes
     const promocodes: SimplePromoCode[] = rawPromocodes
       .map((promo: any) => {
-        // В Strapi v5 поля находятся прямо в объекте, не в attributes
         const discountTypeRaw = promo.discountType || 'percentage';
         
-        // Очищаем лишние символы (видимо есть пробелы и запятые)
-        const cleanDiscountType = discountTypeRaw.trim().replace(/,$/, ''); // убираем запятую в конце
-        const cleanCode = promo.code?.trim() || ''; // убираем пробелы в начале/конце
+        const cleanDiscountType = discountTypeRaw.trim().replace(/,$/, '');
+        const cleanCode = promo.code?.trim() || ''; 
         
         return {
           id: promo.id,
@@ -63,8 +56,6 @@ export async function GET() {
       })
       .filter((promo: SimplePromoCode) => promo.isActive && promo.code);
 
-    console.log(`✅ Отдаем ${promocodes.length} активных промокодов`);
-    console.log('📋 Промокоды:', promocodes.map(p => `${p.code} (${p.discountType}: ${p.discountValue})`));
     
     return NextResponse.json({
       success: true,
@@ -84,20 +75,15 @@ export async function GET() {
   }
 }
 
-// POST /api/promocodes - проверить конкретный промокод ИЛИ обновить счетчик
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { code, promoCodeId } = body;
     
-    // Если передан promoCodeId, увеличиваем счетчик использования
     if (promoCodeId) {
-      console.log(`📊 Увеличиваем счетчик промокода ID: ${promoCodeId}`);
-      // Пока просто возвращаем success (счетчик можно добавить позже)
       return NextResponse.json({ success: true });
     }
     
-    // Иначе проверяем промокод по коду
     if (!code) {
       return NextResponse.json({
         success: false,
@@ -111,8 +97,6 @@ export async function POST(request: Request) {
         error: 'Код не указан'
       }, { status: 400 });
     }
-
-    console.log(`🔍 Проверяем промокод: ${code}`);
 
     const response = await fetch(`${STRAPI_URL}/api/promocodes`, {
       headers: { 'Content-Type': 'application/json' },
@@ -129,7 +113,6 @@ export async function POST(request: Request) {
     const data = await response.json();
     const rawPromocodes = data.data || [];
 
-    // Ищем промокод (в Strapi v5 данные прямо в объекте)
     const foundPromo = rawPromocodes.find((promo: any) => 
       promo.code?.trim().toUpperCase() === code.toUpperCase() && 
       promo.isActive !== false

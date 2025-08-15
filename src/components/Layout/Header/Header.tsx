@@ -12,7 +12,6 @@ const Header: React.FC = () => {
   }, []);
 
   if (!mounted) {
-    // Показываем заглушку до монтирования на клиенте
     return (
       <header className="w-full bg-white border-b border-gray-200 h-[80px] lg:h-[120px]">
         <div className="flex items-center justify-center h-full">

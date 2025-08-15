@@ -1,4 +1,3 @@
-// src/types/checkout.ts
 import { CartItem } from './cart';
 
 export interface CheckoutFormData {
@@ -42,7 +41,7 @@ export interface DeliveryOption {
   id: DeliveryMethod;
   name: string;
   description?: string;
-  price: number; // ✅ Убрал знак вопроса - цена обязательна
+  price: number; 
   estimatedDays?: string;
 }
 

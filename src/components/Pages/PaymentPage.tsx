@@ -38,18 +38,18 @@ const PaymentPage: React.FC = () => {
         </div>
 
         {/* Основной контент */}
-        <div className="mt-8 lg:mt-12">
+        <div className="mt-8 lg:mt-12 payment-page-content">
           
           {/* DESKTOP ВЕРСИЯ */}
           <div className="hidden lg:block space-y-10">
             
             {/* Секция "Какие способы оплаты возможны?" */}
             <div>
-              <h2 className="text-[22px] leading-[28px] font-black mb-4 text-black">
+              <h2 className="text-[22px] leading-[28px] font-black italic mb-4 text-black">
                 Какие способы оплаты возможны?
               </h2>
               
-              <div className="space-y-4">
+              <div className="space-y-4 payment-section-content">
                 <p className="text-[18px] leading-[26px] text-black">
                   Мы принимаем оплату банковскими картами:
                 </p>
@@ -69,11 +69,11 @@ const PaymentPage: React.FC = () => {
 
             {/* Секция "Нужно ли дополнительно оплачивать налоги и таможенные сборы?" */}
             <div>
-              <h2 className="text-[22px] leading-[28px] font-black mb-4 text-black">
+              <h2 className="text-[22px] leading-[28px] font-black italic mb-4 text-black">
                 Нужно ли дополнительно оплачивать налоги и таможенные сборы?
               </h2>
               
-              <div>
+              <div className="payment-section-content">
                 <p className="text-[18px] leading-[26px] text-black">
                   Нет, не нужно, все налоги и таможенные сборы уже включены в итоговую стоимость товаров в нашем магазине.
                 </p>
@@ -87,11 +87,11 @@ const PaymentPage: React.FC = () => {
             
             {/* Секция "Какие способы оплаты возможны?" */}
             <div>
-              <h2 className="text-[16px] leading-[20px] font-black mb-3 text-black">
+              <h2 className="text-[16px] leading-[20px] font-black italic mb-3 text-black">
                 Какие способы оплаты возможны?
               </h2>
               
-              <div className="space-y-3">
+              <div className="space-y-3 payment-section-content-mobile">
                 <p className="text-[14px] leading-[20px] text-black">
                   Мы принимаем оплату банковскими картами:
                 </p>
@@ -109,11 +109,11 @@ const PaymentPage: React.FC = () => {
 
             {/* Секция "Нужно ли дополнительно оплачивать налоги и таможенные сборы?" */}
             <div>
-              <h2 className="text-[16px] leading-[20px] font-black mb-3 text-black">
+              <h2 className="text-[16px] leading-[20px] font-black italic mb-3 text-black">
                 Нужно ли дополнительно оплачивать налоги и таможенные сборы?
               </h2>
               
-              <div>
+              <div className="payment-section-content-mobile">
                 <p className="text-[14px] leading-[20px] text-black">
                   Нет, не нужно, все налоги и таможенные сборы уже включены в итоговую стоимость товаров в нашем магазине.
                 </p>

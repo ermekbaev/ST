@@ -1,4 +1,3 @@
-// src/components/Product/Gallery/DesktopGallery.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -11,7 +10,7 @@ interface DesktopGalleryProps {
   onPrevImage: () => void;
   onNextImage: () => void;
   onSelectImage: (index: number) => void;
-  onOpenLightbox: (index?: number) => void; // Новый пропс
+  onOpenLightbox: (index?: number) => void; 
 }
 
 const DesktopGallery: React.FC<DesktopGalleryProps> = ({

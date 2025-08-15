@@ -38,15 +38,15 @@ const ReturnsPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="text-[20px] lg:text-[30px] leading-[30px] lg:leading-[45px]">
+        <div className="text-[20px] lg:text-[30px] leading-[30px] lg:leading-[45px] returns-page-content">
           
-          {/* Main Title */}
-          <div className="mb-8 lg:mb-12 font-black text-black">
+          {/* Main Title - остается как есть, это заголовок */}
+          <div className="mb-8 lg:mb-12 font-black italic text-black">
             УСЛОВИЯ ВОЗВРАТА И ОБМЕНА
           </div>
 
-          {/* Content Sections */}
-          <div className="space-y-4 lg:space-y-6">
+          {/* Content Sections - исправляем шрифты */}
+          <div className="space-y-4 lg:space-y-6 returns-section-content">
             
             {/* Defective Products Section */}
             <div className="text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px] text-black">
@@ -158,11 +158,11 @@ const ReturnsPage = () => {
 
             {/* Additional Terms */}
             <div className="text-[15px] lg:text-[20px] leading-[20px] lg:leading-[30px] text-black">
-              <div className="text-[18px] lg:text-[24px] leading-[27px] lg:leading-[36px] mb-6 lg:mb-8 font-black">
+              <div className="text-[18px] lg:text-[24px] leading-[27px] lg:leading-[36px] mb-6 lg:mb-8 font-black italic">
                 Дополнительно приложения к процессу возврата товара в TIGR SHOP
               </div>
 
-              <div className="space-y-4 lg:space-y-6">
+              <div className="space-y-4 lg:space-y-6 returns-section-content">
                 <p>
                   Продавец вправе в течение 10 рабочих дней с момента возврата товара ненадлежащего 
                   качества провести проверку его качества.

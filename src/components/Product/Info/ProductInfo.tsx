@@ -1,9 +1,7 @@
-// src/components/Product/Info/ProductInfo.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 
-// Импорты компонентов - будут созданы как отдельные файлы
 import DesktopProductInfo from './DesktopProductInfo';  
 import MobileProductInfo from './MobileProductInfo';
 
@@ -12,7 +10,7 @@ export interface ProductSize {
   size: string;
   price: number;
   available: boolean;
-  originalPrice?: number; // Для скидок
+  originalPrice?: number; 
 }
 
 export interface ProductInfo {
@@ -31,7 +29,6 @@ export interface ProductInfo {
   deliveryInfo?: string;
 }
 
-// Интерфейсы для пропсов дочерних компонентов
 export interface CommonProductInfoProps {
   product: ProductInfo;
   selectedSize: string | null;
@@ -63,40 +60,29 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     setMounted(true);
   }, []);
 
-  // Функция добавления в корзину без alert
   const handleAddToCart = async () => {
     if (!selectedSize) {
-      // Можно добавить визуальную подсветку поля размера
-      console.log('Размер не выбран');
       return;
     }
 
     setIsAddingToCart(true);
     
     try {
-      // Имитируем загрузку (можно убрать если не нужно)
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Добавляем в корзину
       onAddToCart(selectedSize);
-      
-      // Логируем успешное добавление (только в консоль)
-      console.log(`Товар добавлен в корзину: ${product.name}, размер: ${selectedSize}`);
       
     } catch (error) {
       console.error('Ошибка добавления в корзину:', error);
-      // Можно добавить toast уведомление вместо alert
     } finally {
       setIsAddingToCart(false);
     }
   };
 
-  // Получаем информацию о выбранном размере
   const selectedSizeInfo = selectedSize 
     ? product.sizes.find(s => s.size === selectedSize)
     : null;
 
-  // Показываем заглушку до монтирования
   if (!mounted) {
     return (
       <div className={`w-full ${className}`}>

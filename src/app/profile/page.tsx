@@ -33,7 +33,6 @@ const UserProfilePage: NextPage = () => {
           const userData = JSON.parse(savedUser);
           console.log('👤 Данные из localStorage:', userData);
           
-          // Устанавливаем данные пользователя
           const userInfo = {
             name: userData.name || userData.email?.split('@')[0] || 'Пользователь',
             phone: userData.phone || 'Не указан',
@@ -41,13 +40,10 @@ const UserProfilePage: NextPage = () => {
             agreeToMarketing: userData.agreeToMarketing || false
           };
           
-          console.log('👤 Обработанные данные пользователя:', userInfo);
-          
           setUser(userInfo);
           setAgreeToMarketing(userData.agreeToMarketing || false);
           
         } catch (error) {
-          console.error('Ошибка парсинга пользователя:', error);
           localStorage.removeItem('currentUser');
           localStorage.removeItem('authToken');
           window.location.href = '/';
@@ -72,7 +68,6 @@ const UserProfilePage: NextPage = () => {
   const handleLogout = () => {
     console.log('Выход из аккаунта');
     
-    // Сразу выходим без подтверждения
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
       localStorage.removeItem('authToken');
@@ -80,14 +75,11 @@ const UserProfilePage: NextPage = () => {
     window.location.href = '/';
   };
 
-// Полная версия handleMarketingChange с сохранением в Strapi
 const handleMarketingChange = async (newValue: boolean) => {
   console.log('🔄 Обновляем согласие на маркетинг:', newValue);
   
-  // Сначала обновляем локальное состояние (мгновенно)
   setAgreeToMarketing(newValue);
   
-  // Обновляем localStorage (мгновенно)
   if (user) {
     const updatedUser = { ...user, agreeToMarketing: newValue };
     setUser(updatedUser);
@@ -95,11 +87,9 @@ const handleMarketingChange = async (newValue: boolean) => {
     console.log('✅ Согласие обновлено в localStorage');
   }
   
-  // Обновляем в Strapi (в фоне)
   const authToken = localStorage.getItem('authToken');
   if (authToken) {
     try {
-      console.log('📤 Отправляем обновление в Strapi...');
       const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}/api/users/me`, {
         method: 'PUT',
         headers: {
@@ -117,15 +107,12 @@ const handleMarketingChange = async (newValue: boolean) => {
       } else {
         const error = await response.json();
         console.error('❌ Ошибка обновления в Strapi:', error);
-        // НО НЕ откатываем изменение - localStorage уже обновлен
       }
     } catch (error) {
       console.error('❌ Ошибка сети при обновлении согласия:', error);
-      // Оставляем изменение в localStorage даже при ошибке сети
     }
   } else {
     console.log('⚠️ Нет JWT токена для обновления в Strapi');
-    // Но localStorage все равно обновлен
   }
 };
 

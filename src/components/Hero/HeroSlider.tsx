@@ -6,11 +6,9 @@ const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   
-  // 🎯 ДОБАВЛЕНО: Состояния для поддержки touch/swipe
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-  // Минимальное расстояние для регистрации свайпа
   const minSwipeDistance = 50;
 
   const slides = [
@@ -56,7 +54,6 @@ const HeroSlider = () => {
     }
   ];
 
-  // 🎯 ДОБАВЛЕНО: Обработчики touch событий для свайпа
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
@@ -74,10 +71,8 @@ const HeroSlider = () => {
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe) {
-      // Свайп влево - следующий слайд
       nextSlide();
     } else if (isRightSwipe) {
-      // Свайп вправо - предыдущий слайд
       prevSlide();
     }
   };
@@ -94,7 +89,6 @@ const HeroSlider = () => {
     setCurrentSlide(index);
   };
 
-  // Автосмена слайдов раз в 7 секунд
   useEffect(() => {
     if (!isPaused) {
       const timer = setInterval(() => {
@@ -105,7 +99,6 @@ const HeroSlider = () => {
     }
   }, [currentSlide, isPaused]);
 
-  // Управление клавиатурой (стрелки влево/вправо)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight') {
@@ -119,7 +112,6 @@ const HeroSlider = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Обработчик клика по баннеру
   const handleBannerClick = (link: string) => {
     console.log(`Клик по баннеру: ${link}`);
     window.location.href = link;
@@ -131,7 +123,6 @@ const HeroSlider = () => {
       className="relative w-full overflow-hidden group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      // 🎯 ДОБАВЛЕНО: Touch события для поддержки свайпа на мобильных
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -150,7 +141,6 @@ const HeroSlider = () => {
             onClick={() => handleBannerClick(slide.link)}
           >
             <div className="w-full relative">
-              {/* Десктопное изображение (показываются на экранах >= 768px) */}
               <img
                 src={slide.imageDesktop}
                 alt={slide.alt}
@@ -162,7 +152,6 @@ const HeroSlider = () => {
                 }}
               />
               
-              {/* Мобильное изображение (показываются на экранах < 768px) */}
               <img
                 src={slide.imageMobile}
                 alt={slide.alt}

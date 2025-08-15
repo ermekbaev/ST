@@ -1,4 +1,3 @@
-// src/components/Catalog/Filters/CheckboxFilter.tsx - ОБНОВЛЕННЫЙ с функцией сворачивания
 'use client';
 
 import React, { useState } from 'react';
@@ -8,8 +7,8 @@ interface CheckboxFilterProps {
   options: string[];
   selectedValues: string[];
   onChange: (value: string) => void;
-  maxHeight?: string; // Оставляем для совместимости, но игнорируем
-  maxVisible?: number; // Сколько элементов показывать изначально
+  maxHeight?: string; 
+  maxVisible?: number; 
 }
 
 const CheckboxFilter: React.FC<CheckboxFilterProps> = ({
@@ -17,13 +16,11 @@ const CheckboxFilter: React.FC<CheckboxFilterProps> = ({
   options,
   selectedValues,
   onChange,
-  maxHeight, // Игнорируем этот параметр
-  maxVisible = 6 // По умолчанию показываем 6 элементов
+  maxHeight, 
+  maxVisible = 6 
 }) => {
-  // Состояние для управления сворачиванием/разворачиванием
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Определяем какие элементы показывать
   const displayOptions = isExpanded ? options : options.slice(0, maxVisible);
   const hasMore = options.length > maxVisible;
   const hiddenCount = options.length - maxVisible;

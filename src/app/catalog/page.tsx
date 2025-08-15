@@ -1,4 +1,3 @@
-// src/app/catalog/page.tsx
 'use client'
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -22,7 +21,7 @@ interface Product {
   gender: string;
   price: number;
   photo: string;
-  sizes?: string[]; // Новое поле для массива размеров
+  sizes?: string[]; 
 }
 
 interface FilterState {
@@ -36,7 +35,6 @@ interface FilterState {
   };
 }
 
-// Компонент загрузки
 function CatalogLoading() {
   return (
     <div className="min-h-screen bg-white">
@@ -50,7 +48,6 @@ function CatalogLoading() {
   );
 }
 
-// Основной компонент каталога
 function CatalogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,7 +60,6 @@ function CatalogContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   
-  // Состояние фильтров
   const [filters, setFilters] = useState<FilterState>({
     brands: [],
     genders: [],
@@ -72,7 +68,6 @@ function CatalogContent() {
     priceRange: { min: '', max: '' }
   });
 
-  // Опции фильтров (fallback для старых данных)
   const [filterOptions, setFilterOptions] = useState({
     brands: [] as string[],
     genders: [] as string[],
@@ -86,7 +81,6 @@ function CatalogContent() {
     setMounted(true);
   }, []);
 
-  // Загрузка товаров из Strapi
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -98,13 +92,11 @@ function CatalogContent() {
       if (response.ok && result.products) {
         console.log(`✅ [CATALOG] Загружено ${result.products.length} товаров из Strapi`);
         
-        // Группируем товары по названию (объединяем разные размеры)
         const groupedProducts = groupProductsByName(result.products);
         
         setProducts(groupedProducts);
         console.log(`📊 [CATALOG] После группировки: ${groupedProducts.length} уникальных товаров`);
         
-        // Обновляем опции фильтров из загруженных товаров (fallback)
         updateFilterOptions(groupedProducts);
         
       } else {
@@ -120,7 +112,6 @@ function CatalogContent() {
     }
   };
 
-  // Группировка товаров по названию
 const groupProductsByName = (products: Product[]): Product[] => {
   const grouped = products.reduce((acc, product) => {
     const key = `${product.brand.toLowerCase()}_${product.name.toLowerCase()}`;
@@ -128,20 +119,17 @@ const groupProductsByName = (products: Product[]): Product[] => {
     if (!acc[key]) {
       acc[key] = {
         ...product,
-        // ✅ ИСПРАВЛЕНО: Правильная обработка размеров
         allSizes: product.sizes && product.sizes.length > 0 
           ? product.sizes.map(size => ({ size, price: product.price }))  // ← Исправлено: size, не product.size
           : [{ size: product.size, price: product.price }]
       };
     } else {
-      // Добавляем размеры к существующему товару
       const newSizes = product.sizes && product.sizes.length > 0 
         ? product.sizes.map(size => ({ size, price: product.price }))
         : [{ size: product.size, price: product.price }];
       
       acc[key].allSizes = [...(acc[key].allSizes || []), ...newSizes];
       
-      // Берем лучшее фото (самый длинный URL)
       if (product.photo && product.photo.length > (acc[key].photo?.length || 0)) {
         acc[key].photo = product.photo;
       }
@@ -153,14 +141,12 @@ const groupProductsByName = (products: Product[]): Product[] => {
   return Object.values(grouped);
 };
 
-  // Обновление опций фильтров из товаров (fallback)
   const updateFilterOptions = (products: Product[]) => {
     if (products.length > 0) {
       const brands = [...new Set(products.map(p => p.brand))].sort();
       const genders = [...new Set(products.map(p => p.gender))].sort();
       const categories = [...new Set(products.map(p => p.category))].sort();
       
-      // Собираем все размеры из товаров
       const allSizes = new Set<string>();
       products.forEach(product => {
         if (product.sizes && product.sizes.length > 0) {
@@ -181,7 +167,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
     }
   };
 
-  // Инициализация фильтров из URL
   useEffect(() => {
     if (!mounted) return;
 
@@ -206,14 +191,12 @@ const groupProductsByName = (products: Product[]): Product[] => {
     setSortBy(urlSort);
   }, [mounted, searchParams]);
 
-  // Загрузка товаров при монтировании
   useEffect(() => {
     if (mounted) {
       fetchProducts();
     }
   }, [mounted]);
 
-  // Обновление URL при изменении фильтров
   const updateURL = (newFilters: FilterState, newSearchQuery: string, newSortBy: string) => {
     const params = new URLSearchParams();
 
@@ -230,11 +213,9 @@ const groupProductsByName = (products: Product[]): Product[] => {
     router.replace(newURL, { scroll: false });
   };
 
-  // Применение фильтров
   const applyFilters = () => {
     let filtered = [...products];
 
-    // Поиск
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(product =>
@@ -244,28 +225,24 @@ const groupProductsByName = (products: Product[]): Product[] => {
       );
     }
 
-    // Фильтр по брендам
     if (filters.brands.length > 0) {
       filtered = filtered.filter(product =>
         filters.brands.includes(product.brand)
       );
     }
 
-    // Фильтр по полу
     if (filters.genders.length > 0) {
       filtered = filtered.filter(product =>
         filters.genders.includes(product.gender)
       );
     }
 
-    // Фильтр по категориям
     if (filters.categories.length > 0) {
       filtered = filtered.filter(product =>
         filters.categories.includes(product.category)
       );
     }
 
-    // Фильтр по размерам
     if (filters.sizes.length > 0) {
       filtered = filtered.filter(product =>
         product.sizes?.some(size => filters.sizes.includes(size)) ||
@@ -273,7 +250,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
       );
     }
 
-    // Фильтр по цене
     const minPrice = filters.priceRange.min ? parseFloat(filters.priceRange.min) : 0;
     const maxPrice = filters.priceRange.max ? parseFloat(filters.priceRange.max) : Infinity;
     
@@ -281,7 +257,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
       product.price >= minPrice && product.price <= maxPrice
     );
 
-    // Сортировка
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
@@ -294,7 +269,7 @@ const groupProductsByName = (products: Product[]): Product[] => {
           return a.name.localeCompare(b.name);
         case 'popularity':
         default:
-          return 0; // Оставляем оригинальный порядок
+          return 0; 
       }
     });
 
@@ -302,32 +277,27 @@ const groupProductsByName = (products: Product[]): Product[] => {
     console.log(`🔍 [CATALOG] Применены фильтры: ${filtered.length} товаров`);
   };
 
-  // Применение фильтров при изменении
   useEffect(() => {
     applyFilters();
   }, [products, filters, searchQuery, sortBy]);
 
-  // Обновление URL при изменении фильтров
   useEffect(() => {
     if (mounted) {
       updateURL(filters, searchQuery, sortBy);
-      setCurrentPage(1); // Сбрасываем страницу при изменении фильтров
+      setCurrentPage(1); 
     }
   }, [filters, searchQuery, sortBy, mounted]);
 
-  // Обработчики
   const handleFilterChange = (filterType: keyof FilterState, value: string | string[] | { min: string; max: string }) => {
     setFilters(prev => {
       if (filterType === 'priceRange') {
         return { ...prev, priceRange: value as { min: string; max: string } };
       }
       
-      // Если передан массив, используем его напрямую
       if (Array.isArray(value)) {
         return { ...prev, [filterType]: value };
       }
       
-      // Иначе переключаем значение в массиве
       const currentValues = prev[filterType] as string[];
       const newValues = currentValues.includes(value as string)
         ? currentValues.filter(v => v !== value)
@@ -367,7 +337,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
     setSearchQuery('');
   };
 
-  // Проверка наличия активных фильтров
   const hasActiveFilters = () => {
     return filters.brands.length > 0 ||
            filters.genders.length > 0 ||
@@ -378,7 +347,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
            searchQuery.trim() !== '';
   };
 
-  // Пагинация
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const currentProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
@@ -396,7 +364,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
 
   return (
     <div className="min-h-screen bg-white pb-20 lg:pb-0">
-      {/* Мобильные фильтры */}
       <MobileFilters
         filters={filters}
         filterOptions={filterOptions}
@@ -409,9 +376,7 @@ const groupProductsByName = (products: Product[]): Product[] => {
         onSortChange={setSortBy}
       />
 
-      {/* Основной контент */}
       <div className="flex flex-col lg:flex-row">
-        {/* Десктопные фильтры */}
         <DesktopFilters
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
@@ -422,10 +387,8 @@ const groupProductsByName = (products: Product[]): Product[] => {
           totalResults={filteredProducts.length}
         />
 
-        {/* Правая часть с товарами */}
         <div className="flex-1 catalog-content">
           <div className="p-5">
-            {/* Мобильная кнопка фильтра */}
             <div className="lg:hidden mb-5">
               <MobileFilterButton
                 onOpenFilters={() => setIsMobileFiltersOpen(true)}
@@ -434,7 +397,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
               />
             </div>
 
-            {/* Активные фильтры */}
             <ActiveFilters
               filters={filters}
               onRemoveFilter={handleRemoveFilter}
@@ -442,7 +404,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
               className="mb-5"
             />
 
-            {/* Сортировка для десктопа */}
             <div className="hidden lg:block mb-5">
               <CatalogSort
                 sortBy={sortBy}
@@ -451,14 +412,12 @@ const groupProductsByName = (products: Product[]): Product[] => {
               />
             </div>
 
-            {/* Сетка товаров */}
             <ProductGrid
               products={currentProducts}
               loading={loading}
               onClearFilters={hasActiveFilters() ? clearFilters : undefined}
             />
 
-            {/* Пагинация */}
             {totalPages > 1 && (
               <div className="mt-8">
                 <CatalogPagination
@@ -475,7 +434,6 @@ const groupProductsByName = (products: Product[]): Product[] => {
   );
 }
 
-// Основной экспорт с Suspense
 export default function CatalogPage() {
   return (
     <Suspense fallback={<CatalogLoading />}>

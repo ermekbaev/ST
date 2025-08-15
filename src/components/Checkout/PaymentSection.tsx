@@ -1,4 +1,3 @@
-// src/components/Checkout/PaymentSection.tsx - БЕЗ ФОЛЛБЭКА
 'use client';
 
 import React from 'react';
@@ -23,7 +22,6 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 }) => {
   const { register, watch, setValue } = form;
   
-  // 🔥 УБРАЛИ ФОЛЛБЭК - используем только данные из API
   const options = paymentOptions;
   const selectedPayment = watch('paymentMethod');
 
@@ -31,7 +29,6 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
     setValue('paymentMethod', optionId, { shouldValidate: true });
   };
 
-  // Если нет опций - показываем загрузку
   if (!options || options.length === 0) {
     return (
       <div className="space-y-6">

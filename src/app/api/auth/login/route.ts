@@ -1,19 +1,16 @@
-// Обновленная версия /app/api/auth/login/route.ts
 import { NextResponse } from 'next/server';
 
 interface LoginRequest {
   email: string;
 }
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL 
 const TEMP_PASSWORD = 'TigrShop2025!';
 
 export async function POST(request: Request) {
   try {
     const body: LoginRequest = await request.json();
-    console.log('🔐 Попытка входа через Strapi:', body.email);
 
-    // Валидация email
     if (!validateEmail(body.email)) {
       return NextResponse.json({
         success: false,
@@ -22,7 +19,6 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Пробуем войти через стандартную Strapi аутентификацию
     const loginResponse = await fetch(`${STRAPI_URL}/api/auth/local`, {
       method: 'POST',
       headers: {
@@ -37,7 +33,6 @@ export async function POST(request: Request) {
     const userData = await loginResponse.json();
 
     if (!loginResponse.ok) {
-      console.error('❌ Ошибка входа в Strapi:', userData);
       
       let errorMessage = 'Пользователь с таким email не найден. Зарегистрируйтесь сначала.';
       
@@ -56,9 +51,7 @@ export async function POST(request: Request) {
       }, { status: 404 });
     }
 
-    console.log('✅ Пользователь успешно вошел:', userData.user.id);
 
-    // Получаем полные данные пользователя
     let fullUserData = userData.user;
     try {
       const meResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
@@ -69,20 +62,17 @@ export async function POST(request: Request) {
 
       if (meResponse.ok) {
         fullUserData = await meResponse.json();
-        console.log('📊 Полные данные пользователя:', fullUserData);
       }
     } catch (error) {
       console.error('⚠️ Ошибка получения полных данных:', error);
     }
 
-    // Обновляем дату последнего входа
     try {
       await updateUserLastLogin(userData.user.id, userData.jwt);
     } catch (error) {
       console.error('⚠️ Ошибка обновления даты входа:', error);
     }
 
-    // Возвращаем полные данные пользователя
     return NextResponse.json({
       success: true,
       message: 'Вход выполнен успешно',
@@ -116,13 +106,6 @@ async function updateUserLastLogin(userId: string, jwt: string): Promise<void> {
         lastLogin: new Date().toISOString()
       }),
     });
-
-    if (response.ok) {
-      console.log('✅ Дата последнего входа обновлена');
-    } else {
-      const error = await response.json();
-      console.log('⚠️ Не удалось обновить дату входа:', error);
-    }
   } catch (error) {
     console.error('❌ Ошибка обновления даты входа:', error);
   }

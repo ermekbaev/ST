@@ -1,10 +1,8 @@
-// src/components/Layout/Navigation/BottomNavigation.tsx - ПРОСТОЕ ДОБАВЛЕНИЕ АВТОРИЗАЦИИ
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../../../contexts/CartContext';
-import AuthModal from '../../Auth/AuthModal'; // ДОБАВИЛИ: импорт модального окна
+import AuthModal from '../../Auth/AuthModal'; 
 
 interface BottomNavigationProps {
   onSupportClick?: () => void;
@@ -13,7 +11,7 @@ interface BottomNavigationProps {
 const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) => {
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false); // ДОБАВИЛИ: состояние модального окна
+  const [showAuthModal, setShowAuthModal] = useState(false); 
   const { totalItems, toggleCart } = useCart();
 
   useEffect(() => {
@@ -28,28 +26,23 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
     }
   };
 
-  // ИЗМЕНИЛИ: простая логика обработки клика по профилю
   const handleProfileClick = () => {
     console.log('Клик по иконке профиля в мобильной навигации');
     
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
-        // Пользователь авторизован - переходим в профиль
         console.log('👤 Пользователь авторизован, переход в профиль');
         window.location.href = '/profile';
       } else {
-        // Пользователь не авторизован - показываем модальное окно
         console.log('🔐 Показываем модальное окно авторизации');
         setShowAuthModal(true);
       }
     }
   };
 
-  // ДОБАВИЛИ: обработчик закрытия модального окна
   const handleCloseAuthModal = () => {
     setShowAuthModal(false);
-    // Перепроверяем статус авторизации после закрытия модального окна
     checkAuthStatus();
   };
 
@@ -70,7 +63,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
     window.location.href = '/';
   };
 
-  // Не показываем до монтирования
   if (!mounted) {
     return null;
   }

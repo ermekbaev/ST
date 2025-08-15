@@ -1,13 +1,11 @@
-// src/hooks/useCheckout.ts - ОБНОВЛЕННАЯ ВЕРСИЯ С ИНТЕГРАЦИЕЙ ЮKASSA
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation'; // 🔥 ДОБАВЛЕНО: для навигации после создания платежа
+import { useRouter } from 'next/navigation'; 
 import { useCart } from '@/contexts/CartContext';
 import { useDeliverySettings } from './useDeliverySettings';
 import { createPayment, formatCartItemsForPayment } from '@/services/paymentService'; // 🔥 ДОБАВЛЕНО: импорт сервиса ЮKassa
 import { CheckoutFormData, AppliedPromoCode, DeliveryMethod, PaymentMethod } from '@/types/checkout';
 
-// ✅ ДОБАВЛЯЕМ ИНТЕРФЕЙСЫ ДЛЯ API
 interface OrderItem {
   productId: string;
   productName: string;
@@ -39,14 +37,13 @@ interface CreateOrderResponse {
 }
 
 export const useCheckout = () => {
-  const router = useRouter(); // 🔥 ДОБАВЛЕНО: хук для навигации
+  const router = useRouter(); 
   const { items, clearCart } = useCart();
   const { deliveryOptions, paymentOptions, promoCodes, generalSettings, loading } = useDeliverySettings();
   const [appliedPromoCode, setAppliedPromoCode] = useState<AppliedPromoCode | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // 🔥 ДОБАВЛЕНО: состояние обработки платежа
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); 
 
-  // ✅ ФОРМА БЕЗ ЦИКЛИЧЕСКИХ ЗАВИСИМОСТЕЙ
   const form = useForm<CheckoutFormData>({
     defaultValues: {
       firstName: '',
@@ -66,18 +63,15 @@ export const useCheckout = () => {
     mode: 'onChange'
   });
 
-  // ✅ БАЗОВЫЕ РАСЧЕТЫ БЕЗ ЗАВИСИМОСТИ ОТ ФОРМЫ
   const baseCalculations = useMemo(() => {
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     return { subtotal };
   }, [items]);
 
-  // ✅ ФУНКЦИЯ РАСЧЕТА ДОСТАВКИ
   const calculateDeliveryPrice = useCallback((deliveryId: string) => {
     const selectedDelivery = deliveryOptions.find(option => option.id === deliveryId);
     let deliveryPrice = selectedDelivery?.price || 0;
     
-    // Бесплатная доставка при достижении минимальной суммы
     if (baseCalculations.subtotal >= generalSettings.minOrderFreeDelivery && deliveryPrice > 0) {
       deliveryPrice = 0;
     }
@@ -85,7 +79,6 @@ export const useCheckout = () => {
     return deliveryPrice;
   }, [deliveryOptions, baseCalculations.subtotal, generalSettings.minOrderFreeDelivery]);
 
-  // ✅ ФУНКЦИЯ РАСЧЕТА СКИДКИ
   const calculatePromoDiscount = useCallback((deliveryId: string) => {
     if (!appliedPromoCode) return 0;
     
@@ -103,7 +96,6 @@ export const useCheckout = () => {
     }
   }, [appliedPromoCode, baseCalculations.subtotal, deliveryOptions]);
 
-  // ✅ ОБЩАЯ ФУНКЦИЯ РАСЧЕТА
   const calculateTotals = useCallback((deliveryMethod?: string) => {
     const currentDeliveryMethod = deliveryMethod || form.getValues('deliveryMethod');
     const deliveryPrice = calculateDeliveryPrice(currentDeliveryMethod);
@@ -119,21 +111,17 @@ export const useCheckout = () => {
     };
   }, [baseCalculations, calculateDeliveryPrice, calculatePromoDiscount, generalSettings.deliveryTimeGeneral, form]);
 
-  // ✅ ТЕКУЩИЕ РАСЧЕТЫ БЕЗ ПРЯМОЙ ЗАВИСИМОСТИ ОТ form.watch
   const [calculations, setCalculations] = useState(() => calculateTotals());
 
-  // ✅ ОБНОВЛЯЕМ РАСЧЕТЫ КОГДА МЕНЯЮТСЯ БАЗОВЫЕ ДАННЫЕ
   useEffect(() => {
     setCalculations(calculateTotals());
   }, [calculateTotals]);
 
-  // ✅ СЛУШАЕМ ИЗМЕНЕНИЯ СПОСОБА ДОСТАВКИ ОТДЕЛЬНО
   const selectedDeliveryMethod = form.watch('deliveryMethod');
   useEffect(() => {
     setCalculations(calculateTotals(selectedDeliveryMethod));
   }, [selectedDeliveryMethod, calculateTotals]);
 
-  // ✅ ПРИМЕНЕНИЕ ПРОМОКОДА
   const applyPromoCode = useCallback((code: string): boolean => {
     const foundPromo = promoCodes.find(promo => promo.code === code.toUpperCase());
     
@@ -150,32 +138,21 @@ export const useCheckout = () => {
       appliedDiscount
     });
     
-    // Обновляем расчеты после применения промокода
     setTimeout(() => setCalculations(calculateTotals()), 0);
     
-    console.log('✅ Промокод применен:', foundPromo.code, appliedDiscount);
     return true;
   }, [promoCodes, form, calculatePromoDiscount, calculateTotals]);
 
-  // ✅ УДАЛЕНИЕ ПРОМОКОДА
   const removePromoCode = useCallback(() => {
     setAppliedPromoCode(null);
     setTimeout(() => setCalculations(calculateTotals()), 0);
-    console.log('🗑️ Промокод удален');
   }, [calculateTotals]);
 
-  // ✅ СОЗДАНИЕ ЗАКАЗА В STRAPI (БЕЗ ИЗМЕНЕНИЙ)
   const createOrderInStrapi = useCallback(async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
     try {
-      console.log('🔄 Отправляем заказ в Strapi API:', orderData);
 
       const userToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
       
-      console.log('🔍 Отладка токена пользователя:', {
-        hasUserToken: !!userToken,
-        tokenPreview: userToken ? `${userToken.substring(0, 20)}...` : 'НЕТ ТОКЕНА'
-      });
-
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(userToken ? { Authorization: `Bearer ${userToken}` } : {})
@@ -197,7 +174,6 @@ export const useCheckout = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('✅ Заказ успешно создан в Strapi:', data);
         return {
           success: true,
           orderId: data.orderId,
@@ -222,10 +198,8 @@ export const useCheckout = () => {
     }
   }, []);
 
-  // 🔥 НОВАЯ ФУНКЦИЯ: ОБРАБОТКА ПЛАТЕЖА ЧЕРЕЗ ЮKASSA
   const processPayment = useCallback(async (orderData: CreateOrderData, orderResponse: CreateOrderResponse) => {
     if (orderData.paymentMethod === 'card' && orderResponse.orderId) {
-      console.log('💳 Инициируем оплату через ЮKassa');
       
       setIsProcessingPayment(true);
       
@@ -237,7 +211,7 @@ export const useCheckout = () => {
           customerPhone: orderData.customerInfo.phone,
           description: `Оплата заказа #${orderResponse.orderNumber || orderResponse.orderId} в Tigr Shop`,
           returnUrl: `${window.location.origin}/orders/${orderResponse.orderId}/success`,
-          items: formatCartItemsForPayment(items) // Передаем детали товаров для чека
+          items: formatCartItemsForPayment(items) 
         };
 
         const paymentResponse = await createPayment(paymentData);
@@ -245,10 +219,8 @@ export const useCheckout = () => {
         if (paymentResponse.success && paymentResponse.confirmationUrl) {
           console.log('✅ Платеж создан, перенаправляем на ЮKassa');
           
-          // Очищаем корзину перед перенаправлением
           clearCart();
           
-          // Перенаправляем на страницу оплаты ЮKassa
           window.location.href = paymentResponse.confirmationUrl;
           return;
           
@@ -263,14 +235,11 @@ export const useCheckout = () => {
         throw error;
       }
     } else {
-      // Для других способов оплаты - обычное перенаправление
-      console.log('📦 Заказ создан без онлайн оплаты');
       clearCart();
       router.push(`/orders/${orderResponse.orderId}/success`);
     }
   }, [items, clearCart, router]);
 
-  // ✅ ПРЕОБРАЗОВАНИЕ ДАННЫХ ИЗ ФОРМЫ В ФОРМАТ API (БЕЗ ИЗМЕНЕНИЙ)
   const formatOrderDataForAPI = useCallback((formData: CheckoutFormData, calculations: any): CreateOrderData => {
     return {
       customerInfo: {
@@ -297,7 +266,6 @@ export const useCheckout = () => {
     };
   }, [items, appliedPromoCode]);
 
-  // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ЗАКАЗА С ИНТЕГРАЦИЕЙ ЮKASSA
 const submitOrder = useCallback(async (data: CheckoutFormData) => {
   if (isSubmitting || isProcessingPayment) return;
 
@@ -306,17 +274,6 @@ const submitOrder = useCallback(async (data: CheckoutFormData) => {
     
     const finalCalculations = calculateTotals(data.deliveryMethod);
     
-    // 🔥 ДОБАВЬТЕ ЭТИ ЛОГИ ДЛЯ ОТЛАДКИ:
-    console.log('🔍 === ОТЛАДКА ОТПРАВКИ ЗАКАЗА ===');
-    console.log('📋 Данные формы:', data);
-    console.log('💳 Способ оплаты:', data.paymentMethod);
-    console.log('💰 Расчеты:', finalCalculations);
-    console.log('🛒 Товары:', items);
-    
-    console.log('📦 Начинаем оформление заказа...');
-    console.log('📊 Итоговые расчеты:', finalCalculations);
-    
-    // Валидация корзины
     if (!items || items.length === 0) {
       throw new Error('Корзина пуста');
     }
@@ -325,31 +282,17 @@ const submitOrder = useCallback(async (data: CheckoutFormData) => {
       throw new Error('Неверная сумма заказа');
     }
 
-    // Преобразуем данные для API
     const orderData = formatOrderDataForAPI(data, finalCalculations);
     
-    // 🔥 ДОБАВЬТЕ ЭТИ ЛОГИ:
-    console.log('📤 Данные для API:', orderData);
-    console.log('💳 Проверяем способ оплаты:', orderData.paymentMethod);
-    console.log('❓ Это карта?', orderData.paymentMethod === 'card');
-    
-    // Создаем заказ в Strapi
     const orderResponse = await createOrderInStrapi(orderData);
     
     if (!orderResponse.success) {
       throw new Error(orderResponse.error || 'Ошибка создания заказа');
     }
 
-    console.log('✅ Заказ создан в Strapi, ID:', orderResponse.orderId);
-
-    // 🔥 ДОБАВЬТЕ ЭТИ ЛОГИ:
-    console.log('🚀 Запускаем processPayment...');
-    
-    // Обрабатываем платеж (если нужно) или перенаправляем
     await processPayment(orderData, orderResponse);
     
   } catch (error) {
-    // ... остальной код
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       console.error('❌ Ошибка при оформлении заказа:', errorMessage);
       alert(`Ошибка при оформлении заказа: ${errorMessage}`);
@@ -371,7 +314,7 @@ const submitOrder = useCallback(async (data: CheckoutFormData) => {
     applyPromoCode,
     submitOrder,
     isSubmitting,
-    isProcessingPayment, // 🔥 ДОБАВЛЕНО: новое состояние для UI
+    isProcessingPayment, 
     loading,
     generalSettings
   };

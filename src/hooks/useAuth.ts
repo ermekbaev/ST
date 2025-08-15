@@ -11,7 +11,6 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Проверяем сохраненного пользователя при загрузке
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
@@ -30,7 +29,7 @@ export const useAuth = () => {
     setUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
-      localStorage.removeItem('authToken'); // ✅ ДОБАВЛЕНО: Очищаем токен
+      localStorage.removeItem('authToken'); 
     }
   };
 
@@ -41,7 +40,7 @@ export const useAuth = () => {
     }
   };
 
-  // ✅ ДОБАВЛЕНО: Функция получения JWT токена
+
   const getToken = (): string | null => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('authToken');
@@ -54,7 +53,7 @@ export const useAuth = () => {
     loading,
     logout,
     login,
-    getToken, // ✅ ДОБАВЛЕНО: Экспортируем функцию getToken
+    getToken, 
     isAuthenticated: !!user
   };
 };

@@ -1,14 +1,10 @@
-// src/app/api/delivery-settings/route.ts
 import { NextResponse } from 'next/server';
 import { getDeliverySettings } from '@/services/deliverySettingsService';
 
 export async function GET(request: Request) {
   try {
-    // Проверяем параметр forceRefresh
     const url = new URL(request.url);
     const forceRefresh = url.searchParams.get('refresh') === 'true';
-    
-    console.log('🚚 API: Запрос настроек доставки, forceRefresh:', forceRefresh);
     
     const settings = await getDeliverySettings(forceRefresh);
     
@@ -30,10 +26,8 @@ export async function GET(request: Request) {
   }
 }
 
-// Для development - возможность принудительного обновления кеша
 export async function POST(request: Request) {
   try {
-    console.log('🔄 API: Принудительное обновление настроек доставки');
     
     const settings = await getDeliverySettings(true);
     

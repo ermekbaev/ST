@@ -1,4 +1,3 @@
-// components/Footer/FooterContent.tsx
 import React from 'react';
 
 const FooterContent = () => {

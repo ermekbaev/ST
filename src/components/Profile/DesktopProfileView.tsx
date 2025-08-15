@@ -1,4 +1,3 @@
-// src/components/Profile/DesktopProfileView.tsx
 'use client';
 
 import React from 'react';
@@ -40,7 +39,6 @@ export const DesktopProfileView: React.FC<DesktopProfileProps> = ({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Основной контент - точно по Figma */}
       <div className="px-5 pt-12">
         
         {/* ВЕРХНИЙ БЛОК - Заголовок и кнопки */}

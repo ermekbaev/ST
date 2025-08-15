@@ -1,8 +1,7 @@
-// src/app/api/payments/retry/route.ts - API для повторной оплаты заказа
 import { NextRequest, NextResponse } from 'next/server';
 import { YooCheckout, ICreatePayment } from '@a2seven/yoo-checkout';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL 
 
 const checkout = new YooCheckout({
   shopId: process.env.YUKASSA_SHOP_ID!,
@@ -10,17 +9,14 @@ const checkout = new YooCheckout({
 });
 
 interface RetryPaymentRequest {
-  orderNumber: string;  // Номер заказа (например, ORD250811274)
-  returnUrl?: string;   // URL для возврата после оплаты
+  orderNumber: string;  
+  returnUrl?: string;   
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 API: Получен запрос на повторную оплату');
-    
     const body: RetryPaymentRequest = await request.json();
     
-    // Валидация
     if (!body.orderNumber) {
       return NextResponse.json({
         success: false,
@@ -28,7 +24,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // ✅ Получаем токен пользователя
     const authHeader = request.headers.get('authorization');
     const userToken = authHeader?.replace('Bearer ', '') || null;
     
@@ -45,7 +40,6 @@ export async function POST(request: NextRequest) {
         if (userResponse.ok) {
           const userData = await userResponse.json();
           userId = userData.id.toString();
-          console.log('✅ Пользователь авторизован:', userData.email);
         }
       } catch (error) {
         console.log('⚠️ Ошибка проверки токена');
@@ -59,9 +53,6 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // ✅ Ищем заказ по номеру и пользователю
-    console.log(`🔍 Ищем заказ ${body.orderNumber} для пользователя ${userId}...`);
-    
     const orderResponse = await fetch(
       `${STRAPI_URL}/api/orders?filters[orderNumber][$eq]=${body.orderNumber}&filters[user][id][$eq]=${userId}&populate=*`,
       {
@@ -90,7 +81,6 @@ export async function POST(request: NextRequest) {
 
     const order = orderData.data[0];
     
-    // ✅ Проверяем, что заказ можно оплатить
     if (order.paymentStatus === 'paid') {
       return NextResponse.json({
         success: false,
@@ -105,7 +95,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // ✅ Получаем позиции заказа для чека
     const orderItemsResponse = await fetch(
       `${STRAPI_URL}/api/order-items?filters[orderId][$eq]=${order.id}&populate=*`,
       {
@@ -121,12 +110,8 @@ export async function POST(request: NextRequest) {
       orderItems = orderItemsData.data || [];
     }
 
-    console.log(`✅ Заказ найден: ${order.orderNumber}, сумма: ${order.totalAmount}₽, позиций: ${orderItems.length}`);
-
-    // ✅ Подготавливаем данные для оплаты
     const amount = parseFloat(order.totalAmount);
     
-    // Формируем чек для YooKassa
     const receiptItems = orderItems.length > 0 
       ? orderItems.map(item => ({
           description: item.productName || `Товар ${item.productId}`,
@@ -151,7 +136,6 @@ export async function POST(request: NextRequest) {
           payment_subject: 'commodity' as const
         }];
 
-    // Нормализуем телефон
     const normalizePhone = (phone: string): string => {
       const cleaned = phone.replace(/\D/g, '');
       if (cleaned.startsWith('8')) return `7${cleaned.slice(1)}`;
@@ -161,7 +145,6 @@ export async function POST(request: NextRequest) {
 
     const normalizedPhone = normalizePhone(order.customerPhone || '79999999999');
 
-    // ✅ Создаем платеж в YooKassa
     const returnUrl = body.returnUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/order-success?orderNumber=${order.orderNumber}`;
 
     const createPayload: ICreatePayment = {
@@ -210,7 +193,6 @@ export async function POST(request: NextRequest) {
       confirmationUrl: payment.confirmation?.confirmation_url
     });
 
-    // ✅ Обновляем статус заказа
     await updateOrderPaymentStatus(order.id, {
       paymentStatus: 'pending',
       paymentId: payment.id
@@ -243,7 +225,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ✅ Функция обновления статуса платежа заказа
 async function updateOrderPaymentStatus(orderId: string, updateData: {
   paymentStatus: string;
   paymentId: string;

@@ -1,4 +1,3 @@
-// MobileFooterBottom.tsx
 import React from 'react';
 
 const MobileFooterBottom = () => {

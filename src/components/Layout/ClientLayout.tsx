@@ -18,7 +18,6 @@ export default function ClientLayout({
   const [isMobile, setIsMobile] = useState(false);
   const [mobileWidgetVisible, setMobileWidgetVisible] = useState(false);
 
-  // Определяем мобильное устройство
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -36,7 +35,6 @@ export default function ClientLayout({
 
   const handleSupportClick = () => {
     if (isMobile) {
-      // На мобилке показываем/скрываем мобильный виджет
       setMobileWidgetVisible(!mobileWidgetVisible);
     }
   };
@@ -55,17 +53,14 @@ export default function ClientLayout({
           </div>
         </main>
         
-        {/* Footer с отступом снизу на мобильных */}
         <div className="pb-[70px] lg:pb-0">
           <Footer />
         </div>
         
-        {/* Десктопный виджет - только на больших экранах */}
         {mounted && !isMobile && (
           <SupportWidget />
         )}
         
-        {/* Мобильный виджет - только на мобилке */}
         {mounted && isMobile && (
           <MobileSupportWidget
             isVisible={mobileWidgetVisible}
@@ -73,10 +68,8 @@ export default function ClientLayout({
           />
         )}
         
-        {/* BottomNavigation - только на мобильном */}
         <BottomNavigation onSupportClick={handleSupportClick} />
         
-        {/* CartSidebar - корзина */}
         <CartSidebar />
       </div>
     </CartProvider>

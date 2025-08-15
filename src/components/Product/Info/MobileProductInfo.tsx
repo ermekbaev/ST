@@ -1,9 +1,7 @@
-// src/components/Product/Info/MobileProductInfo.tsx - ВАШ КОД с минимальными исправлениями
 'use client';
 
 import React, { useState } from 'react';
 
-// Импортируем типы (дублируем для независимости компонента)
 export interface ProductSize {
   size: string;
   price: number;
@@ -20,8 +18,8 @@ export interface ProductInfo {
   category: string;
   article: string;
   description?: string;
-  sizes: ProductSize[]; // оставляем для совместимости
-  allSizes?: ProductSize[]; // ДОБАВИЛИ: размеры с API
+  sizes: ProductSize[]; 
+  allSizes?: ProductSize[]; 
   inStock: boolean;
   isNew?: boolean;
   isExclusive?: boolean;
@@ -47,31 +45,25 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
 }) => {
   const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
 
-  // Форматирование цены
   const formatPrice = (price: number) => {
     return price.toLocaleString('ru-RU') + ' ₽';
   };
 
-  // ИСПРАВЛЕНО: Используем размеры из API (allSizes) если есть, иначе sizes
   const availableSizes = product.allSizes && product.allSizes.length > 0 ? product.allSizes : product.sizes;
 
-  // ИСПРАВЛЕНО: Получаем информацию о выбранном размере из правильного источника
   const actualSelectedSizeInfo = selectedSize && availableSizes
     ? availableSizes.find(s => s.size === selectedSize)
     : selectedSizeInfo;
 
-  // Получаем финальную цену (из выбранного размера или базовую)
   const finalPrice = actualSelectedSizeInfo?.price || product.price;
   const hasDiscount = actualSelectedSizeInfo?.originalPrice && actualSelectedSizeInfo.originalPrice > finalPrice;
 
-  // Сортируем размеры по числовому значению
   const sortedSizes = [...availableSizes].sort((a, b) => {
     const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
     const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
     return aNum - bNum;
   });
 
-  // ЛОГИКА ТЕКСТА КНОПКИ
   const getButtonText = () => {
     if (isAddingToCart) return 'ДОБАВЛЯЕМ...';
     if (!selectedSize) return 'НЕ ВЫБРАНО';

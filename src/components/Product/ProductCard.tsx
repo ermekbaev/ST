@@ -1,4 +1,3 @@
-// src/components/Product/ProductCard.tsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -25,44 +24,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
 
-  // Добавляем отладку при создании компонента
-  useEffect(() => {
-    console.log('🎯 ProductCard создан для товара:', {
-      name: product.name.substring(0, 30),
-      id: product.id,
-      slug: product.slug,
-      photo: product.photo,
-      photoLength: product.photo?.length || 0,
-      photoStartsWithHttp: product.photo?.startsWith('http'),
-      hasValidPhoto: isValidImageUrl(product.photo)
-    });
-  }, [product]);
 
   const handleCardClick = () => {
     let productIdentifier: string;
     
     if (product.slug && product.slug.trim()) {
       productIdentifier = product.slug;
-      console.log('🔗 Переход по slug:', productIdentifier);
     } else if (product.id) {
       productIdentifier = product.id;
-      console.log('🔗 Переход по ID:', productIdentifier);
     } else {
       productIdentifier = product.article;
-      console.log('🔗 Переход по article:', productIdentifier);
     }
     
     router.push(`/product/${productIdentifier}`);
   };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.error('❌ ОШИБКА ЗАГРУЗКИ ИЗОБРАЖЕНИЯ:');
-    console.error('   Товар:', product.name);
-    console.error('   URL:', `"${product.photo}"`);
-    console.error('   Длина URL:', product.photo?.length || 0);
-    console.error('   Начинается с http:', product.photo?.startsWith('http'));
-    console.error('   Actual src:', e.currentTarget.src);
-    console.error('   Error type:', e.type);
     setImageError(true);
   };
 
@@ -100,7 +77,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             onError={handleImageError}
             onLoad={handleImageLoad}
             loading="lazy"
-            // ИСПРАВЛЕНО: Удален crossOrigin="anonymous" который блокировал CORS
             referrerPolicy="no-referrer"
           />
         ) : (

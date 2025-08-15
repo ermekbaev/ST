@@ -1,4 +1,3 @@
-// src/app/order-success/page.tsx - ПОЛНАЯ ВЕРСИЯ С СИНХРОНИЗАЦИЕЙ
 'use client';
 
 import SuccessHero from '@/components/OrderSuccess/SuccessHero';
@@ -6,7 +5,6 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 
-// Компонент который использует useSearchParams
 const OrderSuccessContent: React.FC = () => {
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
@@ -16,34 +14,16 @@ const OrderSuccessContent: React.FC = () => {
   const [statusSynced, setStatusSynced] = useState(false);
   
   useEffect(() => {
-    console.log('🔍 OrderSuccess useEffect запущен');
-    
-    // Получаем paymentId из localStorage
     const pendingPaymentId = localStorage.getItem('pendingPaymentId');
     const pendingOrderId = localStorage.getItem('pendingOrderId');
     
-    console.log('📋 LocalStorage содержимое:', {
-      pendingPaymentId,
-      pendingOrderId,
-      allKeys: Object.keys(localStorage)
-    });
-    
     if (pendingPaymentId) {
-      console.log('✅ Найден paymentId в localStorage:', pendingPaymentId);
       setPaymentId(pendingPaymentId);
       
-      // Очищаем корзину и localStorage при успешном возврате
-      console.log('🧹 Очищаем корзину и localStorage');
       clearCart();
       localStorage.removeItem('pendingPaymentId');
       localStorage.removeItem('pendingOrderId');
       
-      console.log('✅ Очистка завершена, новое содержимое localStorage:', {
-        pendingPaymentId: localStorage.getItem('pendingPaymentId'),
-        pendingOrderId: localStorage.getItem('pendingOrderId')
-      });
-
-      // 🔥 НОВОЕ: Синхронизируем статус платежа
       if (orderNumber && !statusSynced) {
         syncPaymentStatus(pendingPaymentId, orderNumber);
       }
@@ -52,15 +32,11 @@ const OrderSuccessContent: React.FC = () => {
     }
   }, [clearCart, orderNumber, statusSynced]);
 
-  // 🔥 НОВАЯ ФУНКЦИЯ: Синхронизация статуса платежа
   const syncPaymentStatus = async (paymentId: string, orderNumber: string) => {
     try {
       console.log('🔄 Синхронизируем статус платежа с ЮKassa...');
       setStatusSynced(true);
 
-      // 🔥 ИСПРАВЛЕНО: Используем orderNumber для поиска заказа в Strapi
-      // Strapi найдет заказ по полю orderNumber, а не по ID
-      
       const response = await fetch('/api/payments/sync-status', {
         method: 'POST',
         headers: {
@@ -68,7 +44,7 @@ const OrderSuccessContent: React.FC = () => {
         },
         body: JSON.stringify({
           paymentId,
-          orderNumber // Передаем полный номер заказа
+          orderNumber 
         })
       });
 
@@ -87,13 +63,6 @@ const OrderSuccessContent: React.FC = () => {
       console.error('❌ Сетевая ошибка синхронизации:', error);
     }
   };
-
-  console.log('📄 Страница успеха загружена:', {
-    orderNumber,
-    paymentId,
-    hasPayment: !!paymentId,
-    statusSynced
-  });
 
   return <SuccessHero orderNumber={orderNumber} paymentId={paymentId} />;
 };

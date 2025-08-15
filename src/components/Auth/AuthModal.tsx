@@ -23,7 +23,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Очистка ошибок при вводе
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -75,7 +74,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       console.log('📥 Ответ сервера при регистрации:', data);
 
       if (data.success) {
-        // ИСПРАВЛЕНО: правильно сохраняем телефон
         if (typeof window !== 'undefined') {
           const userToSave = {
             id: data.user.id,
@@ -85,10 +83,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             agreeToMarketing: formData.agreeToMarketing // Берем из формы!
           };
           
-          console.log('💾 Сохраняем пользователя при регистрации:', userToSave);
           localStorage.setItem('currentUser', JSON.stringify(userToSave));
           
-          // ✅ КРИТИЧЕСКИ ВАЖНО: Сохраняем JWT токен если есть
           if (data.jwt) {
             localStorage.setItem('authToken', data.jwt);
             console.log('✅ JWT токен сохранен в localStorage при регистрации:', data.jwt.substring(0, 20) + '...');
@@ -96,7 +92,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             console.log('⚠️ JWT токен НЕ получен от сервера при регистрации!');
           }
 
-          // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: Проверяем что токен действительно сохранился
           const savedToken = localStorage.getItem('authToken');
           console.log('🔍 Проверка сохранения токена:', {
             tokenSaved: !!savedToken,
@@ -104,7 +99,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           });
         }
         
-        // Сразу переходим в профиль
         onClose();
         window.location.href = '/profile';
         
@@ -152,10 +146,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       });
 
       const data = await response.json();
-      console.log('📥 Ответ сервера при входе:', data);
 
       if (data.success) {
-        // Сохраняем пользователя в localStorage
         if (typeof window !== 'undefined') {
           const userToSave = {
             id: data.user.id,
@@ -165,10 +157,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             agreeToMarketing: data.user.agreeToMarketing || false
           };
           
-          console.log('💾 Сохраняем пользователя при входе:', userToSave);
           localStorage.setItem('currentUser', JSON.stringify(userToSave));
           
-          // ✅ КРИТИЧЕСКИ ВАЖНО: Сохраняем JWT токен если есть
           if (data.jwt) {
             localStorage.setItem('authToken', data.jwt);
             console.log('✅ JWT токен сохранен в localStorage при входе:', data.jwt.substring(0, 20) + '...');
@@ -176,7 +166,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
             console.log('⚠️ JWT токен НЕ получен от сервера при входе!');
           }
 
-          // ✅ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: Проверяем что токен действительно сохранился
           const savedToken = localStorage.getItem('authToken');
           console.log('🔍 Проверка сохранения токена:', {
             tokenSaved: !!savedToken,
@@ -184,7 +173,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           });
         }
         
-        // Сразу переходим в профиль
         onClose();
         window.location.href = '/profile';
         
@@ -254,7 +242,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                   onChange={handleInputChange}
                   placeholder="номер телефона"
                   onKeyDown={handlePhoneKeyDown}
-                  className={`w-full h-12 px-4 font-product text-[14px] rounded-sm
+                  className={`text-black w-full h-12 px-4 font-product text-[14px] rounded-sm
                              bg-[#E5DDD4] border-none outline-none placeholder-gray-600
                              ${errors.phone ? 'ring-2 ring-red-500' : ''}`}
                 />
@@ -268,7 +256,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="e-mail"
-                  className={`w-full h-12 px-4 font-product text-[14px] rounded-sm
+                  className={`text-black w-full h-12 px-4 font-product text-[14px] rounded-sm
                              bg-[#E5DDD4] border-none outline-none placeholder-gray-600
                              ${errors.email ? 'ring-2 ring-red-500' : ''}`}
                 />
@@ -344,7 +332,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="e-mail"
-                  className={`w-full h-12 px-4 font-product text-[14px] rounded-sm
+                  className={`text-black w-full h-12 px-4 font-product text-[14px] rounded-sm
                              bg-[#E5DDD4] border-none outline-none placeholder-gray-600
                              ${errors.email ? 'ring-2 ring-red-500' : ''}`}
                 />

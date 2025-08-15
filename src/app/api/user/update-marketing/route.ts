@@ -1,4 +1,3 @@
-// /app/api/user/update-marketing/route.ts
 import { NextResponse } from 'next/server';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -15,7 +14,6 @@ export async function PUT(request: Request) {
       }, { status: 401 });
     }
 
-    // Обновляем в Strapi
     const response = await fetch(`${STRAPI_URL}/api/users/me`, {
       method: 'PUT',
       headers: {

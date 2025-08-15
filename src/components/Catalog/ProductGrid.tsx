@@ -1,4 +1,3 @@
-// src/components/Catalog/ProductGrid.tsx
 'use client';
 
 import React from 'react';
@@ -29,7 +28,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   onClearFilters,
   className = ''
 }) => {
-  // Skeleton загрузки
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
       {Array.from({ length: 20 }, (_, index) => (
@@ -45,7 +43,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     </div>
   );
 
-  // Пустое состояние
   const EmptyState = () => (
     <div className="text-center py-20">
       <div className="mb-4">

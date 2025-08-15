@@ -1,4 +1,3 @@
-// src/app/page.tsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -27,7 +26,6 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Все useEffect должны быть в одном месте
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -35,9 +33,7 @@ export default function Home() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      setError(null); // Сбрасываем ошибку при новой попытке
-      
-      console.log('🔄 Загружаем товары с главной страницы...');
+      setError(null); 
       
       const response = await fetch('/api/products');
       
@@ -46,14 +42,11 @@ export default function Home() {
       }
       
       const result = await response.json();
-      console.log('📦 Ответ API на главной:', result);
       
-      // ИСПРАВЛЕНО: новый формат API
       if (result.products && Array.isArray(result.products)) {
         setProducts(result.products);
         console.log('✅ Загружено товаров на главной:', result.products.length);
       } else {
-        // Если нет поля products, пробуем старый формат для совместимости
         if (result.success && Array.isArray(result.data)) {
           setProducts(result.data);
           console.log('✅ Загружено товаров (старый формат):', result.data.length);
@@ -78,7 +71,6 @@ export default function Home() {
     }
   }, [mounted, retryCount]);
 
-  // Функция для получения последних товаров из категории
   const getLatestProductsFromCategory = (categoryFilter: string[], count: number = 4) => {
     const filteredProducts = products.filter(product => 
       categoryFilter.some(filter => 
@@ -86,16 +78,13 @@ export default function Home() {
       )
     );
     
-    // Убираем дубликаты по названию
     const uniqueProducts = filteredProducts.filter((product, index, self) => 
       index === self.findIndex(p => p.name === product.name)
     );
     
-    // Возвращаем последние добавленные (последние в массиве)
     return uniqueProducts.slice(-count).reverse();
   };
 
-  // Группировка товаров по категориям (оставляем для совместимости)
   const groupedProducts = Array.isArray(products) ? products.reduce((acc: Record<string, Product[]>, product) => {
     const category = product.category || 'Прочее';
     if (!acc[category]) acc[category] = [];
@@ -118,7 +107,6 @@ export default function Home() {
     );
   }
 
-  // Компонент скелетона загрузки
   const LoadingSkeleton = () => (
     <>
       {/* Скелетон для секции ОБУВЬ */}
@@ -149,20 +137,17 @@ export default function Home() {
     </>
   );
 
-  // Красивое состояние загрузки с Hero слайдером
   if (loading) {
     return (  
       <div className="min-h-screen bg-white">
         <HeroSlider />
         <div className="w-full px-5 py-12">
-          {/* Анимированная загрузка товаров без текста */}
           <LoadingSkeleton />
         </div>
       </div>
     );
   }
 
-  // Компонент секции товаров с поддержкой последних товаров
   const ProductSection = ({ title, categoryKey, categoryFilters, linkText = "все модели" }: { 
     title: string; 
     categoryKey?: string;
@@ -172,10 +157,8 @@ export default function Home() {
     let displayProducts: Product[] = [];
 
     if (categoryFilters) {
-      // Новая логика - берем последние товары из указанных категорий
       displayProducts = getLatestProductsFromCategory(categoryFilters, 4);
     } else if (categoryKey) {
-      // Старая логика - первые товары из конкретной категории
       const categoryProducts = groupedProducts[categoryKey] || [];
       displayProducts = categoryProducts.slice(0, 4);
     }
@@ -232,9 +215,7 @@ export default function Home() {
       
       {/* Основной контент */}
       <div className="w-full px-5 py-12">
-        {/* px-5 = 20px отступы с каждой стороны */}
         
-        {/* Ошибка загрузки - показываем только если была реальная ошибка И есть данные для показа */}
         {error && products.length === 0 && (
           <div className="text-center p-8 mb-8 bg-red-50 rounded-lg border-2 border-red-200">
             <div className="max-w-md mx-auto">
@@ -260,7 +241,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Если есть ошибка, но есть данные - показываем предупреждение сверху */}
         {error && products.length > 0 && (
           <div className="text-center p-4 mb-8 bg-yellow-50 rounded-lg border border-yellow-200">
             <p className="text-yellow-800 font-product text-sm">

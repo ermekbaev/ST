@@ -1,4 +1,3 @@
-// src/components/Catalog/ActiveFilters.tsx - ИСПРАВЛЕНО
 'use client';
 
 import React from 'react';
@@ -17,20 +16,18 @@ interface FilterState {
 interface ActiveFiltersProps {
   filters: FilterState;
   onRemoveFilter: (filterType: keyof FilterState, value?: string) => void;
-  onClearAll: () => void;  // ✅ ИСПРАВЛЕНО: изменено с onClearFilters на onClearAll
+  onClearAll: () => void;  
   className?: string;
 }
 
 const ActiveFilters: React.FC<ActiveFiltersProps> = ({
   filters,
   onRemoveFilter,
-  onClearAll,  // ✅ ИСПРАВЛЕНО: изменено с onClearFilters на onClearAll
+  onClearAll,  
   className = ''
 }) => {
-  // Собираем все активные фильтры
   const activeFilters: Array<{ type: keyof FilterState; value: string; label: string }> = [];
 
-  // Добавляем фильтры по брендам
   filters.brands.forEach(brand => {
     activeFilters.push({
       type: 'brands',
@@ -39,7 +36,6 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
     });
   });
 
-  // Добавляем фильтры по полу
   filters.genders.forEach(gender => {
     activeFilters.push({
       type: 'genders',
@@ -48,7 +44,6 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
     });
   });
 
-  // Добавляем фильтры по категориям
   filters.categories.forEach(category => {
     activeFilters.push({
       type: 'categories',
@@ -57,7 +52,6 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
     });
   });
 
-  // Добавляем фильтры по размерам
   filters.sizes.forEach(size => {
     activeFilters.push({
       type: 'sizes',
@@ -66,7 +60,6 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
     });
   });
 
-  // Добавляем фильтр по цене
   if (filters.priceRange.min || filters.priceRange.max) {
     const min = filters.priceRange.min || '0';
     const max = filters.priceRange.max || '∞';
@@ -77,7 +70,6 @@ const ActiveFilters: React.FC<ActiveFiltersProps> = ({
     });
   }
 
-  // Если нет активных фильтров, не показываем компонент
   if (activeFilters.length === 0) {
     return null;
   }

@@ -8,10 +8,8 @@ interface OrderCardProps {
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  // ✅ ИЗМЕНЕНО: imageError теперь объект для отслеживания ошибок каждого изображения
   const [imageError, setImageError] = useState<{[key: string]: boolean}>({});
   
-  // Состояние для оплаты
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
@@ -19,12 +17,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
     setIsExpanded(!isExpanded);
   };
 
-  // ✅ ИЗМЕНЕНО: Обработка ошибок для конкретного товара
   const handleImageError = (itemId: string) => {
     setImageError(prev => ({ ...prev, [itemId]: true }));
   };
 
-  // ✅ ИЗМЕНЕНО: Получение изображения для конкретного товара
   const getProductImage = (item: any) => {
     if (imageError[item.id]) {
       return '/api/placeholder/98/50';
@@ -32,30 +28,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
     return item.image || '/api/placeholder/98/50';
   };
 
-  // ✅ ДОБАВЛЕНО: Получение главного изображения (первый товар)
   const getMainProductImage = () => {
     if (order.items.length === 0) return '/api/placeholder/98/50';
     return getProductImage(order.items[0]);
   };
 
-  // Определяем, можно ли оплатить заказ
   const canPayOrder = () => {
-    // Отладочная информация
-    console.log('🔍 Проверка возможности оплаты для заказа:', {
-      orderNumber: order.orderNumber || order.id,
-      canPay: order.canPay,
-      paymentStatus: order.paymentStatus,
-      orderStatus: order.orderStatus,
-      paymentMethod: order.paymentMethod
-    });
-
-    // Используем поле canPay, если оно есть (из API)
     if (order.canPay !== undefined) {
-      console.log('✅ Используем canPay из API:', order.canPay);
       return order.canPay;
     }
     
-    // Проверяем по реальным данным из API
     const canPay = (
       order.paymentStatus === 'pending' && // оплата не завершена
       order.orderStatus === 'pending' &&   // заказ еще в обработке
@@ -66,7 +48,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
     return canPay;
   };
 
-  // Функция оплаты
   const handlePaymentClick = async () => {
     if (isPaymentProcessing) return;
     
@@ -74,15 +55,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
     setPaymentError(null);
 
     try {
-      console.log(`💳 Инициируем повторную оплату заказа ${order.orderNumber || order.id}`);
-
-      // Получаем токен
       const token = localStorage.getItem('authToken');
       if (!token) {
         throw new Error('Необходима авторизация');
       }
 
-      // Отправляем запрос на создание платежа
       const response = await fetch('/api/payments/retry', {
         method: 'POST',
         headers: {
@@ -105,16 +82,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
         throw new Error('Не получена ссылка для оплаты');
       }
 
-      console.log('✅ Повторный платеж создан, перенаправляем...');
-
-      // Сохраняем информацию о платеже для отслеживания
       if (data.paymentId) {
         localStorage.setItem('retryPaymentId', data.paymentId);
         localStorage.setItem('retryOrderNumber', order.orderNumber || order.id);
         localStorage.setItem('paymentStartTime', Date.now().toString());
       }
 
-      // Перенаправляем на YooKassa
       window.location.href = data.confirmationUrl;
 
     } catch (error) {
@@ -125,7 +98,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
     }
   };
 
-  // Получаем текст кнопки
   const getPaymentButtonText = () => {
     if (isPaymentProcessing) return 'ОБРАБОТКА...';
     if (order.paymentStatus === 'failed') return 'ПОВТОРИТЬ ОПЛАТУ';

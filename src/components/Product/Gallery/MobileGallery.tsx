@@ -1,4 +1,3 @@
-// src/components/Product/Gallery/MobileGallery.tsx
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -11,7 +10,7 @@ interface MobileGalleryProps {
   onPrevImage: () => void;
   onNextImage: () => void;
   onSelectImage: (index: number) => void;
-  onOpenLightbox: (index?: number) => void; // Новый пропс
+  onOpenLightbox: (index?: number) => void; 
 }
 
 const MobileGallery: React.FC<MobileGalleryProps> = ({
@@ -37,7 +36,6 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
     console.log('Изображение загружено:', imageId);
   };
 
-  // Свайп навигация
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
@@ -62,16 +60,13 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
     }
   };
 
-  // Двойное нажатие для открытия лайтбокса
   const handleTap = () => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
     
     if (lastTap && (now - lastTap) < DOUBLE_TAP_DELAY) {
-      // Двойное нажатие - открываем лайтбокс
       onOpenLightbox(currentImageIndex);
     } else {
-      // Одинарное нажатие - переключаем на следующее изображение
       if (images && images.length > 1) {
         onNextImage();
       }

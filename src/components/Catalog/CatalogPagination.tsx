@@ -1,4 +1,3 @@
-// src/components/Catalog/CatalogPagination.tsx
 'use client';
 
 import React from 'react';

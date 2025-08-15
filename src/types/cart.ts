@@ -1,5 +1,3 @@
-// 📁 src/types/cart.ts
-
 // Базовый интерфейс товара
 export interface Product {
   id?: string;
@@ -26,7 +24,7 @@ export interface CartContextType {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getTotalPrice: () => number; // Функция для получения общей стоимости
+  getTotalPrice: () => number; 
   totalItems: number;
   totalPrice: number;
   isCartOpen: boolean;

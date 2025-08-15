@@ -1,4 +1,3 @@
-// src/types/orders.ts - ОБНОВЛЕННЫЕ типы с поддержкой оплаты
 export interface OrderItem {
   price: any;
   id: string;
@@ -17,7 +16,7 @@ export interface DeliveryDetails {
 
 export interface Order {
   id: string;
-  orderNumber: string;          // ✅ ДОБАВЛЕНО: номер заказа (ORD250811274)
+  orderNumber: string;
   date: string;
   status: string;
   total: string;

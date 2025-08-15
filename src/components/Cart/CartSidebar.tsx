@@ -20,7 +20,6 @@ const CartSidebar: React.FC = () => {
     setMounted(true);
   }, []);
 
-  // Блокировка скролла при открытой корзине
   useEffect(() => {
     if (isCartOpen) {
       document.body.style.overflow = 'hidden';
@@ -33,7 +32,6 @@ const CartSidebar: React.FC = () => {
     };
   }, [isCartOpen]);
 
-  // Обработка клавиши Escape
   useEffect(() => {
     const handleEscapeKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isCartOpen) {
@@ -54,8 +52,8 @@ const CartSidebar: React.FC = () => {
   };
 
   const handleOrderClick = () => {
-    closeCart(); // Закрываем корзину
-    window.location.href = '/checkout'; // Переходим на страницу оформления
+    closeCart(); 
+    window.location.href = '/checkout'; 
   };
 
   if (!mounted || !isCartOpen) {

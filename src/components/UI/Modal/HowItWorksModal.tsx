@@ -11,12 +11,10 @@ interface HowItWorksModalProps {
 const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) => {
   const [mounted, setMounted] = useState(false);
 
-  // Монтируем компонент только на клиенте
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Обработка клавиш и блокировка скролла
   useEffect(() => {
     if (!mounted || !isOpen) return;
 
@@ -26,21 +24,17 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) =>
       }
     };
 
-    // Блокируем скролл страницы
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     
-    // Добавляем обработчик клавиш
     document.addEventListener('keydown', handleEscapeKey);
 
-    // Очистка при размонтировании
     return () => {
       document.body.style.overflow = originalOverflow;
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [mounted, isOpen, onClose]);
 
-  // Не рендерим до монтирования или если закрыто
   if (!mounted || !isOpen) {
     return null;
   }

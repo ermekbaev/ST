@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-// Десктопные компоненты
 import FooterContent from './FooterContent';
 import FooterBottom from './FooterBottom';
-// Мобильные компоненты
 import MobileFooterContent from './MobileFooterContent';
 import MobileFooterBottom from './MobileFooterBottom';
 
@@ -16,7 +14,6 @@ const Footer: React.FC = () => {
   }, []);
 
   if (!mounted) {
-    // Показываем заглушку до монтирования на клиенте
     return (
       <footer className="bg-[#0B0B0D] text-white py-8">
         <div className="flex items-center justify-center">

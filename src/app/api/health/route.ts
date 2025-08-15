@@ -1,13 +1,9 @@
-// app/api/health/route.ts
 import { NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL;
 
 export async function GET() {
   try {
-    console.log('🔍 Проверяем состояние Strapi...');
-    
-    // Проверяем подключение к Strapi
     const strapiResponse = await fetch(`${STRAPI_URL}/api/products?pagination[limit]=1`, {
       headers: {
         'Content-Type': 'application/json',
@@ -15,9 +11,7 @@ export async function GET() {
     });
 
     const isStrapiHealthy = strapiResponse.ok;
-    console.log(`Strapi статус: ${isStrapiHealthy ? '✅' : '❌'} (${strapiResponse.status})`);
 
-    // Получаем статистику если Strapi доступен
     let stats = {
       totalProducts: 0,
       totalBrands: 0,
@@ -29,7 +23,6 @@ export async function GET() {
         const data = await strapiResponse.json();
         stats.totalProducts = data.meta?.pagination?.total || 0;
         
-        // Получаем остальную статистику параллельно
         const [brandsRes, categoriesRes] = await Promise.all([
           fetch(`${STRAPI_URL}/api/brands?pagination[limit]=1`),
           fetch(`${STRAPI_URL}/api/categories?pagination[limit]=1`)

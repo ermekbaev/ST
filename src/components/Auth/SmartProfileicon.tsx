@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 interface SmartProfileIconProps {
-  onAuthClick: () => void; // Функция для показа модального окна авторизации
+  onAuthClick: () => void; 
   className?: string;
 }
 
@@ -19,7 +19,6 @@ const SmartProfileIcon: React.FC<SmartProfileIconProps> = ({
     setMounted(true);
     checkAuthStatus();
     
-    // Проверяем статус авторизации периодически (например, если пользователь авторизовался в другой вкладке)
     const interval = setInterval(checkAuthStatus, 1000);
     
     return () => clearInterval(interval);
@@ -48,10 +47,8 @@ const SmartProfileIcon: React.FC<SmartProfileIconProps> = ({
 
   const handleClick = () => {
     if (isAuthenticated) {
-      // Переходим в личный кабинет
       window.location.href = '/profile';
     } else {
-      // Показываем модальное окно авторизации
       onAuthClick();
     }
   };

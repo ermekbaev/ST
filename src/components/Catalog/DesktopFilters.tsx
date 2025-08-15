@@ -1,4 +1,3 @@
-// src/components/Catalog/DesktopFilters.tsx - ОБНОВЛЕННЫЙ с функцией сворачивания
 'use client';
 
 import React from 'react';
@@ -43,10 +42,8 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
   onClearFilters,
   totalResults
 }) => {
-  // Загружаем фильтры из Strapi
   const { brands: strapiBrands, categories: strapiCategories, sizes: strapiSizes, loading, error } = useCatalogFilters();
 
-  // Стандартные варианты пола (статичные данные)
   const genders = [
     { name: 'Мужской' },
     { name: 'Женский' },

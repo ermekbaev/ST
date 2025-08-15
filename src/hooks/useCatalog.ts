@@ -1,4 +1,3 @@
-// src/hooks/useCatalog.ts
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -9,24 +8,20 @@ interface UseCatalogProps {
 }
 
 interface UseCatalogReturn {
-  // Состояние данных
   products: Product[];
   filteredProducts: Product[];
   currentProducts: Product[];
   loading: boolean;
   error: string | null;
   
-  // Фильтры и поиск
   filters: FilterState;
   filterOptions: FilterOptions;
   searchQuery: string;
   sortBy: string;
   
-  // Пагинация
   currentPage: number;
   totalPages: number;
   
-  // Обработчики
   setSearchQuery: (query: string) => void;
   setSortBy: (sort: string) => void;
   setCurrentPage: (page: number) => void;
@@ -37,12 +32,10 @@ interface UseCatalogReturn {
 }
 
 export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCatalogReturn => {
-  // Основное состояние
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Фильтры и поиск
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popularity');
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,7 +47,6 @@ export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCata
     priceRange: { min: '', max: '' }
   });
 
-  // Опции фильтров, вычисляемые из данных
   const filterOptions = useMemo(() => {
     if (products.length === 0) {
       return { brands: [], genders: [], categories: [], sizes: [] };
@@ -72,11 +64,9 @@ export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCata
     return { brands, genders, categories, sizes };
   }, [products]);
 
-  // Применение фильтров и сортировки
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // Поиск
     if (searchQuery.trim()) {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,7 +74,6 @@ export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCata
       );
     }
 
-    // Фильтры
     if (filters.brands.length > 0) {
       filtered = filtered.filter(product => filters.brands.includes(product.brand));
     }
@@ -107,7 +96,6 @@ export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCata
       filtered = filtered.filter(product => product.price >= min && product.price <= max);
     }
 
-    // Сортировка
     switch (sortBy) {
       case 'price-asc':
         filtered.sort((a, b) => a.price - b.price);
@@ -119,30 +107,25 @@ export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCata
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'newest':
-        // Предполагаем, что более новые товары имеют больший индекс
         filtered.reverse();
         break;
-      default: // popularity
-        // Оставляем исходный порядок
+      default: 
         break;
     }
 
     return filtered;
   }, [products, searchQuery, filters, sortBy]);
 
-  // Пагинация
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const currentProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredProducts, currentPage, itemsPerPage]);
 
-  // Сброс страницы при изменении фильтров
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filters, sortBy]);
 
-  // Загрузка данных
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -165,7 +148,6 @@ export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCata
     }
   };
 
-  // Обработчики
   const handleFilterChange = (
     filterType: keyof FilterState, 
     value: string | string[] | { min: string; max: string }
@@ -215,30 +197,25 @@ export const useCatalog = ({ itemsPerPage = 20 }: UseCatalogProps = {}): UseCata
     setCurrentPage(1);
   };
 
-  // Загрузка при инициализации
   useEffect(() => {
     fetchProducts();
   }, []);
 
   return {
-    // Данные
     products,
     filteredProducts,
     currentProducts,
     loading,
     error,
     
-    // Состояние фильтров
     filters,
     filterOptions,
     searchQuery,
     sortBy,
     
-    // Пагинация
     currentPage,
     totalPages,
     
-    // Обработчики
     setSearchQuery,
     setSortBy,
     setCurrentPage,

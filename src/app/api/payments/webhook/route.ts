@@ -1,4 +1,3 @@
-// src/app/api/payments/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
@@ -29,30 +28,17 @@ interface YooKassaWebhookEvent {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔔 ЮKassa Webhook: Получено уведомление');
     
     const body = await request.text();
     const signature = request.headers.get('yookassa-signature');
     
-    console.log('🔍 Проверяем подпись webhook');
-    
-    // Проверка подписи webhook для безопасности
     if (!verifyWebhookSignature(body, signature)) {
       console.error('❌ Неверная подпись webhook');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const event: YooKassaWebhookEvent = JSON.parse(body);
-    
-    console.log('📦 Событие ЮKassa:', {
-      type: event.type,
-      event: event.event,
-      paymentId: event.object.id,
-      status: event.object.status,
-      orderId: event.object.metadata?.order_id
-    });
 
-    // Обрабатываем различные события
     switch (event.event) {
       case 'payment.succeeded':
         await handlePaymentSucceeded(event.object);
@@ -85,9 +71,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Проверка подписи webhook от ЮKassa
- */
 function verifyWebhookSignature(body: string, signature: string | null): boolean {
   if (!signature || !YUKASSA_WEBHOOK_SECRET) {
     console.warn('⚠️ Отсутствует подпись или секрет webhook');
@@ -102,9 +85,6 @@ function verifyWebhookSignature(body: string, signature: string | null): boolean
   return hash === signature;
 }
 
-/**
- * Обработка успешной оплаты
- */
 async function handlePaymentSucceeded(payment: YooKassaWebhookEvent['object']) {
   const orderId = payment.metadata?.order_id;
   
@@ -113,10 +93,7 @@ async function handlePaymentSucceeded(payment: YooKassaWebhookEvent['object']) {
     return;
   }
 
-  console.log(`✅ Платеж успешен для заказа ${orderId}`);
-
   try {
-    // Обновляем статус заказа в Strapi
     await updateOrderPaymentStatus(orderId, {
       paymentStatus: 'paid',
       paymentId: payment.id,
@@ -124,7 +101,6 @@ async function handlePaymentSucceeded(payment: YooKassaWebhookEvent['object']) {
       paymentAmount: parseFloat(payment.amount.value)
     });
 
-    // Отправляем уведомление администратору
     await sendAdminNotification(`💳 Получена оплата за заказ #${orderId}`, {
       orderId,
       paymentId: payment.id,
@@ -137,9 +113,6 @@ async function handlePaymentSucceeded(payment: YooKassaWebhookEvent['object']) {
   }
 }
 
-/**
- * Обработка отмененного платежа
- */
 async function handlePaymentCanceled(payment: YooKassaWebhookEvent['object']) {
   const orderId = payment.metadata?.order_id;
   
@@ -164,15 +137,10 @@ async function handlePaymentCanceled(payment: YooKassaWebhookEvent['object']) {
   }
 }
 
-/**
- * Обработка платежа, ожидающего подтверждения
- */
 async function handlePaymentWaitingForCapture(payment: YooKassaWebhookEvent['object']) {
   const orderId = payment.metadata?.order_id;
   
   if (!orderId) return;
-
-  console.log(`⏳ Платеж ожидает подтверждения для заказа ${orderId}`);
 
   try {
     await updateOrderPaymentStatus(orderId, {
@@ -185,16 +153,10 @@ async function handlePaymentWaitingForCapture(payment: YooKassaWebhookEvent['obj
   }
 }
 
-/**
- * Обработка успешного возврата
- */
 async function handleRefundSucceeded(refund: any) {
   console.log(`💸 Возврат успешно выполнен: ${refund.id}`);
 }
 
-/**
- * Обновление статуса платежа заказа в Strapi
- */
 async function updateOrderPaymentStatus(orderId: string, updateData: {
   paymentStatus: string;
   paymentId: string;
@@ -234,9 +196,6 @@ async function updateOrderPaymentStatus(orderId: string, updateData: {
   }
 }
 
-/**
- * Отправка уведомления администратору в Telegram
- */
 async function sendAdminNotification(message: string, details: Record<string, any>) {
   const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
@@ -262,8 +221,6 @@ async function sendAdminNotification(message: string, details: Record<string, an
         parse_mode: 'HTML'
       })
     });
-
-    console.log('✅ Уведомление отправлено администратору');
 
   } catch (error) {
     console.error('❌ Ошибка отправки Telegram уведомления:', error);

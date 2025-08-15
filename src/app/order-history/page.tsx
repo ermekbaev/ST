@@ -8,13 +8,11 @@ const OrderHistoryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Функция загрузки заказов
   const loadOrders = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Получаем токен
       const token = localStorage.getItem('authToken');
       
       if (!token) {
@@ -23,7 +21,6 @@ const OrderHistoryPage: React.FC = () => {
         return;
       }
 
-      // Загружаем заказы из вашего API
       const response = await fetch('/api/user/orders', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -41,8 +38,6 @@ const OrderHistoryPage: React.FC = () => {
       if (!data.success) {
         throw new Error(data.error || 'Ошибка получения данных');
       }
-
-      // ✅ ОБНОВЛЕНО: Преобразуем данные с поддержкой нескольких товаров
       const transformedOrders: ExtendedOrder[] = (data.orders || []).map((apiOrder: any) => {
         console.log(`🔄 Обрабатываем заказ ${apiOrder.orderNumber}: ${apiOrder.items.length} товаров`);
         
@@ -56,7 +51,6 @@ const OrderHistoryPage: React.FC = () => {
           }),
           status: getDisplayStatus(apiOrder.orderStatus, apiOrder.paymentStatus),
           total: `${apiOrder.totalAmount.toLocaleString('ru-RU')} ₽`,
-          // ✅ ИСПРАВЛЕНО: Обрабатываем все товары, а не только первый
           items: apiOrder.items.map((item: any) => ({
             id: item.id,
             productName: item.productName,
@@ -86,22 +80,12 @@ const OrderHistoryPage: React.FC = () => {
           customerName: apiOrder.customerName,
           customerEmail: apiOrder.customerEmail,
           deliveryAddress: apiOrder.deliveryAddress,
-          // ✅ ДОБАВЛЕНО: Информация о количестве товаров
           totalItems: apiOrder.items.length
         };
       });
 
       setOrders(transformedOrders);
       
-      // Логируем статистику
-      const totalOrders = transformedOrders.length;
-      const totalItems = transformedOrders.reduce((sum, order) => sum + order.items.length, 0);
-      const ordersWithMultipleItems = transformedOrders.filter(order => order.items.length > 1).length;
-      
-      console.log(`✅ Загружено заказов: ${totalOrders}`);
-      console.log(`📦 Общее количество товаров: ${totalItems}`);
-      console.log(`🛍️ Заказов с несколькими товарами: ${ordersWithMultipleItems}`);
-
     } catch (err) {
       console.error('❌ Ошибка загрузки заказов:', err);
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
@@ -110,15 +94,12 @@ const OrderHistoryPage: React.FC = () => {
     }
   };
 
-  // Загрузка заказов при монтировании
   useEffect(() => {
     loadOrders();
   }, []);
 
-  // ✅ Используем существующий API для проверки статуса платежа
   useEffect(() => {
     const checkPaymentStatus = async () => {
-      // Проверяем, есть ли данные о недавнем платеже
       const retryPaymentId = localStorage.getItem('retryPaymentId');
       const retryOrderNumber = localStorage.getItem('retryOrderNumber');
       const paymentStartTime = localStorage.getItem('paymentStartTime');
@@ -126,21 +107,15 @@ const OrderHistoryPage: React.FC = () => {
       if (retryPaymentId && retryOrderNumber && paymentStartTime) {
         const timeSincePayment = Date.now() - parseInt(paymentStartTime);
         
-        // Проверяем только если прошло менее 10 минут
         if (timeSincePayment < 10 * 60 * 1000) {
-          console.log('🔍 Проверяем статус недавнего платежа:', retryPaymentId);
           
           try {
-            // Используем существующий API для проверки статуса
             const response = await fetch(`/api/payments/status?paymentId=${retryPaymentId}`);
             const data = await response.json();
             
             if (data.success && data.payment) {
-              console.log('💳 Статус платежа:', data.payment.status, 'paid:', data.payment.paid);
               
-              // Если платеж успешен, синхронизируем статус
               if (data.payment.status === 'succeeded' && data.payment.paid) {
-                console.log('✅ Платеж успешен - синхронизируем статус');
                 
                 await fetch('/api/payments/sync-status', {
                   method: 'POST',
@@ -153,12 +128,10 @@ const OrderHistoryPage: React.FC = () => {
                   })
                 });
                 
-                // Очищаем localStorage после успешной синхронизации
                 localStorage.removeItem('retryPaymentId');
                 localStorage.removeItem('retryOrderNumber');
                 localStorage.removeItem('paymentStartTime');
                 
-                // Обновляем заказы
                 loadOrders();
               }
             }
@@ -166,7 +139,6 @@ const OrderHistoryPage: React.FC = () => {
             console.error('❌ Ошибка проверки статуса платежа:', error);
           }
         } else {
-          // Слишком много времени прошло - очищаем localStorage
           localStorage.removeItem('retryPaymentId');
           localStorage.removeItem('retryOrderNumber');
           localStorage.removeItem('paymentStartTime');
@@ -175,9 +147,6 @@ const OrderHistoryPage: React.FC = () => {
     };
 
     const handleFocus = () => {
-      console.log('🔄 Окно получило фокус');
-      
-      // Проверяем только при возврате с оплаты
       const urlParams = new URLSearchParams(window.location.search);
       const paymentReturn = urlParams.get('payment');
       
@@ -187,12 +156,10 @@ const OrderHistoryPage: React.FC = () => {
       }
     };
 
-    // Проверяем при загрузке, если есть признаки возврата с оплаты
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'retry') {
       checkPaymentStatus();
       
-      // Очищаем URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
@@ -204,13 +171,11 @@ const OrderHistoryPage: React.FC = () => {
     };
   }, []);
 
-  // Колбэк для обновления заказов
   const handleOrderUpdate = () => {
     console.log('🔄 Запрошено обновление заказов');
     loadOrders();
   };
 
-  // Функции преобразования статусов
   const getDisplayStatus = (orderStatus: string, paymentStatus: string): string => {
     if (orderStatus === 'pending' && paymentStatus === 'pending') {
       return 'принят, ожидается оплата';
@@ -249,11 +214,8 @@ const OrderHistoryPage: React.FC = () => {
   };
 
   const handleRetry = () => {
-    loadOrders(); // Используем функцию загрузки вместо перезагрузки страницы
+    loadOrders(); 
   };
-
-  console.log('📋 Transformed orders:', orders);
-  
 
   return (
     <div className="min-h-screen bg-white">

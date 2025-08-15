@@ -14,7 +14,6 @@ const SupportWidget: React.FC<SupportWidgetProps> = ({ forceVisible = false, onT
   const [showComment, setShowComment] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Определяем мобильное устройство
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -29,11 +28,9 @@ const SupportWidget: React.FC<SupportWidgetProps> = ({ forceVisible = false, onT
   useEffect(() => {
     setMounted(true);
     
-    // Автоматическое появление через 30 секунд только на десктопе
     if (!isMobile) {
       const timer = setTimeout(() => {
         setIsVisible(true);
-        // Показываем комментарий через 500ms после появления виджета
         setTimeout(() => {
           setShowComment(true);
         }, 500);
@@ -55,13 +52,11 @@ const SupportWidget: React.FC<SupportWidgetProps> = ({ forceVisible = false, onT
 
   const handleMainButtonClick = () => {
     if (forceVisible) {
-      // В принудительном режиме показываем кнопки связи
       setIsExpanded(!isExpanded);
       if (onToggle) {
         onToggle(!isExpanded);
       }
     } else {
-      // В обычном режиме скрываем комментарий и показываем кнопки
       setShowComment(false);
       setIsExpanded(!isExpanded);
     }

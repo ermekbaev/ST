@@ -17,7 +17,6 @@ const MobileSupportWidget: React.FC<MobileSupportWidgetProps> = ({ isVisible, on
     
     window.open(links[type], '_blank');
     
-    // Закрываем виджет после клика
     onClose();
   };
 

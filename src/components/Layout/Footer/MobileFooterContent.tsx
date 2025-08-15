@@ -1,4 +1,3 @@
-// MobileFooterContent.tsx
 import React, { useState } from 'react';
 
 const MobileFooterContent = () => {

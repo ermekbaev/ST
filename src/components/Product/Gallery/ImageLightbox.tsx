@@ -1,4 +1,3 @@
-// src/components/Product/Gallery/ImageLightbox.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -32,7 +31,6 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
     setImageLoadError(prev => ({ ...prev, [imageId]: true }));
   };
 
-  // Управление клавиатурой
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen) return;
@@ -54,7 +52,6 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      // Блокируем скролл страницы
       document.body.style.overflow = 'hidden';
     }
 
@@ -69,7 +66,7 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
     setTimeout(() => {
       onClose();
       setIsClosing(false);
-    }, 200); // Время анимации закрытия
+    }, 200); 
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {

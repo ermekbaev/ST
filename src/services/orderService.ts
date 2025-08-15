@@ -28,9 +28,6 @@ export interface CreateOrderResponse {
   details?: string;
 }
 
-/**
- * Создать заказ через новый API Strapi
- */
 export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
   try {
     console.log('🔄 Отправляем заказ на сервер:', orderData);
@@ -40,7 +37,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrd
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}) // ВАЖНО
+        ...(token ? { Authorization: `Bearer ${token}` } : {}) 
       },
       body: JSON.stringify(orderData)
     });
@@ -73,9 +70,6 @@ export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrd
   }
 };
 
-/**
- * Преобразовать данные из формы чекаута в формат API
- */
 export const formatCheckoutDataForAPI = (
   formData: any,
   cartItems: any[],

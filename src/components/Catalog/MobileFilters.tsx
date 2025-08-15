@@ -1,4 +1,3 @@
-// src/components/Catalog/MobileFilters.tsx - ОБНОВЛЕННЫЙ с функцией сворачивания
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -27,7 +26,6 @@ interface MobileFiltersProps {
     categories: string[];
     sizes: string[];
   };
-  // ✅ ИСПРАВЛЕНО: Правильная типизация для onFilterChange
   onFilterChange: (filterType: keyof FilterState, value: string | string[] | { min: string; max: string }) => void;
   onClearFilters: () => void;
   totalResults: number;
@@ -50,10 +48,8 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   
-  // Загружаем фильтры из Strapi
   const { brands: strapiBrands, categories: strapiCategories, sizes: strapiSizes, loading, error } = useCatalogFilters();
 
-  // Стандартные варианты пола (статичные данные)
   const genders = [
     { name: 'Мужской' },
     { name: 'Женский' },
@@ -65,7 +61,6 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
     setMounted(true);
   }, []);
 
-  // Блокировка скролла при открытых фильтрах
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -78,7 +73,6 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
     };
   }, [isOpen]);
 
-  // ✅ ИСПРАВЛЕНО: Правильная обработка фильтров
   const handleFilterChange = (filterType: keyof FilterState, value: string | { min: string; max: string }) => {
     if (filterType === 'priceRange') {
       onFilterChange(filterType, value);
@@ -87,12 +81,10 @@ const MobileFilters: React.FC<MobileFiltersProps> = ({
       const newValues = currentValues.includes(value as string)
         ? currentValues.filter(v => v !== value)
         : [...currentValues, value as string];
-      // ✅ ИСПРАВЛЕНО: Передаем массив правильно
       onFilterChange(filterType, newValues);
     }
   };
 
-  // Подготавливаем данные для компонентов (используем Strapi данные если есть, иначе fallback)
   const brandsToShow = strapiBrands.length > 0 
     ? strapiBrands.map(b => b.name) 
     : filterOptions.brands;

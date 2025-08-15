@@ -1,4 +1,3 @@
-// src/components/UI/Notifications/CartNotification.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -23,7 +22,6 @@ const CartNotification: React.FC<CartNotificationProps> = ({
 
   useEffect(() => {
     if (isVisible) {
-      // Автоматически скрываем через 3 секунды
       const timer = setTimeout(() => {
         onHide();
       }, 3000);
