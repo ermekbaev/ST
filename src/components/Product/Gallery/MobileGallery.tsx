@@ -203,12 +203,9 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
             return (
               <div
                 key={`placeholder-${index}`}
-                className="flex items-center justify-center aspect-[16/10] rounded"
-                style={{
-                  background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
-                }}
+                className="bg-white flex items-center justify-center aspect-[16/10] rounded"
+
               >
-                <span className="text-gray-500 text-xs">{actualIndex + 1}</span>
               </div>
             );
           })}

@@ -49,7 +49,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
           <img
             src={currentImage.url || undefined}
             alt={currentImage.alt || productName}
-            className="w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-105"
+            className="bg-white w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-105"
             onError={() => handleImageError(currentImage.id)}
             onLoad={() => handleImageLoad(currentImage.id)}
             style={{
@@ -173,7 +173,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
                     <img
                       src={image.url || undefined}
                       alt={image.alt || `${productName} - фото ${index + 1}`}
-                      className="w-full h-full object-contain object-center"
+                      className="bg-white w-full h-full object-contain object-center"
                       onError={() => handleImageError(image.id)}
                       onLoad={() => handleImageLoad(image.id)}
                       style={{
@@ -203,7 +203,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
             {images.length < 4 && [...Array(4 - images.length)].map((_, index) => (
               <div
                 key={`placeholder-${index}`}
-                className="flex items-center justify-center aspect-[16/10] rounded relative overflow-hidden"
+                className="bg-white flex items-center justify-center aspect-[16/10] rounded relative overflow-hidden"
                 style={{
                   background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
                 }}
@@ -211,7 +211,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
                 <span className="text-gray-500 text-sm">Фото {images.length + index + 1}</span>
                 
                 {/* Оверлей для недоступных миниатюр */}
-                <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div className="absolute inset-0 bg-white bg-opacity-40"></div>
               </div>
             ))}
           </div>

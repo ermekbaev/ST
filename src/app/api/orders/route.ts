@@ -1,13 +1,10 @@
+// src/app/api/orders/route.ts - ИСПРАВЛЕНО ПОД НОВЫЕ СВЯЗИ STRAPI
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL;
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
-
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_FROM = process.env.EMAIL_FROM;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 interface CreateOrderData {
   customerInfo: {
@@ -29,15 +26,23 @@ interface CreateOrderData {
   notes?: string;
 }
 
+// POST /api/orders - создать заказ
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 API /orders вызван (асинхронная версия)');
+    console.log('📝 API: Получен запрос на создание заказа');
     
     const body: CreateOrderData = await request.json();
     
+    // Получаем токен пользователя
     const authHeader = request.headers.get('authorization');
     const userToken = authHeader?.replace('Bearer ', '') || null;
     
+    console.log('🔍 Отладка токена:', {
+      hasUserToken: !!userToken,
+      tokenPreview: userToken ? `${userToken.substring(0, 20)}...` : 'НЕТ ТОКЕНА'
+    });
+
+    // Получаем данные пользователя если токен есть
     let userId: string | null = null;
     if (userToken) {
       try {
@@ -51,6 +56,7 @@ export async function POST(request: NextRequest) {
         if (userResponse.ok) {
           const userData = await userResponse.json();
           userId = userData.id.toString();
+          console.log('✅ Пользователь найден:', userData.id, userData.email);
         } else {
           console.log('⚠️ Токен недействителен, создаем гостевой заказ');
         }
@@ -59,6 +65,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Базовая валидация
     const validation = validateOrderData(body);
     if (!validation.isValid) {
       console.error('❌ Валидация заказа не прошла:', validation.error);
@@ -68,8 +75,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Генерируем номер заказа
     const orderNumber = generateOrderNumber();
+    console.log('🔢 Сгенерирован номер заказа:', orderNumber);
 
+    // ✅ ИСПРАВЛЕНО: Подготавливаем данные для Strapi с правильной связью пользователя
     const orderData = {
       orderNumber,
       customerName: body.customerInfo.name,
@@ -82,6 +92,7 @@ export async function POST(request: NextRequest) {
       notes: body.notes || '',
       orderStatus: 'pending',
       paymentStatus: body.paymentMethod === 'cash_vladivostok' ? 'pending' : 'pending',
+      // Правильная связь с пользователем
       ...(userId && { 
         user: {
           connect: [{ id: parseInt(userId) }]
@@ -89,33 +100,26 @@ export async function POST(request: NextRequest) {
       })
     };
 
-    console.log('💾 Сохраняем заказ в Strapi...');
+    console.log('💾 Сохраняем заказ в Strapi...', {
+      isUserOrder: !!userId,
+      userId: userId || 'guest'
+    });
+
+    // Сохраняем заказ в Strapi
     const orderId = await saveOrderToStrapi(orderData, body.items);
     
-    console.log('✅ Заказ создан:', orderNumber);
+    console.log(`✅ Заказ сохранен в Strapi с ID: ${orderId}`, userId ? '(авторизованный)' : '(гостевой)');
 
-    // 🔥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Возвращаем ответ НЕМЕДЛЕННО
-    const response = NextResponse.json({
+    // Отправляем уведомление админу
+    await sendAdminNotification(orderNumber, body, orderData);
+
+    return NextResponse.json({
       success: true,
       orderId,
       orderNumber,
       message: 'Заказ успешно создан',
       userOrder: !!userId
     });
-
-    // 🔥 АСИНХРОННО отправляем email ПОСЛЕ ответа клиенту
-    setImmediate(async () => {
-      try {
-        console.log('📧 Отправляем email асинхронно...');
-        await sendAdminNotificationAsync(orderNumber, body, orderData);
-        console.log('✅ Email отправлен успешно');
-      } catch (emailError) {
-        console.error('⚠️ Ошибка email (не критично):', emailError);
-        // Email ошибки не влияют на заказ
-      }
-    });
-
-    return response;
 
   } catch (error) {
     console.error('❌ Ошибка создания заказа:', error);
@@ -131,82 +135,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 🔥 АСИНХРОННАЯ отправка email с таймаутами и повторными попытками
-async function sendAdminNotificationAsync(orderNumber: string, orderData: CreateOrderData, savedData: any): Promise<void> {
-  const MAX_RETRIES = 3;
-  const TIMEOUT_MS = 10000; // 10 секунд максимум
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      console.log(`📧 Попытка отправки email ${attempt}/${MAX_RETRIES}...`);
-      
-      // Создаем транспортер с жесткими таймаутами
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.mail.ru',
-        port: 465,
-        secure: true,
-        auth: {
-          user: EMAIL_USER,
-          pass: EMAIL_PASS, 
-        },
-        // 🔥 ЖЕСТКИЕ ТАЙМАУТЫ для предотвращения блокировки
-        connectionTimeout: 5000,   // 5 секунд на подключение
-        greetingTimeout: 3000,     // 3 секунды на приветствие
-        socketTimeout: 5000,       // 5 секунд на сокет
-        tls: {
-          rejectUnauthorized: false
-        }
-      });
-
-      const messageText = formatAdminNotification(orderNumber, orderData, savedData);
-      const messageHtml = formatAdminNotificationHtml(orderNumber, orderData, savedData);
-
-      const mailOptions = {
-        from: EMAIL_FROM,
-        to: ADMIN_EMAIL,
-        subject: `🛍️ Новый заказ №${orderNumber} - ${orderData.totalAmount.toLocaleString('ru-RU')}₽`,
-        text: messageText,
-        html: messageHtml,
-      };
-
-      // 🔥 Отправляем с общим таймаутом
-      await Promise.race([
-        transporter.sendMail(mailOptions),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Email timeout')), TIMEOUT_MS)
-        )
-      ]);
-
-      console.log(`✅ Email отправлен успешно на попытке ${attempt}`);
-      return; // Успешно отправили, выходим
-
-    } catch (error) {
-      console.error(`❌ Попытка ${attempt} не удалась:`, error);
-      
-      if (attempt === MAX_RETRIES) {
-        console.error('❌ Все попытки отправки email исчерпаны');
-        
-        // В качестве последнего средства - выводим в логи
-        console.log('\n📧 === EMAIL НЕ ОТПРАВЛЕН - ДУБЛИРУЕМ В ЛОГИ ===');
-        console.log(formatAdminNotification(orderNumber, orderData, savedData));
-        console.log('=== КОНЕЦ EMAIL ДУБЛИРОВАНИЯ ===\n');
-        
-        return;
-      }
-      
-      // Ждем перед следующей попыткой (экспоненциальная задержка)
-      const delay = attempt * 2000; // 2с, 4с, 6с
-      console.log(`⏳ Ждем ${delay}ms перед попыткой ${attempt + 1}...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
+// ✅ ИСПРАВЛЕНО: Сохранение заказа в Strapi под новые связи
 async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']): Promise<string> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
+  console.log('🔄 Создаем основной заказ в Strapi...');
+
+  // 1. Создаем основной заказ
   const orderResponse = await fetch(`${STRAPI_URL}/api/orders`, {
     method: 'POST',
     headers,
@@ -222,6 +159,11 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
   const orderResult = await orderResponse.json();
   const orderId = orderResult.data.id;
 
+  console.log(`✅ Основной заказ создан с ID: ${orderId}`);
+
+  // 2. ✅ ИСПРАВЛЕНО: Создаем позиции заказа с новой связью
+  console.log(`\n🔄 === СОЗДАЕМ ${items.length} ПОЗИЦИЙ ЗАКАЗА ===`);
+  
   const createdOrderItems: string[] = [];
   let successCount = 0;
 
@@ -229,12 +171,16 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
     const item = items[index];
     
     try {
+      console.log(`\n🔄 === СОЗДАЕМ ПОЗИЦИЮ ${index + 1}/${items.length} ===`);
+      
+      // Пытаемся найти размер
       const sizeId = await findSizeId(item.productId, item.size);
       
       if (!sizeId) {
         console.warn(`⚠️ Размер "${item.size}" не найден для товара ${item.productId}, создаем без размера`);
       }
 
+      // ✅ ИСПРАВЛЕНО: Правильная структура для новых связей
       const itemData = {
         orderId: orderId.toString(),
         productId: item.productId,
@@ -242,20 +188,32 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
         quantity: item.quantity,
         priceAtTime: item.priceAtTime,
         
+        // ✅ ИСПРАВЛЕНО: Связь с product
         product: {
           connect: [{ id: parseInt(item.productId) }]
         },
         
+        // ✅ ИСПРАВЛЕНО: Связь с заказом через новое поле
         order: {
           connect: [{ id: orderId }]
         },
         
+        // Размер только если найден
         ...(sizeId && {
           size: {
             connect: [{ id: parseInt(sizeId) }]
           }
         })
       };
+
+      console.log(`🔄 Отправляем запрос создания позиции ${index + 1}:`, {
+        orderId: itemData.orderId,
+        productId: itemData.productId,
+        productName: itemData.productName,
+        hasProductConnection: true,
+        hasOrderConnection: true,
+        hasSizeConnection: !!sizeId
+      });
 
       const itemResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
         method: 'POST',
@@ -264,6 +222,12 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
       });
 
       if (!itemResponse.ok) {
+        const errorText = await itemResponse.text();
+        console.error(`❌ Ошибка создания позиции ${index + 1}:`, errorText);
+        
+        // ✅ FALLBACK: Пытаемся создать хотя бы базовую позицию
+        console.log(`🔄 Пытаемся создать fallback позицию ${index + 1} без связей...`);
+        
         const fallbackData = {
           orderId: orderId.toString(),
           productId: item.productId,
@@ -296,6 +260,7 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
         successCount++;
       }
       
+      // Небольшая пауза между созданием позиций для стабильности
       if (index < items.length - 1) {
         console.log(`⏳ Пауза 200ms перед следующей позицией...`);
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -306,13 +271,19 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
     }
   }
 
+  console.log(`\n📦 === ИТОГИ СОЗДАНИЯ ПОЗИЦИЙ ===`);
+  console.log(`✅ Создано позиций: ${successCount}/${items.length}`);
+  console.log(`📋 ID созданных позиций: [${createdOrderItems.join(', ')}]`);
+
   if (successCount === 0) {
     throw new Error('Не удалось создать ни одной позиции заказа');
   }
 
+  // ✅ ИСПРАВЛЕНО: Обновляем заказ с новым полем связи
   if (createdOrderItems.length > 0) {
     await updateOrderWithItems(orderId, createdOrderItems);
     
+    // Проверяем результат связывания
     await new Promise(resolve => setTimeout(resolve, 1000));
     await verifyOrderLinks(orderId.toString());
   }
@@ -320,10 +291,12 @@ async function saveOrderToStrapi(orderData: any, items: CreateOrderData['items']
   return orderId.toString();
 }
 
+// ✅ ИСПРАВЛЕНО: Обновление заказа с новым названием поля связи
 async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Promise<void> {
   try {
     console.log(`🔄 Обновляем заказ ${orderId} со связями на позиции: [${orderItemIds.join(', ')}]`);
     
+    // Получаем documentId заказа
     let documentId = null;
     
     try {
@@ -345,6 +318,8 @@ async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Pr
       documentId = orderId;
     }
     
+    // ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем новое название поля для связи
+    // Проверим разные варианты названий полей
     const possibleFieldNames = ['order_items', 'orderItems', 'order_item'];
     
     for (const fieldName of possibleFieldNames) {
@@ -370,12 +345,15 @@ async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Pr
         const result = await updateResponse.json();
         console.log(`✅ Заказ ${orderId} обновлен через поле "${fieldName}" со связями на ${orderItemIds.length} позиций`);
         console.log(`📋 Новый ID заказа: ${result.data?.id || 'не указан'}`);
-        return; 
+        return; // Успешно обновили, выходим
       } else {
         const errorText = await updateResponse.text();
         console.warn(`⚠️ Не удалось обновить через поле "${fieldName}":`, errorText);
       }
     }
+    
+    // Если ни один вариант не сработал, пробуем connect
+    console.log('🔄 Пробуем через connect...');
     
     for (const fieldName of possibleFieldNames) {
       const connectData = {
@@ -403,14 +381,19 @@ async function updateOrderWithItems(orderId: string, orderItemIds: string[]): Pr
       }
     }
     
+    console.error(`❌ Все попытки обновления заказа ${orderId} не удались`);
+    
   } catch (error) {
     console.error(`❌ Критическая ошибка обновления заказа ${orderId}:`, error);
   }
 }
 
+// ✅ ИСПРАВЛЕНО: Проверка связей с учетом нового поля
 async function verifyOrderLinks(orderId: string): Promise<void> {
   try {
+    console.log(`🔍 Проверяем связи для заказа ${orderId}...`);
     
+    // Проверяем разные варианты populate
     const populateOptions = ['order_items', 'orderItems', 'order_item'];
     
     for (const populateField of populateOptions) {
@@ -434,7 +417,7 @@ async function verifyOrderLinks(orderId: string): Promise<void> {
             orderItems.forEach((item: any, index: number) => {
               console.log(`  ${index + 1}. ID: ${item.id}, Product: ${item.productName}`);
             });
-            return;
+            return; // Нашли рабочее поле, выходим
           }
         }
       } catch (error) {
@@ -442,11 +425,16 @@ async function verifyOrderLinks(orderId: string): Promise<void> {
       }
     }
     
+    console.warn(`⚠️ У заказа ${orderId} не найдены связанные order_items ни в одном поле!`);
+    
   } catch (error) {
     console.error(`❌ Ошибка проверки связей:`, error);
   }
 }
 
+// Остальные функции остаются без изменений...
+
+// Генерация номера заказа
 function generateOrderNumber(): string {
   const now = new Date();
   const year = now.getFullYear().toString().slice(-2);
@@ -457,6 +445,7 @@ function generateOrderNumber(): string {
   return `TS-${year}${month}${day}${random}`;
 }
 
+// Валидация данных заказа
 function validateOrderData(data: CreateOrderData): { isValid: boolean; error?: string } {
   if (!data.customerInfo?.name?.trim()) {
     return { isValid: false, error: 'Не указано имя покупателя' };
@@ -497,9 +486,12 @@ function validateOrderData(data: CreateOrderData): { isValid: boolean; error?: s
   return { isValid: true };
 }
 
+// Поиск размеров
 async function findSizeId(productId: string, sizeValue: string): Promise<string | null> {
   try {
+    console.log(`🔍 Ищем размер "${sizeValue}" для товара ${productId}...`);
     
+    // Метод 1: Получаем товар с размерами
     const productResponse = await fetch(
       `${STRAPI_URL}/api/products?filters[id][$eq]=${productId}&populate=sizes`,
       {
@@ -522,12 +514,14 @@ async function findSizeId(productId: string, sizeValue: string): Promise<string 
           );
           
           if (targetSize) {
+            console.log(`✅ Найден размер ID: ${targetSize.id} для значения "${sizeValue}"`);
             return targetSize.id.toString();
           }
         }
       }
     }
 
+    // Метод 2: Прямой поиск размера
     const sizeResponse = await fetch(
       `${STRAPI_URL}/api/sizes?filters[value][$eq]=${sizeValue}&populate=*`,
       {
@@ -543,17 +537,39 @@ async function findSizeId(productId: string, sizeValue: string): Promise<string 
       
       if (sizeData.data && sizeData.data.length > 0) {
         const firstSize = sizeData.data[0];
+        console.log(`✅ Найден размер ID через прямой поиск: ${firstSize.id} для значения "${sizeValue}"`);
         return firstSize.id.toString();
       }
     }
 
+    console.log(`❌ Размер "${sizeValue}" не найден для товара ${productId}`);
     return null;
     
   } catch (error) {
+    console.error('❌ Ошибка поиска размера:', error);
     return null;
   }
 }
 
+// Отправка уведомления админу
+async function sendAdminNotification(orderNumber: string, orderData: CreateOrderData, savedData: any): Promise<void> {
+  try {
+    const message = formatAdminNotification(orderNumber, orderData, savedData);
+    
+    console.log('📧 Отправляем уведомление админу...');
+    
+    if (TELEGRAM_BOT_TOKEN && ADMIN_TELEGRAM_CHAT_ID) {
+      await sendTelegramNotification(message);
+    } else {
+      console.log('📧 УВЕДОМЛЕНИЕ АДМИНУ (Telegram не настроен):\n', message);
+    }
+
+  } catch (error) {
+    console.error('❌ Ошибка отправки уведомления админу:', error);
+  }
+}
+
+// Форматирование уведомления
 function formatAdminNotification(orderNumber: string, orderData: CreateOrderData, savedData: any): string {
   const { customerInfo, items, totalAmount, deliveryMethod, paymentMethod } = orderData;
   
@@ -588,105 +604,33 @@ function formatAdminNotification(orderNumber: string, orderData: CreateOrderData
   return message;
 }
 
-function formatAdminNotificationHtml(orderNumber: string, orderData: CreateOrderData, savedData: any): string {
-  const { customerInfo, items, totalAmount, deliveryMethod, paymentMethod } = orderData;
-  
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Новый заказ ${orderNumber}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
-        .content { padding: 30px; }
-        .order-info { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
-        .customer-info { margin-bottom: 25px; }
-        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .items-table th, .items-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        .items-table th { background-color: #f1f2f6; font-weight: bold; }
-        .total { font-size: 18px; font-weight: bold; text-align: right; margin: 20px 0; color: #27ae60; }
-        .delivery-payment { display: flex; justify-content: space-between; margin: 20px 0; }
-        .delivery-payment > div { flex: 1; margin: 0 10px; background-color: #f8f9fa; padding: 15px; border-radius: 5px; }
-        .timestamp { text-align: center; color: #7f8c8d; font-size: 14px; margin-top: 30px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>🛍️ НОВЫЙ ЗАКАЗ!</h1>
-          <h2>Заказ №${orderNumber}</h2>
-        </div>
-        
-        <div class="content">
-          <div class="customer-info">
-            <h3>👤 Информация о клиенте:</h3>
-            <p><strong>Имя:</strong> ${customerInfo.name}</p>
-            <p><strong>Телефон:</strong> ${customerInfo.phone}</p>
-            ${customerInfo.email ? `<p><strong>Email:</strong> ${customerInfo.email}</p>` : ''}
-          </div>
+// Отправка в Telegram
+async function sendTelegramNotification(message: string): Promise<void> {
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: ADMIN_TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
 
-          <h3>📦 Заказанные товары (${items.length} шт.):</h3>
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>№</th>
-                <th>Товар</th>
-                <th>Размер</th>
-                <th>Кол-во</th>
-                <th>Цена</th>
-                <th>Сумма</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items.map((item, index) => `
-                <tr>
-                  <td>${index + 1}</td>
-                  <td>${item.productName || item.productId}</td>
-                  <td>${item.size}</td>
-                  <td>${item.quantity}</td>
-                  <td>${item.priceAtTime.toLocaleString('ru-RU')}₽</td>
-                  <td>${(item.priceAtTime * item.quantity).toLocaleString('ru-RU')}₽</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <div class="total">
-            💰 Итого: ${totalAmount.toLocaleString('ru-RU')}₽
-          </div>
-
-          <div class="delivery-payment">
-            <div>
-              <h4>🚚 Доставка:</h4>
-              <p>${getDeliveryMethodName(deliveryMethod)}</p>
-              ${savedData.deliveryAddress ? `<p><strong>Адрес:</strong> ${savedData.deliveryAddress}</p>` : ''}
-            </div>
-            <div>
-              <h4>💳 Оплата:</h4>
-              <p>${getPaymentMethodName(paymentMethod)}</p>
-            </div>
-          </div>
-
-          ${savedData.notes ? `
-            <div class="order-info">
-              <h4>📝 Примечания:</h4>
-              <p>${savedData.notes}</p>
-            </div>
-          ` : ''}
-
-          <div class="timestamp">
-            ⏰ ${new Date().toLocaleString('ru-RU')}
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
+    if (response.ok) {
+      console.log('✅ Уведомление отправлено в Telegram');
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Ошибка отправки в Telegram:', errorText);
+    }
+  } catch (error) {
+    console.error('❌ Ошибка Telegram API:', error);
+  }
 }
 
+// Вспомогательные функции для читаемых названий
 function getDeliveryMethodName(method: string): string {
   const methods = {
     'store_pickup': 'Самовывоз из магазина',

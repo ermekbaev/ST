@@ -11,14 +11,48 @@ const checkout = new YooCheckout({
 
 export async function POST(request: NextRequest) {
   try {
-    const { paymentId, orderNumber } = await request.json();
+    // Проверяем наличие тела запроса
+    const contentLength = request.headers.get('content-length');
+    if (!contentLength || contentLength === '0') {
+      return NextResponse.json({
+        success: false,
+        error: 'Тело запроса пустое'
+      }, { status: 400 });
+    }
+
+    // Получаем raw текст сначала для debug
+    const rawBody = await request.text();
+    console.log('📝 Raw request body:', rawBody);
+
+    if (!rawBody.trim()) {
+      return NextResponse.json({
+        success: false,
+        error: 'Пустое тело запроса'
+      }, { status: 400 });
+    }
+
+    let requestData;
+    try {
+      requestData = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error('❌ Ошибка парсинга JSON:', parseError);
+      console.error('Raw body:', rawBody);
+      return NextResponse.json({
+        success: false,
+        error: 'Некорректный JSON в теле запроса',
+        receivedBody: rawBody
+      }, { status: 400 });
+    }
+
+    const { paymentId, orderNumber } = requestData;
 
     console.log('🔄 Синхронизация статуса платежа:', { paymentId, orderNumber });
 
     if (!paymentId || !orderNumber) {
       return NextResponse.json({
         success: false,
-        error: 'PaymentId и orderNumber обязательны'
+        error: 'PaymentId и orderNumber обязательны',
+        received: { paymentId, orderNumber }
       }, { status: 400 });
     }
 
@@ -74,6 +108,27 @@ export async function POST(request: NextRequest) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+// Альтернативный подход - добавить поддержку GET для debug
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const paymentId = url.searchParams.get('paymentId');
+  const orderNumber = url.searchParams.get('orderNumber');
+
+  if (!paymentId || !orderNumber) {
+    return NextResponse.json({
+      success: false,
+      error: 'Для GET запроса используйте query параметры: ?paymentId=xxx&orderNumber=yyy'
+    }, { status: 400 });
+  }
+
+  // Переиспользуем логику POST
+  return POST(new NextRequest(request.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentId, orderNumber })
+  }));
 }
 
 async function updateOrderPaymentStatus(orderNumber: string, updateData: {
@@ -154,7 +209,7 @@ async function updateOrderPaymentStatus(orderNumber: string, updateData: {
     }
 
     const order = findResult.data[0];
-    const documentId = order.documentId || order.id; // Используем documentId для Strapi v5
+    const documentId = order.documentId || order.id;
     console.log(`✅ Найден заказ с documentId: ${documentId} (ID: ${order.id}) (с токеном)`);
 
     console.log(`🔄 Обновляем заказ documentId ${documentId} с данными:`, updateData);
