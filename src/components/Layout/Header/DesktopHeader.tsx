@@ -41,7 +41,7 @@ const DesktopHeader: React.FC = () => {
       ],
       links: {
         'все': '/catalog',
-        'кеды и кроссовки': '/catalog?categories=Кросовки+и+кеды',
+        'кеды и кроссовки': '/catalog?categories=Кроссовки+и+кеды',
         'ботинки и угги': '/catalog',
         'слэды': '/catalog',
         'детская обувь': '/catalog'

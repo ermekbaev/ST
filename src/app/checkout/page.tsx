@@ -35,8 +35,83 @@ const CheckoutPage: React.FC = () => {
     }
   }, [items, router, isLoading, orderCompleted, isProcessing, isProcessingPayment]);
 
-  const getPromoData = () => {
+  // ✅ НОВАЯ ФУНКЦИЯ: Получение изображения из товара корзины
+  const getProductImageFromCartItem = (item: any): string | null => {
+    // Проверяем все возможные поля с изображениями
+    const possibleImageFields = [
+      item.image,           // Основное поле image
+      item.photo,           // Поле photo
+      item.productImage,    // Поле productImage  
+      item.mainPhoto,       // Поле mainPhoto
+      item.images?.[0],     // Первое изображение из массива
+      item.images?.src,     // Поле src в images
+      item.imageUrl,        // Поле imageUrl
+      item.src             // Прямое поле src
+    ];
+
+    for (const imageField of possibleImageFields) {
+      if (imageField && 
+          typeof imageField === 'string' && 
+          imageField.trim() && 
+          (imageField.startsWith('http://') || imageField.startsWith('https://'))) {
+        return imageField.trim();
+      }
+    }
+
+    return null;
+  };
+
+  // ✅ ДЕБАГ ФУНКЦИЯ: Для диагностики изображений в корзине
+  const debugCartImages = (items: any[]) => {
+    console.log('\n🔍 === ДЕБАГ ИЗОБРАЖЕНИЙ В КОРЗИНЕ ===');
     
+    items.forEach((item, index) => {
+      console.log(`\n📦 Товар ${index + 1}: ${item.name || item.title || 'Без названия'}`);
+      console.log(`  ID: ${item.id || item.article || 'НЕТ ID'}`);
+      
+      // Проверяем все возможные поля с изображениями
+      const imageFields = {
+        'item.image': item.image,
+        'item.photo': item.photo,
+        'item.productImage': item.productImage,
+        'item.mainPhoto': item.mainPhoto,
+        'item.images[0]': item.images?.[0],
+        'item.images.src': item.images?.src,
+        'item.imageUrl': item.imageUrl,
+        'item.src': item.src
+      };
+      
+      let foundValidImage = false;
+      
+      Object.entries(imageFields).forEach(([fieldName, value]) => {
+        if (value) {
+          const isValidUrl = typeof value === 'string' && 
+                            value.trim() && 
+                            (value.startsWith('http://') || value.startsWith('https://'));
+          
+          console.log(`  ${fieldName}: ${value} ${isValidUrl ? '✅ ВАЛИДНЫЙ' : '❌ НЕВАЛИДНЫЙ'}`);
+          
+          if (isValidUrl) {
+            foundValidImage = true;
+          }
+        }
+      });
+      
+      if (!foundValidImage) {
+        console.log(`  ⚠️ У товара НЕТ валидных изображений!`);
+      }
+    });
+    
+    console.log('\n🎯 === ИТОГИ ДЕБАГА ===');
+    const itemsWithImages = items.filter(item => getProductImageFromCartItem(item));
+    
+    console.log(`📊 Товаров с изображениями: ${itemsWithImages.length}/${items.length}`);
+    console.log(`📊 Товаров без изображений: ${items.length - itemsWithImages.length}/${items.length}`);
+    
+    return itemsWithImages.length;
+  };
+
+  const getPromoData = () => {
     if (orderSummaryRef.current?.getPromoCalculations) {
       const promoData = orderSummaryRef.current.getPromoCalculations();
       console.log('🎟️ Данные промокодов:', promoData);
@@ -117,25 +192,36 @@ const CheckoutPage: React.FC = () => {
         throw new Error('Корзина пуста');
       }
 
+      // ✅ ДЕБАГ: Проверяем изображения в корзине
+      debugCartImages(items);
+
       const finalTotal = orderData.total && orderData.total > 0 
         ? orderData.total           // ← Цена С ПРОМОКОДОМ
         : calculateTotal();         // ← Fallback если промокоды не работают
 
-
+      // ✅ ОБНОВЛЕНО: Подготавливаем данные С ИЗОБРАЖЕНИЯМИ
       const orderPayload = {
         customerInfo: {
           name: orderData.firstName.trim(),
           phone: orderData.phone.trim(),
           email: orderData.email?.trim() || '',
         },
-        items: items.map(item => ({
-          productId: item.id || item.article,
-          productName: item.name || item.title,
-          //@ts-ignore
-          size: item.selectedSize || item.size,
-          quantity: item.quantity,
-          priceAtTime: item.price,
-        })),
+        items: items.map(item => {
+          // Получаем изображение из корзины
+          const productImage = getProductImageFromCartItem(item);
+          
+          console.log(`📷 Товар ${item.name || item.title}: изображение = ${productImage ? productImage.substring(0, 50) + '...' : 'НЕТ'}`);
+          
+          return {
+            productId: item.id || item.article,
+            productName: item.name || item.title,
+            //@ts-ignore
+            size: item.selectedSize || item.size,
+            quantity: item.quantity,
+            priceAtTime: item.price,
+            productImage: productImage || undefined // ✅ ДОБАВЛЯЕМ ИЗОБРАЖЕНИЕ
+          };
+        }),
         totalAmount: finalTotal, 
         deliveryMethod: selectedDelivery,
         paymentMethod: orderData.paymentMethod || selectedPayment,
@@ -148,6 +234,13 @@ const CheckoutPage: React.FC = () => {
         promoDiscount: orderData.promoDiscount || 0,
         appliedPromoCode: orderData.appliedPromoCode || null
       };
+
+      console.log('📦 Данные заказа с изображениями:', {
+        itemsCount: orderPayload.items.length,
+        itemsWithImages: orderPayload.items.filter(item => item.productImage).length,
+        totalAmount: orderPayload.totalAmount,
+        sampleItem: orderPayload.items[0]
+      });
 
       const token = localStorage.getItem('authToken');
       const response = await fetch('/api/orders', {
