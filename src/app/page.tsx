@@ -148,65 +148,81 @@ export default function Home() {
     );
   }
 
-  const ProductSection = ({ title, categoryKey, categoryFilters, linkText = "все модели" }: { 
-    title: string; 
-    categoryKey?: string;
-    categoryFilters?: string[];
-    linkText?: string;
-  }) => {
-    let displayProducts: Product[] = [];
+const ProductSection = ({ 
+  title, 
+  categoryKey, 
+  categoryFilters, 
+  linkText = "все модели",
+  catalogFilters // массив фильтров для каталога
+}: { 
+  title: string; 
+  categoryKey?: string;
+  categoryFilters?: string[];
+  linkText?: string;
+  catalogFilters?: string[]; // массив категорий для фильтрации в каталоге
+}) => {
+  let displayProducts: Product[] = [];
 
-    if (categoryFilters) {
-      displayProducts = getLatestProductsFromCategory(categoryFilters, 4);
-    } else if (categoryKey) {
-      const categoryProducts = groupedProducts[categoryKey] || [];
-      displayProducts = categoryProducts.slice(0, 4);
+  if (categoryFilters) {
+    displayProducts = getLatestProductsFromCategory(categoryFilters, 4);
+  } else if (categoryKey) {
+    const categoryProducts = groupedProducts[categoryKey] || [];
+    displayProducts = categoryProducts.slice(0, 4);
+  }
+
+  // Функция для создания URL каталога с множественными фильтрами
+  const getCatalogUrl = () => {
+    if (catalogFilters && catalogFilters.length > 0) {
+      const filterParam = catalogFilters.join(',');
+      return `/catalog?categories=${encodeURIComponent(filterParam)}`;
     }
-
-    return (
-      <section className="mb-16">
-        <div className="flex justify-between items-center mb-6 lg:mb-8">
-          <h2 className="section-title text-[22px] lg:text-[35px] text-black">
-            {title}
-          </h2>
-          <a 
-            href="/catalog" 
-            className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
-          >
-            {/* Десктопная версия */}
-            <span className="hidden lg:inline">
-              {linkText}
-            </span>
-            <img src="/utils/Vector3.svg" alt="" className="hidden lg:block w-3 h-3 lg:w-4 lg:h-4" />
-            {/* Мобильная версия - своя иконка стрелки */}
-            <img src="/utils/arrow_right.svg" alt="" className="lg:hidden w-4 h-4" />
-          </a>
-        </div>
-        
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {displayProducts.length > 0 ? (
-            displayProducts.map((product, index) => (
-              <ProductCard key={product.id || index} product={product} />
-            ))
-          ) : (
-            // Показываем заглушки если нет товаров - но только если НЕ ошибка
-            !error && Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="bg-white w-full">
-                <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">
-                  <span className="text-gray-400 text-sm font-product">Скоро товары</span>
-                </div>
-                <div className="w-full h-px bg-brand-dark"></div>
-                <div className="py-2">
-                  <div className="h-[22px] bg-gray-200 rounded w-3/4 mb-1"></div>
-                  <div className="h-[20px] bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-    );
+    return '/catalog';
   };
+
+  return (
+    <section className="mb-16">
+      <div className="flex justify-between items-center mb-6 lg:mb-8">
+        <h2 className="section-title text-[22px] lg:text-[35px] text-black">
+          {title}
+        </h2>
+        <a 
+          href={getCatalogUrl()} 
+          className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
+        >
+          {/* Десктопная версия */}
+          <span className="hidden lg:inline">
+            {linkText}
+          </span>
+          <img src="/utils/Vector3.svg" alt="" className="hidden lg:block w-3 h-3 lg:w-4 lg:h-4" />
+          {/* Мобильная версия - своя иконка стрелки */}
+          <img src="/utils/arrow_right.svg" alt="" className="lg:hidden w-4 h-4" />
+        </a>
+      </div>
+      
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {displayProducts.length > 0 ? (
+          displayProducts.map((product, index) => (
+            <ProductCard key={product.id || index} product={product} />
+          ))
+        ) : (
+          // Показываем заглушки если нет товаров - но только если НЕ ошибка
+          !error && Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="bg-white w-full">
+              <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">
+                <span className="text-gray-400 text-sm font-product">Скоро товары</span>
+              </div>
+              <div className="w-full h-px bg-brand-dark"></div>
+              <div className="py-2">
+                <div className="h-[22px] bg-gray-200 rounded w-3/4 mb-1"></div>
+                <div className="h-[20px] bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+};
 
   return (
     <div className="min-h-screen bg-white">
@@ -258,30 +274,32 @@ export default function Home() {
           </div>
         )}
 
-        {/* Секция "ОБУВЬ" - показывает 4 последних товара из категорий обуви */}
         <ProductSection 
           title="ОБУВЬ" 
           categoryFilters={["кроссовки", "кеды", "ботинки", "обувь", "угги", "слэды"]}
+          catalogFilters={["Кроссовки и кеды", "Ботинки и угги", "Слэды", "Шлёпанцы и сандали"]}
         />
 
-        {/* Секция "ОДЕЖДА" - показывает 4 последних товара из категорий одежды */}
+        {/* Секция "ОДЕЖДА" - фильтрует по всем типам одежды */}
         <ProductSection 
           title="ОДЕЖДА" 
           categoryFilters={["толстовки", "свитшоты", "футболки", "одежда", "куртки", "штаны", "шорты"]}
+          catalogFilters={["Толстовки и свитшоты", "Футболки и поло", "Пуховики и куртки", "Штаны и брюки", "Шорты"]}
         />
 
-        {/* Секция "АКСЕССУАРЫ" - показывает 4 последних товара из категорий аксессуаров */}
+        {/* Секция "АКСЕССУАРЫ" - фильтрует по всем типам аксессуаров */}
         <ProductSection 
           title="АКСЕССУАРЫ" 
           categoryFilters={["аксессуары", "сумки", "рюкзаки", "головные", "очки", "кошельки", "белье"]}
+          catalogFilters={["Аксессуары", "Сумки и рюкзаки", "Головные уборы", "Белье"]}
         />
 
         {/* Секция "КОЛЛЕКЦИИ" */}
         <ProductSection 
           title="КОЛЛЕКЦИИ" 
           categoryFilters={["коллекции", "коллекция", "фигурки", "интерьера", "предметы интерьера", "другое всё"]}
+          catalogFilters={["Коллекция", "Фигурки", "Предметы интерьера"]}
         />
-
       </div>
 
       {/* Секция индивидуального заказа */}

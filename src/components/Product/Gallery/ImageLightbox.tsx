@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { GalleryImage } from './ProductGallery';
 
 interface ImageLightboxProps {
@@ -26,11 +26,84 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
 }) => {
   const [imageLoadError, setImageLoadError] = useState<Record<string, boolean>>({});
   const [isClosing, setIsClosing] = useState(false);
+  
+  // Состояния для свайпов
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragDistance, setDragDistance] = useState(0);
+  
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const minSwipeDistance = 50; // Минимальная дистанция для срабатывания свайпа
 
   const handleImageError = (imageId: string) => {
     setImageLoadError(prev => ({ ...prev, [imageId]: true }));
   };
 
+  // Обработка начала касания
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (images.length <= 1) return;
+    
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+    setTouchEnd(null);
+    setIsDragging(true);
+    setDragDistance(0);
+  }, [images.length]);
+
+  // Обработка движения пальца
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStart || images.length <= 1) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = Math.abs(touch.clientY - touchStart.y);
+    
+    // Если движение больше по вертикали, не обрабатываем как свайп для навигации
+    if (deltaY > Math.abs(deltaX) * 1.5) return;
+    
+    // Предотвращаем скролл страницы при горизонтальном свайпе
+    e.preventDefault();
+    
+    setTouchEnd({ x: touch.clientX, y: touch.clientY });
+    setDragDistance(deltaX);
+  }, [touchStart, images.length]);
+
+  // Обработка окончания касания
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStart || !touchEnd || images.length <= 1) return;
+
+    const deltaX = touchEnd.x - touchStart.x;
+    const deltaY = Math.abs(touchEnd.y - touchStart.y);
+    
+    // Если движение больше по вертикали, игнорируем
+    if (deltaY > Math.abs(deltaX) * 1.5) {
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsDragging(false);
+      setDragDistance(0);
+      return;
+    }
+
+    const isSwipe = Math.abs(deltaX) > minSwipeDistance;
+
+    if (isSwipe) {
+      if (deltaX > 0) {
+        // Свайп вправо - предыдущее фото
+        onPrev();
+      } else {
+        // Свайп влево - следующее фото  
+        onNext();
+      }
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsDragging(false);
+    setDragDistance(0);
+  }, [touchStart, touchEnd, onNext, onPrev, minSwipeDistance, images.length]);
+
+  // Обработка клавиатуры
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen) return;
@@ -80,6 +153,15 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
   const currentImage = images[currentIndex];
   const hasError = imageLoadError[currentImage?.id];
 
+  // Стили для анимации перетаскивания
+  const imageTransform = isDragging && dragDistance !== 0 
+    ? `translateX(${dragDistance * 0.3}px)` 
+    : 'translateX(0px)';
+
+  const imageOpacity = isDragging && Math.abs(dragDistance) > 20
+    ? Math.max(0.7, 1 - Math.abs(dragDistance) / 300)
+    : 1;
+
   return (
     <div 
       className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-200 ${
@@ -114,24 +196,34 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
           </div>
         </button>
 
-        {/* Основное изображение */}
-        <div className="relative flex-1 flex items-center justify-center w-full max-w-7xl">
+        {/* Основное изображение с поддержкой свайпов */}
+        <div 
+          ref={imageContainerRef}
+          className="relative flex-1 flex items-center justify-center w-full max-w-7xl touch-pan-y"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
             <img
               src={currentImage.url}
               alt={currentImage.alt || `${productName} - фото ${currentIndex + 1}`}
-              className="max-w-full max-h-full object-contain select-none"
+              className="max-w-full max-h-full object-contain select-none transition-all duration-150"
               onError={() => handleImageError(currentImage.id)}
               draggable={false}
               style={{
-                maxHeight: 'calc(100vh - 200px)' // Оставляем место для навигации
+                maxHeight: 'calc(100vh - 200px)',
+                transform: imageTransform,
+                opacity: imageOpacity,
               }}
             />
           ) : (
             <div 
-              className="w-96 h-96 flex items-center justify-center rounded-lg"
+              className="w-96 h-96 flex items-center justify-center rounded-lg transition-all duration-150"
               style={{
-                background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
+                background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)',
+                transform: imageTransform,
+                opacity: imageOpacity,
               }}
             >
               <div className="text-center text-gray-600">
@@ -182,6 +274,20 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
                 ></div>
               </button>
             </>
+          )}
+
+          {/* Индикатор свайпа для мобильных (показывается при первом открытии) */}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/50 text-xs text-center lg:hidden">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="w-1 h-1 bg-white/50 rounded-full animate-pulse"></div>
+                  <div className="w-1 h-1 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-1 h-1 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+                <span>Листайте пальцем</span>
+              </div>
+            </div>
           )}
         </div>
 

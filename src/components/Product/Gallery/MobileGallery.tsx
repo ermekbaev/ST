@@ -23,10 +23,13 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
   onOpenLightbox,
 }) => {
   const [imageLoadError, setImageLoadError] = useState<Record<string, boolean>>({});
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
   const [lastTap, setLastTap] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragDistance, setDragDistance] = useState<number>(0);
   const mainImageRef = useRef<HTMLDivElement>(null);
+  const minSwipeDistance = 50; // Минимальная дистанция для срабатывания свайпа
 
   const handleImageError = (imageId: string) => {
     setImageLoadError(prev => ({ ...prev, [imageId]: true }));
@@ -37,30 +40,71 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (images.length <= 1) return;
+    
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+    setIsDragging(false);
+    setDragDistance(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    if (!touchStart || images.length <= 1) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = Math.abs(touch.clientY - touchStart.y);
+    
+    // Если движение больше по вертикали, не обрабатываем как свайп
+    if (deltaY > Math.abs(deltaX) * 1.5) return;
+    
+    // Предотвращаем скролл страницы при горизонтальном свайпе
+    e.preventDefault();
+    
+    setTouchEnd({ x: touch.clientX, y: touch.clientY });
+    setIsDragging(true);
+    setDragDistance(deltaX);
   };
 
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd || !images || images.length <= 1) return;
-    
-    const distance = touchStart - touchStart;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
+    if (!touchStart || !touchEnd || images.length <= 1) return;
 
-    if (isLeftSwipe) {
-      onNextImage();
+    const deltaX = touchEnd.x - touchStart.x;
+    const deltaY = Math.abs(touchEnd.y - touchStart.y);
+    
+    // Если движение больше по вертикали, игнорируем
+    if (deltaY > Math.abs(deltaX) * 1.5) {
+      resetTouchState();
+      return;
     }
-    if (isRightSwipe) {
-      onPrevImage();
+
+    const isSwipe = Math.abs(deltaX) > minSwipeDistance;
+
+    if (isSwipe) {
+      if (deltaX > 0) {
+        // Свайп вправо - предыдущее фото
+        onPrevImage();
+      } else {
+        // Свайп влево - следующее фото
+        onNextImage();
+      }
     }
+
+    resetTouchState();
   };
 
-  const handleTap = () => {
+  const resetTouchState = () => {
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsDragging(false);
+    setDragDistance(0);
+  };
+
+  const handleTap = (e: React.TouchEvent | React.MouseEvent) => {
+    // Если это был свайп, не обрабатываем как тап
+    if (isDragging || Math.abs(dragDistance) > 10) return;
+    
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
     
@@ -82,34 +126,53 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
       {/* Главное изображение */}
       <div 
         ref={mainImageRef}
-        className="relative cursor-pointer overflow-hidden select-none aspect-[16/9] rounded"
+        className="relative cursor-pointer overflow-hidden select-none aspect-[16/9] rounded touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={handleTap} // Изменили обработчик клика
+        onClick={handleTap}
       >
-        {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
-          <img
-            src={currentImage.url || undefined}
-            alt={currentImage.alt || productName}
-            className="w-full h-full object-contain object-center"
-            onError={() => handleImageError(currentImage.id)}
-            onLoad={() => handleImageLoad(currentImage.id)}
-            draggable={false}
-            style={{
-              backgroundColor: 'transparent'
-            }}
-          />
-        ) : (
-          <div 
-            className="w-full h-full flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
-            }}
-          >
-            <div className="text-center text-gray-600">
-              <div className="text-lg mb-1">{productName}</div>
-              <div className="text-xs">Изображение скоро</div>
+        <div 
+          className="w-full h-full transition-transform duration-150 ease-out"
+          style={{
+            transform: isDragging ? `translateX(${dragDistance * 0.3}px)` : 'translateX(0px)',
+            opacity: isDragging && Math.abs(dragDistance) > 20 ? Math.max(0.8, 1 - Math.abs(dragDistance) / 300) : 1,
+          }}
+        >
+          {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
+            <img
+              src={currentImage.url || undefined}
+              alt={currentImage.alt || productName}
+              className="w-full h-full object-contain object-center"
+              onError={() => handleImageError(currentImage.id)}
+              onLoad={() => handleImageLoad(currentImage.id)}
+              draggable={false}
+              style={{
+                backgroundColor: 'transparent'
+              }}
+            />
+          ) : (
+            <div 
+              className="w-full h-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
+              }}
+            >
+              <div className="text-center text-gray-600">
+                <div className="text-lg mb-1">{productName}</div>
+                <div className="text-xs">Изображение скоро</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Индикатор свайпа (показывается только при наличии нескольких фото) */}
+        {images.length > 1 && !isDragging && (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/40 text-xs pointer-events-none">
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-white/40 rounded-full"></div>
+              <div className="w-1 h-1 bg-white/40 rounded-full"></div>
+              <div className="w-1 h-1 bg-white/40 rounded-full"></div>
             </div>
           </div>
         )}
@@ -141,16 +204,8 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
           </div>
         </div>
 
-        {/* Подсказка о двойном нажатии (показывается кратковременно) */}
-        <div 
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 px-3 py-1 text-white text-xs rounded-full pointer-events-none opacity-0 animate-pulse"
-          style={{
-            background: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(4px)'
-          }}
-        >
-          Нажмите дважды для увеличения
-        </div>
+        {/* ✅ УБРАЛИ МИГАЮЩУЮ ПОДСКАЗКУ */}
+        {/* Подсказка о двойном нажатии была здесь - теперь удалена */}
       </div>
 
       {/* Миниатюры под главным изображением */}
@@ -204,7 +259,6 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
               <div
                 key={`placeholder-${index}`}
                 className="bg-white flex items-center justify-center aspect-[16/10] rounded"
-
               >
               </div>
             );
