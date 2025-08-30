@@ -43,9 +43,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     setImageError(true);
   };
 
-  const handleImageLoad = () => {
-    console.log('✅ Изображение успешно загружено:', product.name.substring(0, 30));
-  };
 
   // Улучшенная проверка валидности изображения
   const isValidImageUrl = (url: string): boolean => {
@@ -75,7 +72,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             alt={product.name}
             className="w-full h-[150px] lg:h-[200px] object-contain"
             onError={handleImageError}
-            onLoad={handleImageLoad}
             loading="lazy"
             referrerPolicy="no-referrer"
           />

@@ -934,7 +934,7 @@ h6 {
 
 /* Внутренний контейнер мега-меню */
 .mega-menu-inner {
-  max-width: 800px;
+  max-width: 600px;
   margin: 0 auto;
   padding: 0 20px;
   position: relative;
@@ -974,7 +974,7 @@ h6 {
 /* Большие экраны (1400px+) */
 @media (min-width: 1400px) {
   .mega-menu-inner {
-    max-width: 900px;
+    max-width: 800px;
     padding: 0 40px;
   }
 
@@ -996,7 +996,7 @@ h6 {
 /* Средние экраны (1200px - 1399px) */
 @media (min-width: 1200px) and (max-width: 1399px) {
   .mega-menu-inner {
-    max-width: 800px;
+    max-width: 600px;
     padding: 0 40px;
   }
 

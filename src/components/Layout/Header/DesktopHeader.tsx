@@ -5,19 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '../../../contexts/CartContext';
 import AuthModal from '../../Auth/AuthModal';
 import SmartProfileIcon from '@/components/Auth/SmartProfileicon';
-
-interface MegaMenuData {
-  title: string;
-  categories: string[];
-  subcategories: string[];
-  additional?: string[];
-  links?: Record<string, string>; 
-}
-
-type MenuKey = 'обувь' | 'одежда' | 'аксессуары' | 'коллекции' | 'другое' | 'бренды' | 'информация';
+// ✅ ЕДИНЫЙ ИМПОРТ
+import { UNIFIED_MENU_DATA, MENU_ITEMS, isMegaMenuSection } from '../../../data/unifiedMenuData';
+import { MenuKey, MegaMenuData } from '../../../data/menuTypes';
 
 const DesktopHeader: React.FC = () => {
-  const router = useRouter(); // ✅ Добавляем useRouter
+  const router = useRouter();
   const [mounted, setMounted] = useState<boolean>(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -29,185 +22,9 @@ const DesktopHeader: React.FC = () => {
     setMounted(true);
   }, []);
 
-  const megaMenuData: Record<MenuKey, MegaMenuData> = {
-    'обувь': {
-      title: 'ОБУВЬ',
-      categories: [
-        'все',
-        'кеды и кроссовки',
-        'ботинки и угги',
-        'слэды',
-        'детская обувь'
-      ],
-      links: {
-        'все': '/catalog',
-        'кеды и кроссовки': '/catalog?categories=Кроссовки+и+кеды',
-        'ботинки и угги': '/catalog',
-        'слэды': '/catalog',
-        'детская обувь': '/catalog'
-      },
-      subcategories: [
-        'новые релизы',
-        'эксклюзивы',
-        'мастхэв',
-        'хиты продаж',
-        'коллаборации'
-      ]
-    },
-    'одежда': {
-      title: 'ОДЕЖДА',
-      categories: [
-        'все',
-        'куртки и пуховики',
-        'футболки и лонгсливы',
-        'штаны и джинсы',
-        'шорты'
-      ],
-      links: {
-        'все': '/catalog',
-        'куртки и пуховики': '/catalog?categories=Пуховики+и+куртки',
-        'футболки и лонгсливы': '/catalog?categories=Футболки+и+поло',
-        'штаны и джинсы': '/catalog?categories=Штаны+и+брюки',
-        'шорты': '/catalog?categories=Шорты',
-        'худи и свитшоты': '/catalog?categories=Толстовки+и+свитшоты'
-      },
-      subcategories: [
-        'худи и свитшоты',
-        'другая одежда'
-      ],
-      additional: [
-        'новые релизы',
-        'эксклюзивы',
-        'мастхэв',
-        'хиты продаж',
-        'коллаборации'
-      ]
-    },
-    'аксессуары': {
-      title: 'АКСЕССУАРЫ',
-      categories: [
-        'все',
-        'белье',
-        'головные уборы',
-        'рюкзаки и сумки',
-        'кошельки'
-      ],
-      links: {
-        'все': '/catalog?categories=Аксессуары',
-        'белье': '/catalog',
-        'головные уборы': '/catalog',
-        'рюкзаки и сумки': '/catalog?categories=Сумки+и+рюкзаки',
-        'кошельки': '/catalog'
-      },
-      subcategories: [
-        'очки',
-        'другие аксессуары'
-      ],
-      additional: [
-        'новые релизы',
-        'эксклюзивы',
-        'мастхэв',
-        'хиты продаж',
-        'коллаборации'
-      ]
-    },
-    'коллекции': {
-      title: 'КОЛЛЕКЦИИ',
-      categories: [
-        'все',
-        'другие аксессуары',
-        'фигурки',
-        'предметы интерьера',
-        'другое всё'
-      ],
-      links: {
-        'все': '/catalog?categories=Коллекция',
-        'другие аксессуары': '/catalog',
-        'фигурки': '/catalog',
-        'предметы интерьера': '/catalog',
-        'другое всё': '/catalog'
-      },
-      subcategories: [
-        'новые релизы',
-        'эксклюзивы',
-        'мастхэв',
-        'хиты продаж',
-        'коллаборации'
-      ]
-    },
-    'другое': {
-      title: 'ДРУГОЕ',
-      categories: [
-        'все',
-        'электроника',
-        'товары для дома',
-        'спорт и отдых',
-        'красота и здоровье'
-      ],
-      subcategories: [
-        'новые релизы',
-        'эксклюзивы',
-        'мастхэв',
-        'хиты продаж',
-        'коллаборации'
-      ]
-    },
-    'бренды': {
-      title: 'БРЕНДЫ',
-      categories: [
-        'все',
-        'nike',
-        'adidas',
-        'puma',
-        'reebok'
-      ],
-      links: {
-        'все': '/catalog',
-        'nike': '/catalog?brands=Nike',
-        'adidas': '/catalog?brands=Adidas',
-        'puma': '/catalog?brands=Puma',
-        'reebok': '/catalog?brands=Reebok'
-      },
-      subcategories: [
-        'новые релизы',
-        'эксклюзивы',
-        'мастхэв',
-        'хиты продаж',
-        'коллаборации'
-      ]
-    },
-    'информация': {
-      title: 'ИНФОРМАЦИЯ',
-      categories: [
-        'контакты',
-        'доставка', 
-        'возврат',
-        'оплата',
-        'FAQ',
-        'о нас'
-      ],
-      links: {  
-        'контакты': '/contacts',
-        'доставка': '/delivery',
-        'возврат': '/returns', 
-        'оплата': '/payment',
-        'FAQ': '/faq',
-        'о нас': '/about'
-      },
-      subcategories: [] 
-    }
-  };
-  
-  const menuItems: string[] = [
-    'sale',
-    'обувь', 
-    'одежда',
-    'аксессуары',
-    'коллекции',
-    'другое',
-    'бренды',
-    'информация'
-  ];
+  // ✅ ИСПОЛЬЗУЕМ ЕДИНЫЕ ДАННЫЕ
+  const megaMenuData = UNIFIED_MENU_DATA;
+  const menuItems = MENU_ITEMS;
 
   const buildCatalogUrl = (searchTerm: string) => {
     const params = new URLSearchParams();
@@ -275,7 +92,6 @@ const DesktopHeader: React.FC = () => {
     setShowAuthModal(false);
   }, []);
 
-  // Обработчик клика по элементам навигации
   const handleNavClick = useCallback((item: string, e: React.MouseEvent<HTMLAnchorElement>) => {
     if (item === 'sale') {
       e.preventDefault();
@@ -291,17 +107,26 @@ const DesktopHeader: React.FC = () => {
     console.log(`Клик по навигации: ${item}`);
   }, []);
 
-  const getMenuPosition = useCallback((): React.CSSProperties => {
+const getMenuPosition = useCallback((): React.CSSProperties => {
     if (!activeMenu) return {};
     
     const activeIndex = menuItems.indexOf(activeMenu);
-    
-    // Проверяем ширину экрана
     const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1400;
     
     let centerOffset;
     
-    if (activeIndex === menuItems.length - 1) { // информация
+    // Специальная обработка для "бренды" - они стали уже после удаления подкатегорий
+    if (activeMenu === 'бренды') {
+      if (screenWidth >= 1400) {
+        centerOffset = (activeIndex - 3.5) * 120 + 50; // Используем логику для последнего элемента
+      } else if (screenWidth >= 1200) {
+        centerOffset = (activeIndex - 3.5) * 100 + 30;
+      } else if (screenWidth >= 1024) {
+        centerOffset = (activeIndex - 3.5) * 70;
+      } else {
+        centerOffset = 0;
+      }
+    } else if (activeIndex === menuItems.length - 1) {
       if (screenWidth >= 1400) {
         centerOffset = (activeIndex - 3.5) * 120 + 50;
       } else if (screenWidth >= 1200) {
@@ -309,7 +134,7 @@ const DesktopHeader: React.FC = () => {
       } else if (screenWidth >= 1024) {
         centerOffset = (activeIndex - 3.5) * 70;
       } else {
-        centerOffset = 0; // Центрируем на малых экранах
+        centerOffset = 0;
       }
     } else {
       if (screenWidth >= 1400) {
@@ -319,27 +144,22 @@ const DesktopHeader: React.FC = () => {
       } else if (screenWidth >= 1024) {
         centerOffset = (activeIndex - 3.5) * 70 + 80;
       } else {
-        centerOffset = 0; // Центрируем на малых экранах
+        centerOffset = 0;
       }
     }
     
-    // Ограничиваем сдвиг чтобы не выходить за границы
     const maxOffset = Math.max(0, (screenWidth - 600) / 2 - 40);
     const minOffset = -maxOffset;
     centerOffset = Math.max(minOffset, Math.min(maxOffset, centerOffset));
     
     return {
       transform: `translateX(${centerOffset}px)`,
-      // Предотвращаем выход за границы экрана
       maxWidth: screenWidth < 900 ? 'calc(100vw - 30px)' : 'calc(100vw - 80px)',
-      // Добавляем центрирование по умолчанию
       margin: '0 auto',
-      // Ограничиваем ширину контейнера
       width: 'fit-content'
     };
   }, [activeMenu, menuItems]);
 
-  // И добавьте хук для отслеживания изменения размера экрана
   const [screenWidth, setScreenWidth] = useState(1400);
 
   useEffect(() => {
@@ -348,9 +168,8 @@ const DesktopHeader: React.FC = () => {
     };
     
     if (typeof window !== 'undefined') {
-      handleResize(); // Установить начальное значение
+      handleResize();
       window.addEventListener('resize', handleResize);
-      
       return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
@@ -361,6 +180,13 @@ const DesktopHeader: React.FC = () => {
     }
 
     const menuData = megaMenuData[activeMenu as MenuKey];
+
+    // ✅ Проверяем тип секции
+    if (!isMegaMenuSection(menuData)) {
+      return null;
+    }
+
+    const typedMenuData = menuData as MegaMenuData;
 
     return (
       <div 
@@ -376,15 +202,15 @@ const DesktopHeader: React.FC = () => {
             <div className="mb-8 lg:mb-16">
               <div className="flex">
                 <h3 className="mega-menu-title ">
-                  {menuData.title}
+                  {typedMenuData.title}
                 </h3>
                 <div className="">
                   <div className="w-full h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
                   <div className="ml-5 grid grid-cols-2">
-                    {menuData.categories.map((category: string, index: number) => (
+                    {typedMenuData.categories.map((category: string, index: number) => (
                       <a
                         key={index}
-                        href={menuData.links?.[category] || '#'}
+                        href={typedMenuData.links?.[category] || '#'}
                         className="mega-menu-link"
                       >
                         {category}
@@ -394,32 +220,6 @@ const DesktopHeader: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Секция КАТЕГОРИЯ только если это НЕ информация */}
-            {activeMenu !== 'информация' && (
-              <div>
-                <div className="flex">
-                  <h3 className="mega-menu-title">
-                    КАТЕГОРИЯ
-                  </h3>
-                  <div className="">
-                    <div className="w-auto h-0.5 bg-brand-dark mb-4 lg:mb-8 lg:mt-6 ml-5"></div>
-                    <div className="ml-5 grid grid-cols-2">
-                      {menuData.subcategories.map((subcategory: string, index: number) => (
-                        <a key={index} href="#" className="mega-menu-link">
-                          {subcategory}
-                        </a>
-                      ))}
-                      {menuData.additional?.map((item: string, index: number) => (
-                        <a key={`additional-${index}`} href="#" className="mega-menu-link">
-                          {item}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -429,16 +229,13 @@ const DesktopHeader: React.FC = () => {
   return (
     <header className="w-full bg-white border-b border-gray-200 relative">
       <div className="w-full h-[120px] flex items-center justify-between px-[139px]">
-        {/* Логотип */}
         <div className="flex-shrink-0">
           <a href="/">
             <img src="/icons/TS_logo.svg" alt="Tigr Shop" className="w-[37px] h-[58px]" />
           </a>
         </div>
 
-        {/* Навигация - точно по центру */}
         <nav className="flex-shrink-0 relative">
-          {/* ✅ Поисковая строка с рабочим функционалом */}
           <div 
             className={`absolute top-1/2 right-0 transform -translate-y-1/2 h-10 flex items-center transition-all duration-500 ease-in-out z-20 ${
               isSearchOpen ? 'w-full opacity-100' : 'w-0 opacity-0'
@@ -458,7 +255,6 @@ const DesktopHeader: React.FC = () => {
             </form>
           </div>
 
-          {/* Основная навигация */}
           <ul className={`flex items-center gap-8 text-sm text-brand-dark h-[27px] transition-opacity duration-300 ${
             isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}>
@@ -481,7 +277,6 @@ const DesktopHeader: React.FC = () => {
           </ul>
         </nav>
 
-        {/* Иконки */}
         <div className="flex items-center gap-6 flex-shrink-0 relative z-30">
           <div 
             className="cursor-pointer hover:opacity-70 transition-opacity duration-200 hover-lift"
@@ -504,10 +299,8 @@ const DesktopHeader: React.FC = () => {
         </div>
       </div>
 
-      {/* Мега-меню */}
       {!isSearchOpen && renderMegaMenu()}
 
-      {/* Модальное окно авторизации */}
       {showAuthModal && (
         <AuthModal onClose={handleCloseAuthModal} />
       )}
