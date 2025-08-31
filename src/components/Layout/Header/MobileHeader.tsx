@@ -113,6 +113,7 @@ const MobileHeader: React.FC = () => {
 
   // ✅ РАБОТАЕМ НАПРЯМУЮ С ЕДИНЫМИ ДАННЫМИ
   const handleCategoryClick = useCallback((category: string, item: string): void => {
+    //@ts-ignore
     const section = menuData[item];
     
     if (isMegaMenuSection(section)) {
@@ -258,7 +259,7 @@ const MobileHeader: React.FC = () => {
                   {/* ✅ ИСПОЛЬЗУЕМ ЕДИНЫЕ ДАННЫЕ НАПРЯМУЮ */}
                   {item !== 'sale' && openSection === item && (
                     <div className="bg-gray-50 border-b border-gray-100 animate-in slide-in-from-top duration-300">
-                      {(() => {
+                      {(() => {//@ts-ignore
                         const section = menuData[item];
                         
                         if (isInfoSection(section)) {

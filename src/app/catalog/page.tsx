@@ -11,6 +11,8 @@ import ProductGrid from '../../components/Catalog/ProductGrid';
 import CatalogPagination from '../../components/Catalog/CatalogPagination';
 import ActiveFilters from '../../components/Catalog/ActiveFilters';
 
+import { fullyAutomaticSearch } from '@/utils/automaticSearch';
+
 interface Product {
   id?: string;
   article: string;
@@ -112,34 +114,34 @@ function CatalogContent() {
     }
   };
 
-const groupProductsByName = (products: Product[]): Product[] => {
-  const grouped = products.reduce((acc, product) => {
-    const key = `${product.brand.toLowerCase()}_${product.name.toLowerCase()}`;
-    
-    if (!acc[key]) {
-      acc[key] = {
-        ...product,
-        allSizes: product.sizes && product.sizes.length > 0 
-          ? product.sizes.map(size => ({ size, price: product.price }))  // ← Исправлено: size, не product.size
-          : [{ size: product.size, price: product.price }]
-      };
-    } else {
-      const newSizes = product.sizes && product.sizes.length > 0 
-        ? product.sizes.map(size => ({ size, price: product.price }))
-        : [{ size: product.size, price: product.price }];
+  const groupProductsByName = (products: Product[]): Product[] => {
+    const grouped = products.reduce((acc, product) => {
+      const key = `${product.brand.toLowerCase()}_${product.name.toLowerCase()}`;
       
-      acc[key].allSizes = [...(acc[key].allSizes || []), ...newSizes];
-      
-      if (product.photo && product.photo.length > (acc[key].photo?.length || 0)) {
-        acc[key].photo = product.photo;
+      if (!acc[key]) {
+        acc[key] = {
+          ...product,
+          allSizes: product.sizes && product.sizes.length > 0 
+            ? product.sizes.map(size => ({ size, price: product.price }))  // ← Исправлено: size, не product.size
+            : [{ size: product.size, price: product.price }]
+        };
+      } else {
+        const newSizes = product.sizes && product.sizes.length > 0 
+          ? product.sizes.map(size => ({ size, price: product.price }))
+          : [{ size: product.size, price: product.price }];
+        
+        acc[key].allSizes = [...(acc[key].allSizes || []), ...newSizes];
+        
+        if (product.photo && product.photo.length > (acc[key].photo?.length || 0)) {
+          acc[key].photo = product.photo;
+        }
       }
-    }
-    
-    return acc;
-  }, {} as Record<string, any>);
+      
+      return acc;
+    }, {} as Record<string, any>);
 
-  return Object.values(grouped);
-};
+    return Object.values(grouped);
+  };
 
   const updateFilterOptions = (products: Product[]) => {
     if (products.length > 0) {
@@ -216,14 +218,32 @@ const groupProductsByName = (products: Product[]): Product[] => {
   const applyFilters = () => {
     let filtered = [...products];
 
+    // if (searchQuery.trim()) {
+    //   const query = searchQuery.toLowerCase();
+    //   filtered = filtered.filter(product =>
+    //     product.name.toLowerCase().includes(query) ||
+    //     product.brand.toLowerCase().includes(query) ||
+    //     product.category.toLowerCase().includes(query)
+    //   );
+    // }
+
+    // ✅ НОВАЯ ЛОГИКА - АВТОМАТИЧЕСКИЙ УМНЫЙ ПОИСК
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(query) ||
-        product.brand.toLowerCase().includes(query) ||
-        product.category.toLowerCase().includes(query)
-      );
+      console.log('🤖 [CATALOG] Автоматический поиск для:', searchQuery);
+      
+      // Используем полностью автоматический поиск вместо простого
+      filtered = fullyAutomaticSearch(products, searchQuery);
+      
+      console.log(`✅ [CATALOG] Автоматически найдено: ${filtered.length} товаров`);
+      
+      // Показываем что не найдено
+      if (filtered.length === 0) {
+        console.log('❌ [CATALOG] Товары не найдены. Попробуйте:', 
+          'название товара, бренд, или "кроссовки", "куртки", "угги"'
+        );
+      }
     }
+
 
     if (filters.brands.length > 0) {
       filtered = filtered.filter(product =>
@@ -358,6 +378,44 @@ const groupProductsByName = (products: Product[]): Product[] => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  if (!mounted) {
+    return <CatalogLoading />;
+  }
+
+  const AutoSearchDebugPanel = () => {
+    if (!searchQuery) return null;
+    
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-green-600 font-medium">🤖 Автоматический поиск:</span>
+          <span className="text-gray-700 font-medium">"{searchQuery}"</span>
+          <span className="text-green-600">→ {filteredProducts.length} товаров найдено</span>
+        </div>
+        
+        {filteredProducts.length === 0 && (
+          <div className="text-xs text-red-600 mt-2 bg-red-50 p-2 rounded">
+            💡 <strong>Попробуйте:</strong> "кроссовки", "куртки", "угги", "nike", "adidas" или название конкретного товара
+          </div>
+        )}
+        
+        {filteredProducts.length > 0 && (
+          <div className="text-xs text-gray-600 mt-2">
+            ✨ Система автоматически проанализировала {products.length} товаров и нашла наиболее подходящие
+          </div>
+        )}
+        
+        <button 
+          onClick={() => setSearchQuery('')}
+          className="text-xs text-blue-600 hover:underline mt-1"
+        >
+          Очистить поиск
+        </button>
+      </div>
+    );
+  };
+
+  // Ваш if (!mounted) остается как есть
   if (!mounted) {
     return <CatalogLoading />;
   }
