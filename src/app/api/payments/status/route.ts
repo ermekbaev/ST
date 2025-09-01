@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const paymentId = searchParams.get('paymentId');
 
-    console.log('🔍 Проверка статуса платежа:', paymentId);
 
     if (!paymentId) {
       return NextResponse.json({
@@ -29,13 +28,6 @@ export async function GET(request: NextRequest) {
     }
 
     const payment = await checkout.getPayment(paymentId);
-
-    console.log('✅ Статус платежа получен:', {
-      id: payment.id,
-      status: payment.status,
-      paid: payment.paid,
-      amount: payment.amount?.value
-    });
 
     return NextResponse.json({
       success: true,

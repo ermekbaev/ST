@@ -52,12 +52,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     setLoading(true);
     
     try {
-      console.log('📤 Отправка данных регистрации:', {
-        phone: formData.phone,
-        email: formData.email,
-        agreeToMarketing: formData.agreeToMarketing
-      });
-      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -71,7 +65,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
       });
 
       const data = await response.json();
-      console.log('📥 Ответ сервера при регистрации:', data);
 
       if (data.success) {
         if (typeof window !== 'undefined') {
@@ -87,16 +80,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           
           if (data.jwt) {
             localStorage.setItem('authToken', data.jwt);
-            console.log('✅ JWT токен сохранен в localStorage при регистрации:', data.jwt.substring(0, 20) + '...');
           } else {
-            console.log('⚠️ JWT токен НЕ получен от сервера при регистрации!');
           }
 
           const savedToken = localStorage.getItem('authToken');
-          console.log('🔍 Проверка сохранения токена:', {
-            tokenSaved: !!savedToken,
-            tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'НЕТ ТОКЕНА'
-          });
         }
         
         onClose();
@@ -133,8 +120,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     setLoading(true);
     
     try {
-      console.log('📤 Отправка данных входа...');
-      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -161,16 +146,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           
           if (data.jwt) {
             localStorage.setItem('authToken', data.jwt);
-            console.log('✅ JWT токен сохранен в localStorage при входе:', data.jwt.substring(0, 20) + '...');
           } else {
-            console.log('⚠️ JWT токен НЕ получен от сервера при входе!');
           }
 
           const savedToken = localStorage.getItem('authToken');
-          console.log('🔍 Проверка сохранения токена:', {
-            tokenSaved: !!savedToken,
-            tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'НЕТ ТОКЕНА'
-          });
         }
         
         onClose();

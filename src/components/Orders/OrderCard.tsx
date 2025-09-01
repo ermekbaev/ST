@@ -44,7 +44,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, index }) => {
       order.paymentMethod === 'card'        // карточная оплата
     );
     
-    console.log('🔄 Используем fallback логику:', canPay);
     return canPay;
   };
 

@@ -8,7 +8,6 @@ const CACHE_DURATION = 5 * 60 * 1000;
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔄 API: Получен запрос на товары');
     
     const now = Date.now();
     const cacheAge = now - cacheTimestamp;
@@ -175,7 +174,6 @@ export async function GET(request: NextRequest) {
     
     cachedProducts = result;
     cacheTimestamp = now;
-    console.log(`💾 Данные сохранены в кэш на ${CACHE_DURATION / 1000 / 60} минут`);
     
     return NextResponse.json(result);
 
@@ -183,7 +181,6 @@ export async function GET(request: NextRequest) {
     console.error('❌ API: Ошибка загрузки товаров:', error);
     
     if (cachedProducts) {
-      console.log('⚠️ Ошибка загрузки, возвращаем устаревший кэш');
       return NextResponse.json({
         ...cachedProducts,
         cached: true,
@@ -205,7 +202,6 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   cachedProducts = null;
   cacheTimestamp = 0;
-  console.log('🗑️ Кэш товаров очищен');
   
   return NextResponse.json({ 
     message: 'Кэш очищен',

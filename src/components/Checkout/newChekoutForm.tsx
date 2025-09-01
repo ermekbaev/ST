@@ -41,10 +41,6 @@ interface NewCheckoutFormProps {
   getPromoData?: () => any;
 }
 
-// ============================================================================
-// КОНСТАНТЫ ДАННЫХ
-// ============================================================================
-
 const DELIVERY_OPTIONS = [
   { id: 'store_pickup', name: 'Доставить в магазин TS', price: 0 },
   { id: 'courier_ts', name: 'Доставка курьером TS', price: 0 },
@@ -57,9 +53,6 @@ const PAYMENT_OPTIONS = [
   { id: 'cash_vladivostok', name: 'Оплата наличными в городе Владивосток' }
 ];
 
-// ============================================================================
-// ОСНОВНОЙ КОМПОНЕНТ - ТОЛЬКО ФОРМА
-// ============================================================================
 
 const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({ 
   cartItems, 
@@ -70,11 +63,8 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   onPaymentChange,
   isMobile = false,
   isProcessing = false,
-  getPromoData, // ✅ ДОБАВЛЕНО
+  getPromoData, 
 }) => {
-  // ============================================================================
-  // СОСТОЯНИЕ И ФОРМА
-  // ============================================================================
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,42 +87,26 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
 
   const { register, watch, setValue, handleSubmit, formState: { errors } } = form;
 
-  // ============================================================================
-  // СИНХРОНИЗАЦИЯ С РОДИТЕЛЬСКИМ КОМПОНЕНТОМ
-  // ============================================================================
-  
   React.useEffect(() => {
     setValue('deliveryMethod', selectedDelivery);
     setValue('paymentMethod', selectedPayment);
   }, [selectedDelivery, selectedPayment, setValue]);
 
-  // ============================================================================
-  // ОТСЛЕЖИВАНИЕ ЗНАЧЕНИЙ
-  // ============================================================================
-  
   const watchedDelivery = watch('deliveryMethod');
   const watchedPayment = watch('paymentMethod');
 
-  // ============================================================================
-  // ОБРАБОТЧИКИ СОБЫТИЙ
-  // ============================================================================
-  
   const handleDeliveryChange = useCallback((deliveryId: string) => {
     setValue('deliveryMethod', deliveryId, { shouldValidate: true });
-    onDeliveryChange(deliveryId); // ✅ Уведомляем родительский компонент
+    onDeliveryChange(deliveryId); 
   }, [setValue, onDeliveryChange]);
 
   const handlePaymentChange = useCallback((paymentId: string) => {
     setValue('paymentMethod', paymentId, { shouldValidate: true });
-    onPaymentChange(paymentId); // ✅ Уведомляем родительский компонент
+    onPaymentChange(paymentId); 
   }, [setValue, onPaymentChange]);
 
   const onFormSubmit = useCallback(async (data: CheckoutFormData) => {
     if (isSubmitting || isProcessing) return;
-    
-    console.log('🚀 NewCheckoutForm (react-hook-form): Отправка заказа');
-    console.log('📋 Данные формы:', data);
-    console.log('📱 Мобильная версия:', isMobile);
     
     setIsSubmitting(true);
     try {
@@ -166,10 +140,6 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
       setIsSubmitting(false);
     }
   }, [onSubmit, isSubmitting, isProcessing, getPromoData, isMobile]);
-
-  // ============================================================================
-  // РЕНДЕР КОМПОНЕНТОВ
-  // ============================================================================
 
   const renderInput = (
     name: keyof CheckoutFormData, 
@@ -254,14 +224,9 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     </div>
   );
 
-  // ============================================================================
-  // ОСНОВНОЙ РЕНДЕР - ТОЛЬКО ФОРМА
-  // ============================================================================
-
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8" id="checkout-form">
       
-      {/* ЛИЧНЫЕ ДАННЫЕ - ТОЧНО КАК БЫЛО */}
       <div className="space-y-6">
         <h2 className={isMobile ? 'checkout-section-title--mobile' : 'checkout-section-title'}>
           ЛИЧНЫЕ ДАННЫЕ

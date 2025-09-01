@@ -42,7 +42,6 @@ export async function POST(request: NextRequest) {
           userId = userData.id.toString();
         }
       } catch (error) {
-        console.log('⚠️ Ошибка проверки токена');
       }
     }
 
@@ -179,19 +178,7 @@ export async function POST(request: NextRequest) {
       save_payment_method: false
     };
 
-    console.log('💳 YooKassa: Создаем повторный платеж:', {
-      amount: createPayload.amount,
-      orderNumber: order.orderNumber,
-      orderId: order.id
-    });
-
     const payment = await checkout.createPayment(createPayload);
-
-    console.log('✅ YooKassa: Повторный платеж создан:', {
-      paymentId: payment.id,
-      status: payment.status,
-      confirmationUrl: payment.confirmation?.confirmation_url
-    });
 
     await updateOrderPaymentStatus(order.id, {
       paymentStatus: 'pending',
@@ -230,8 +217,6 @@ async function updateOrderPaymentStatus(orderId: string, updateData: {
   paymentId: string;
 }) {
   try {
-    console.log(`🔄 Обновляем статус платежа заказа ${orderId}...`);
-
     const response = await fetch(`${STRAPI_URL}/api/orders/${orderId}`, {
       method: 'PUT',
       headers: {
@@ -249,7 +234,6 @@ async function updateOrderPaymentStatus(orderId: string, updateData: {
     }
 
     const result = await response.json();
-    console.log('✅ Статус платежа заказа обновлен:', result.data?.id);
 
   } catch (error) {
     console.error('❌ Ошибка обновления статуса платежа:', error);

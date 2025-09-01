@@ -58,8 +58,6 @@ export async function GET() {
   try {
     const allStrapiBrands = await getAllBrandsFromStrapi();
     
-    console.log(`📦 Всего загружено брендов из Strapi: ${allStrapiBrands.length}`);
-
     const brandNames: string[] = [];
     
     allStrapiBrands.forEach((item: any) => {

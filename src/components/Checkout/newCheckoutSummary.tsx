@@ -34,10 +34,6 @@ interface NewOrderSummaryProps {
   getFormData?: () => any;
 }
 
-// ============================================================================
-// КОНСТАНТЫ
-// ============================================================================
-
 const DELIVERY_OPTIONS = [
   { id: 'store_pickup', name: 'Доставить в магазин TS', price: 0 },
   { id: 'courier_ts', name: 'Доставка курьером TS', price: 0 },
@@ -47,9 +43,6 @@ const DELIVERY_OPTIONS = [
 
 const MIN_ORDER_FREE_DELIVERY = 5000;
 
-// ============================================================================
-// ОСНОВНОЙ КОМПОНЕНТ С forwardRef
-// ============================================================================
 
 const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({ 
   cartItems, 
@@ -60,15 +53,9 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
   isProcessing = false,
   getFormData,
 }, ref) => {
-  // ============================================================================
-  // КОНТЕКСТ КОРЗИНЫ
-  // ============================================================================
   
   const { updateQuantity, removeFromCart } = useCart();
 
-  // ============================================================================
-  // СОСТОЯНИЕ ПРОМОКОДОВ
-  // ============================================================================
   
   const [promoCodes, setPromoCodes] = useState<SimplePromoCode[]>([]);
   const [appliedPromo, setAppliedPromo] = useState<SimplePromoCode | null>(null);
@@ -77,9 +64,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
   const [isLoadingPromos, setIsLoadingPromos] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ============================================================================
-  // ЗАГРУЗКА ПРОМОКОДОВ ИЗ API
-  // ============================================================================
   
   useEffect(() => {
     const loadPromoCodes = async () => {
@@ -91,7 +75,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
         
         if (result.success) {
           setPromoCodes(result.promocodes || []);
-          console.log(`✅ Загружено ${result.promocodes?.length || 0} промокодов`);
         } else {
           console.error('❌ Ошибка загрузки промокодов:', result.error);
           setPromoCodes([]);
@@ -108,9 +91,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     loadPromoCodes();
   }, []);
 
-  // ============================================================================
-  // ОБРАБОТЧИКИ КОЛИЧЕСТВА ТОВАРОВ
-  // ============================================================================
   
   const handleQuantityChange = useCallback((item: CartItem, newQuantity: number) => {
     const itemKey = item.id || item.article || '';
@@ -127,9 +107,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     removeFromCart(itemKey);
   }, [removeFromCart]);
 
-  // ============================================================================
-  // РАСЧЕТЫ ЦЕНЫ С ПРОМОКОДАМИ
-  // ============================================================================
   
   const calculations = useMemo(() => {
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -171,9 +148,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     };
   }, [cartItems, selectedDelivery, appliedPromo]);
 
-  // ============================================================================
-  // ОБРАБОТЧИКИ ПРОМОКОДОВ
-  // ============================================================================
   
   const handleApplyPromo = useCallback(() => {
     const code = promoInput.trim().toUpperCase();
@@ -201,7 +175,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     setPromoInput('');
     setPromoError(null);
     
-    console.log('✅ Промокод применен:', foundPromo.code);
     
     fetch('/api/promocodes', {
       method: 'POST',
@@ -215,12 +188,8 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     setAppliedPromo(null);
     setPromoInput('');
     setPromoError(null);
-    console.log('🗑️ Промокод удален');
   }, []);
 
-  // ============================================================================
-  // ФУНКЦИЯ СКАЧИВАНИЯ ДОКУМЕНТОВ
-  // ============================================================================
   
   const handleDownloadDocument = (docType: 'terms' | 'privacy' | 'offer') => {
     const fileUrls = {
@@ -250,7 +219,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     const form = document.getElementById('checkout-form') as HTMLFormElement;
     if (!form) {
       console.error('❌ Форма checkout-form не найдена в DOM');
-      console.log('🔍 Доступные формы:', document.querySelectorAll('form'));
       return {};
     }
     
@@ -281,12 +249,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     getPromoCalculations
   }), [getPromoCalculations]);
 
-  useEffect(() => {
-    console.log('🎟️ NewOrderSummary: Промокоды изменились');
-    console.log('💰 Текущие расчеты:', calculations);
-    console.log('🏷️ Примененный промокод:', appliedPromo?.code || 'НЕТ');
-  }, [calculations, appliedPromo]);
-
   const handleSubmit = useCallback(async () => {
     if (isSubmitting || isProcessing) return;
     
@@ -299,9 +261,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
       } else {
         formData = getFormDataFromDOM();
       }
-      
-      console.log('📋 Данные формы:', formData);
-      console.log('💰 Наши расчеты:', calculations);
       
       const completeOrderData = {
         ...formData,
@@ -328,9 +287,6 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
     }
   }, [onSubmit, selectedDelivery, selectedPayment, calculations, getFormData, getFormDataFromDOM, isSubmitting, isProcessing, appliedPromo]);
 
-  // ============================================================================
-  // ОСНОВНОЙ РЕНДЕР
-  // ============================================================================
 
   return (
     <div className="space-y-6">

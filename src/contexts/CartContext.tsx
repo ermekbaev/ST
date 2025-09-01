@@ -85,7 +85,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items, isHydrated]);
 
 const addToCart = (product: Product) => {
-  console.log('🛒 Добавление товара:', product);
   
   //@ts-ignore
   setItems(currentItems => {
@@ -102,7 +101,6 @@ const addToCart = (product: Product) => {
           : item
       );
     } else {
-      console.log(`🆕 Добавляем новую позицию: ${product.name} размер ${product.size}`);
       return [...currentItems, { ...product, quantity: 1 }];
     }
   });

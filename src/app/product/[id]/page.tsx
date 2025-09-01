@@ -86,7 +86,6 @@ export default function ProductPage({ params }: ProductPageProps) {
               productSizes = [
                 { size: productData.size || '41', price: productData.price, available: true }
               ];
-              console.log('⚠️ Используем дефолтный размер');
             }
             
             const productInfo: ProductInfoType = {
@@ -129,7 +128,6 @@ export default function ProductPage({ params }: ProductPageProps) {
             }
             
             if (productImages.length === 0) {
-              console.log('📷 Нет валидных изображений, добавляем placeholder');
               productImages.push({
                 id: 'placeholder_1',
                 url: '/images/placeholder.jpg', // Placeholder изображение
@@ -140,7 +138,6 @@ export default function ProductPage({ params }: ProductPageProps) {
             setImages(productImages);
             
             productImages.forEach((img, i) => {
-              console.log(`  ${i + 1}: ${img.id} - ${img.url ? img.url.substring(0, 60) + '...' : 'PLACEHOLDER'}`);
             });
             
           } else {
@@ -190,12 +187,10 @@ export default function ProductPage({ params }: ProductPageProps) {
   };
 
   const handleContinueShopping = () => {
-    console.log('Переход в каталог');
     window.location.href = '/catalog';
   };
 
   const handleBackToStore = () => {
-    console.log('Переход на главную');
     window.location.href = '/';
   };
 
@@ -250,12 +245,6 @@ export default function ProductPage({ params }: ProductPageProps) {
       </div>
     );
   }
-
-  console.log('🎨 Рендерим страницу товара:', {
-    productName: product.name,
-    imagesCount: images.length,
-    images: images.map(img => ({ id: img.id, hasUrl: !!img.url, url: img.url?.substring(0, 50) }))
-  });
 
   return (
     <div className="min-h-screen bg-white">

@@ -30,7 +30,6 @@ const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     if (!isLoading && items.length === 0 && !orderCompleted && !isProcessing && !isProcessingPayment) {
-      console.log('🔄 Корзина пуста, перенаправляем на главную');
       router.push('/');
     }
   }, [items, router, isLoading, orderCompleted, isProcessing, isProcessingPayment]);
@@ -63,11 +62,8 @@ const CheckoutPage: React.FC = () => {
 
   // ✅ ДЕБАГ ФУНКЦИЯ: Для диагностики изображений в корзине
   const debugCartImages = (items: any[]) => {
-    console.log('\n🔍 === ДЕБАГ ИЗОБРАЖЕНИЙ В КОРЗИНЕ ===');
     
     items.forEach((item, index) => {
-      console.log(`\n📦 Товар ${index + 1}: ${item.name || item.title || 'Без названия'}`);
-      console.log(`  ID: ${item.id || item.article || 'НЕТ ID'}`);
       
       // Проверяем все возможные поля с изображениями
       const imageFields = {
@@ -88,9 +84,6 @@ const CheckoutPage: React.FC = () => {
           const isValidUrl = typeof value === 'string' && 
                             value.trim() && 
                             (value.startsWith('http://') || value.startsWith('https://'));
-          
-          console.log(`  ${fieldName}: ${value} ${isValidUrl ? '✅ ВАЛИДНЫЙ' : '❌ НЕВАЛИДНЫЙ'}`);
-          
           if (isValidUrl) {
             foundValidImage = true;
           }
@@ -98,15 +91,10 @@ const CheckoutPage: React.FC = () => {
       });
       
       if (!foundValidImage) {
-        console.log(`  ⚠️ У товара НЕТ валидных изображений!`);
       }
     });
     
-    console.log('\n🎯 === ИТОГИ ДЕБАГА ===');
     const itemsWithImages = items.filter(item => getProductImageFromCartItem(item));
-    
-    console.log(`📊 Товаров с изображениями: ${itemsWithImages.length}/${items.length}`);
-    console.log(`📊 Товаров без изображений: ${items.length - itemsWithImages.length}/${items.length}`);
     
     return itemsWithImages.length;
   };
@@ -114,7 +102,6 @@ const CheckoutPage: React.FC = () => {
   const getPromoData = () => {
     if (orderSummaryRef.current?.getPromoCalculations) {
       const promoData = orderSummaryRef.current.getPromoCalculations();
-      console.log('🎟️ Данные промокодов:', promoData);
       return promoData;
     } else {
       return null;
@@ -170,7 +157,6 @@ const CheckoutPage: React.FC = () => {
         throw error;
       }
     } else {
-      console.log('📦 Заказ создан без онлайн оплаты на сумму:', orderData.total);
       clearCart();
       setOrderCompleted(true);
       
@@ -210,8 +196,6 @@ const CheckoutPage: React.FC = () => {
           // Получаем изображение из корзины
           const productImage = getProductImageFromCartItem(item);
           
-          console.log(`📷 Товар ${item.name || item.title}: изображение = ${productImage ? productImage.substring(0, 50) + '...' : 'НЕТ'}`);
-          
           return {
             productId: item.id || item.article,
             productName: item.name || item.title,
@@ -235,13 +219,6 @@ const CheckoutPage: React.FC = () => {
         appliedPromoCode: orderData.appliedPromoCode || null
       };
 
-      console.log('📦 Данные заказа с изображениями:', {
-        itemsCount: orderPayload.items.length,
-        itemsWithImages: orderPayload.items.filter(item => item.productImage).length,
-        totalAmount: orderPayload.totalAmount,
-        sampleItem: orderPayload.items[0]
-      });
-
       const token = localStorage.getItem('authToken');
       const response = await fetch('/api/orders', {
         method: 'POST',
@@ -257,8 +234,6 @@ const CheckoutPage: React.FC = () => {
       if (!response.ok) {
         throw new Error(orderResponse.error || 'Ошибка создания заказа');
       }
-
-      console.log('✅ Заказ создан в Strapi:', orderResponse);
 
       const paymentOrderData = {
         ...orderPayload,

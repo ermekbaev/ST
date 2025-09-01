@@ -30,7 +30,6 @@ export interface CreateOrderResponse {
 
 export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
   try {
-    console.log('🔄 Отправляем заказ на сервер:', orderData);
     const token = localStorage.getItem('authToken');
 
     const response = await fetch('/api/orders', {
@@ -45,7 +44,6 @@ export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrd
     const data = await response.json();
 
     if (response.ok) {
-      console.log('✅ Заказ успешно создан:', data);
       return {
         success: true,
         orderId: data.orderId,

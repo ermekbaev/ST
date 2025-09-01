@@ -27,15 +27,12 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
   };
 
   const handleProfileClick = () => {
-    console.log('Клик по иконке профиля в мобильной навигации');
     
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
-        console.log('👤 Пользователь авторизован, переход в профиль');
         window.location.href = '/profile';
       } else {
-        console.log('🔐 Показываем модальное окно авторизации');
         setShowAuthModal(true);
       }
     }
@@ -47,19 +44,16 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
   };
 
   const handleSupportClick = () => {
-    console.log('Клик по иконке поддержки');
     if (onSupportClick) {
       onSupportClick();
     }
   };
 
   const handleCartClick = () => {
-    console.log('Клик по корзине в нижней навигации');
     toggleCart();
   };
 
   const handleHomeClick = () => {
-    console.log('Клик по домой');
     window.location.href = '/';
   };
 

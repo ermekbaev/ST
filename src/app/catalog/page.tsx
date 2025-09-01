@@ -86,18 +86,15 @@ function CatalogContent() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      console.log('🔄 [CATALOG] Загружаем товары из Strapi...');
       
       const response = await fetch('/api/products');
       const result = await response.json();
       
       if (response.ok && result.products) {
-        console.log(`✅ [CATALOG] Загружено ${result.products.length} товаров из Strapi`);
         
         const groupedProducts = groupProductsByName(result.products);
         
         setProducts(groupedProducts);
-        console.log(`📊 [CATALOG] После группировки: ${groupedProducts.length} уникальных товаров`);
         
         updateFilterOptions(groupedProducts);
         
@@ -165,7 +162,6 @@ function CatalogContent() {
       });
 
       setFilterOptions({ brands, genders, categories, sizes });
-      console.log('📊 [CATALOG] Опции фильтров обновлены:', { brands: brands.length, categories: categories.length, sizes: sizes.length });
     }
   };
 
@@ -227,21 +223,9 @@ function CatalogContent() {
     //   );
     // }
 
-    // ✅ НОВАЯ ЛОГИКА - АВТОМАТИЧЕСКИЙ УМНЫЙ ПОИСК
+    //  НОВАЯ ЛОГИКА - АВТОМАТИЧЕСКИЙ УМНЫЙ ПОИСК
     if (searchQuery.trim()) {
-      console.log('🤖 [CATALOG] Автоматический поиск для:', searchQuery);
-      
-      // Используем полностью автоматический поиск вместо простого
       filtered = fullyAutomaticSearch(products, searchQuery);
-      
-      console.log(`✅ [CATALOG] Автоматически найдено: ${filtered.length} товаров`);
-      
-      // Показываем что не найдено
-      if (filtered.length === 0) {
-        console.log('❌ [CATALOG] Товары не найдены. Попробуйте:', 
-          'название товара, бренд, или "кроссовки", "куртки", "угги"'
-        );
-      }
     }
 
 
@@ -294,7 +278,6 @@ function CatalogContent() {
     });
 
     setFilteredProducts(filtered);
-    console.log(`🔍 [CATALOG] Применены фильтры: ${filtered.length} товаров`);
   };
 
   useEffect(() => {
@@ -381,39 +364,6 @@ function CatalogContent() {
   if (!mounted) {
     return <CatalogLoading />;
   }
-
-  const AutoSearchDebugPanel = () => {
-    if (!searchQuery) return null;
-    
-    return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-green-600 font-medium">🤖 Автоматический поиск:</span>
-          <span className="text-gray-700 font-medium">"{searchQuery}"</span>
-          <span className="text-green-600">→ {filteredProducts.length} товаров найдено</span>
-        </div>
-        
-        {filteredProducts.length === 0 && (
-          <div className="text-xs text-red-600 mt-2 bg-red-50 p-2 rounded">
-            💡 <strong>Попробуйте:</strong> "кроссовки", "куртки", "угги", "nike", "adidas" или название конкретного товара
-          </div>
-        )}
-        
-        {filteredProducts.length > 0 && (
-          <div className="text-xs text-gray-600 mt-2">
-            ✨ Система автоматически проанализировала {products.length} товаров и нашла наиболее подходящие
-          </div>
-        )}
-        
-        <button 
-          onClick={() => setSearchQuery('')}
-          className="text-xs text-blue-600 hover:underline mt-1"
-        >
-          Очистить поиск
-        </button>
-      </div>
-    );
-  };
 
   // Ваш if (!mounted) остается как есть
   if (!mounted) {

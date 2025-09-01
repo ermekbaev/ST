@@ -31,7 +31,6 @@ const UserProfilePage: NextPage = () => {
       if (savedUser) {
         try {
           const userData = JSON.parse(savedUser);
-          console.log('👤 Данные из localStorage:', userData);
           
           const userInfo = {
             name: userData.name || userData.email?.split('@')[0] || 'Пользователь',
@@ -49,7 +48,6 @@ const UserProfilePage: NextPage = () => {
           window.location.href = '/';
         }
       } else {
-        console.log('❌ Пользователь не найден в localStorage');
         window.location.href = '/';
       }
       setIsLoading(false);
@@ -57,7 +55,6 @@ const UserProfilePage: NextPage = () => {
   };
 
   const handleEditField = (field: string) => {
-    console.log(`Редактировать поле: ${field}`);
     alert(`Редактирование поля "${field}" будет добавлено в следующих обновлениях`);
   };
 
@@ -66,7 +63,6 @@ const UserProfilePage: NextPage = () => {
   };
 
   const handleLogout = () => {
-    console.log('Выход из аккаунта');
     
     if (typeof window !== 'undefined') {
       localStorage.removeItem('currentUser');
@@ -76,7 +72,6 @@ const UserProfilePage: NextPage = () => {
   };
 
 const handleMarketingChange = async (newValue: boolean) => {
-  console.log('🔄 Обновляем согласие на маркетинг:', newValue);
   
   setAgreeToMarketing(newValue);
   
@@ -84,7 +79,6 @@ const handleMarketingChange = async (newValue: boolean) => {
     const updatedUser = { ...user, agreeToMarketing: newValue };
     setUser(updatedUser);
     localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    console.log('✅ Согласие обновлено в localStorage');
   }
   
   const authToken = localStorage.getItem('authToken');
@@ -103,7 +97,6 @@ const handleMarketingChange = async (newValue: boolean) => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Согласие успешно обновлено в Strapi:', result);
       } else {
         const error = await response.json();
         console.error('❌ Ошибка обновления в Strapi:', error);
@@ -112,7 +105,6 @@ const handleMarketingChange = async (newValue: boolean) => {
       console.error('❌ Ошибка сети при обновлении согласия:', error);
     }
   } else {
-    console.log('⚠️ Нет JWT токена для обновления в Strapi');
   }
 };
 

@@ -45,11 +45,9 @@ export default function Home() {
       
       if (result.products && Array.isArray(result.products)) {
         setProducts(result.products);
-        console.log('✅ Загружено товаров на главной:', result.products.length);
       } else {
         if (result.success && Array.isArray(result.data)) {
           setProducts(result.data);
-          console.log('✅ Загружено товаров (старый формат):', result.data.length);
         } else {
           console.warn('⚠️ Неожиданный формат ответа:', result);
           setProducts([]);

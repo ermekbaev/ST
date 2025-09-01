@@ -24,7 +24,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ title, products, view
   const displayProducts = products.slice(0, 4);
 
   const handleViewAllClick = () => {
-    console.log('Переход к категории:', viewAllLink);
+    viewAllLink;
   };
 
   return (

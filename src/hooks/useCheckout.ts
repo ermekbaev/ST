@@ -126,7 +126,6 @@ export const useCheckout = () => {
     const foundPromo = promoCodes.find(promo => promo.code === code.toUpperCase());
     
     if (!foundPromo) {
-      console.log('❌ Промокод не найден:', code);
       return false;
     }
     
@@ -160,9 +159,7 @@ export const useCheckout = () => {
 
       if (userToken) {
         headers['Authorization'] = `Bearer ${userToken}`;
-        console.log('✅ Токен добавлен в заголовки запроса');
       } else {
-        console.log('⚠️ ТОКЕН НЕ НАЙДЕН - заказ будет создан как гостевой');
       }
 
       const response = await fetch('/api/orders', {
@@ -217,8 +214,6 @@ export const useCheckout = () => {
         const paymentResponse = await createPayment(paymentData);
         
         if (paymentResponse.success && paymentResponse.confirmationUrl) {
-          console.log('✅ Платеж создан, перенаправляем на ЮKassa');
-          
           clearCart();
           
           window.location.href = paymentResponse.confirmationUrl;

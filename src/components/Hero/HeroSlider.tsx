@@ -113,7 +113,6 @@ const HeroSlider = () => {
   }, []);
 
   const handleBannerClick = (link: string) => {
-    console.log(`Клик по баннеру: ${link}`);
     window.location.href = link;
   };
 
@@ -145,7 +144,7 @@ const HeroSlider = () => {
                 src={slide.imageDesktop}
                 alt={slide.alt}
                 className="hidden md:block w-full h-auto object-cover object-center"
-                onLoad={() => console.log('Загружено десктоп:', slide.imageDesktop)}
+                onLoad={() => slide.imageDesktop}
                 onError={(e) => {
                   console.error('Ошибка загрузки десктоп:', slide.imageDesktop);
                   e.currentTarget.style.backgroundColor = '#f3f4f6';
@@ -156,7 +155,7 @@ const HeroSlider = () => {
                 src={slide.imageMobile}
                 alt={slide.alt}
                 className="block md:hidden w-full h-auto object-contain object-center"
-                onLoad={() => console.log('Загружено мобильное:', slide.imageMobile)}
+                onLoad={() => slide.imageMobile}
                 onError={(e) => {
                   console.error('Ошибка загрузки мобильное:', slide.imageMobile);
                   e.currentTarget.style.backgroundColor = '#f3f4f6';

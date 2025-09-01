@@ -25,7 +25,6 @@ export async function GET(
       },
     });
 
-    console.log(`📡 Strapi ответ для товара ${id}:`, strapiResponse.status);
 
     if (!strapiResponse.ok) {
       if (strapiResponse.status === 404) {
@@ -63,18 +62,6 @@ export async function GET(
       );
     }
 
-    console.log(`🔍 Структура товара:`, {
-      id: item.id,
-      name: item.name,
-      hasSizes: !!item.sizes,
-      sizesCount: item.sizes?.length || 0,
-      sizesPreview: item.sizes?.slice(0, 2).map((s: any) => ({
-        value: s.value,
-        price: s.price,
-        hasPrice: s.price !== null
-      }))
-    });
-
     let allSizes = [];
     
     if (item.sizes && Array.isArray(item.sizes)) {
@@ -82,7 +69,6 @@ export async function GET(
         .filter((sizeItem: any) => {
           const hasPrice = sizeItem.price !== null && sizeItem.price !== undefined;
           const hasStock = sizeItem.stockQuantity !== null && sizeItem.stockQuantity !== undefined;
-          console.log(`📏 Размер ${sizeItem.value}: price=${sizeItem.price}, stock=${sizeItem.stockQuantity}, включаем=${hasPrice && hasStock}`);
           return hasPrice && hasStock;
         })
         .map((sizeItem: any) => {

@@ -36,7 +36,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
   };
 
   const handleImageLoad = (imageId: string) => {
-    console.log('Изображение загружено:', imageId);
+    imageId;
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {

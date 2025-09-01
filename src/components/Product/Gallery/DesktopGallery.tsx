@@ -30,7 +30,7 @@ const DesktopGallery: React.FC<DesktopGalleryProps> = ({
   };
 
   const handleImageLoad = (imageId: string) => {
-    console.log('Изображение загружено:', imageId);
+    imageId;
   };
 
   const currentImage = images[currentImageIndex];

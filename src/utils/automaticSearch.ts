@@ -68,10 +68,6 @@ class DictionaryService {
 
     this.flatCategoriesDictionary = allCategories;
 
-    console.log('📚 Словари загружены:', {
-      brands: Object.keys(this.flatBrandsDictionary).length,
-      categories: Object.keys(this.flatCategoriesDictionary).length
-    });
   }
 
   getBrandTranslations(brand: string): string[] {
@@ -124,7 +120,6 @@ class SearchService {
     if (!searchQuery.trim()) return products;
 
     const startTime = performance.now();
-    console.log('🔍 Модульный поиск для:', searchQuery);
 
     const results = this.performSearch(products, searchQuery);
     const executionTime = performance.now() - startTime;
@@ -142,7 +137,6 @@ class SearchService {
       }))
     };
 
-    this.logSearchStats(stats);
     return results.map(r => r.product);
   }
 
@@ -274,17 +268,6 @@ class SearchService {
     }
 
     return bonus;
-  }
-
-  private logSearchStats(stats: SearchStats) {
-    console.log(`✅ Поиск завершен: ${stats.foundProducts}/${stats.totalProducts} за ${stats.executionTime}мс`);
-    
-    if (stats.topMatches.length > 0) {
-      console.log('🔥 Топ результаты:');
-      stats.topMatches.forEach((match, i) => {
-        console.log(`  ${i+1}. "${match.name}" (${match.brand}) - ${match.score} баллов`);
-      });
-    }
   }
 }
 

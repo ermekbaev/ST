@@ -58,8 +58,6 @@ export const getProducts = async (filters?: {
   limit?: number;
 }): Promise<Product[]> => {
   try {
-    console.log('🔄 Загружаем товары через API...');
-    
     // Строим URL с параметрами
     const params = new URLSearchParams();
     if (filters?.category) params.append('category', filters.category);
@@ -83,7 +81,6 @@ export const getProducts = async (filters?: {
     const data = await response.json();
     const products = data.products || [];
     
-    console.log(`✅ Загружено ${products.length} товаров через API`);
     return products;
 
   } catch (error) {
@@ -92,12 +89,8 @@ export const getProducts = async (filters?: {
   }
 };
 
-/**
- * Получить товар по ID
- */
 export const getProductById = async (id: string): Promise<Product | null> => {
   try {
-    console.log(`🔄 Загружаем товар ${id} через API...`);
     
     const response = await fetch(`/api/products/${id}`, {
       headers: {
@@ -118,7 +111,6 @@ export const getProductById = async (id: string): Promise<Product | null> => {
     const data = await response.json();
     const product = data.product;
     
-    console.log(`✅ Товар ${id} загружен через API`);
     return product;
 
   } catch (error) {
@@ -132,7 +124,6 @@ export const getProductById = async (id: string): Promise<Product | null> => {
  */
 export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrderResponse> => {
   try {
-    console.log('🔄 Создаем заказ через API...', orderData);
     const token = localStorage.getItem('authToken');
 
     const response = await fetch('/api/orders', {
@@ -154,7 +145,6 @@ export const createOrder = async (orderData: CreateOrderData): Promise<CreateOrd
       };
     }
 
-    console.log(`✅ Заказ создан через API:`, data);
     return data;
 
   } catch (error) {

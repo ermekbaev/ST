@@ -1,7 +1,6 @@
 export const cleanImageUrl = (url: string): string => {
   if (!url || url.trim() === '') return '';
   
-  console.log(`🧽 Очищаем URL: ${url.substring(0, 100)}...`);
   
   let cleanUrl = url.replace(/^[",;}\]\)\s]+/, '').replace(/[",;}\]\)\s]+$/, '').trim();
   
@@ -24,7 +23,6 @@ export const cleanImageUrl = (url: string): string => {
         cleanUrl = baseUrl + '?' + validQueryMatch[0];
       } else {
         cleanUrl = baseUrl;
-        console.log(`❌ Убираем невалидные параметры`);
       }
     }
   }
@@ -73,7 +71,6 @@ export const parseMultiplePhotoUrls = (photoString: string): string[] => {
     return [];
   }
   
-  console.log('📸 Парсинг множественных URL:', photoString.substring(0, 100) + '...');
   
   let photos: string[] = [];
   
@@ -97,7 +94,6 @@ export const parseMultiplePhotoUrls = (photoString: string): string[] => {
     .filter((url: string) => url.length > 20) 
     .filter((url: string) => url.startsWith('https://'));
   
-  console.log(`✅ Итого очищенных URL: ${cleanPhotos.length}`);
   return [...new Set(cleanPhotos)]; 
 };
 
@@ -148,9 +144,6 @@ export const getFirstValidUrl = (photoString: string): string => {
 export const logUrlProcessing = (originalUrl: string, cleanedUrl: string, context?: string): void => {
   if (process.env.NODE_ENV === 'development') {
     console.group(`🔍 URL Processing ${context ? `(${context})` : ''}`);
-    console.log('Original:', originalUrl.substring(0, 100) + (originalUrl.length > 100 ? '...' : ''));
-    console.log('Cleaned:', cleanedUrl.substring(0, 100) + (cleanedUrl.length > 100 ? '...' : ''));
-    console.log('Valid:', isValidImageUrl(cleanedUrl));
     console.groupEnd();
   }
 };

@@ -34,14 +34,10 @@ export async function GET(request: NextRequest) {
 
       if (ordersResponse.ok) {
         ordersData = await ordersResponse.json();
-        console.log(`✅ Загружены заказы с расширенным populate для order_items`);
-        console.log(`📊 Найдено заказов: ${ordersData.data?.length || 0}`);
         
         ordersData.data?.forEach((order: any, index: number) => {
-          console.log(`📋 Заказ ${index + 1} (${order.orderNumber}): order_items = ${order.order_items?.length || 0}`);
           if (order.order_items?.length > 0) {
             order.order_items.forEach((item: any, itemIndex: number) => {
-              console.log(`  Товар ${itemIndex + 1}: product=${!!item.product}, size=${!!item.size}, mainPhoto=${!!item.product?.mainPhoto}`);
             });
           }
         });
@@ -60,7 +56,6 @@ export async function GET(request: NextRequest) {
 
         if (ordersResponse.ok) {
           ordersData = await ordersResponse.json();
-          console.log(`✅ Загружены заказы с простым populate order_items`);
         } else {
           throw new Error('Простой populate тоже не удался');
         }
@@ -111,21 +106,15 @@ export async function GET(request: NextRequest) {
     const orders: any[] = [];
 
     for (const order of ordersData.data || []) {
-      console.log(`\n🔍 === ЗАКАЗ ${order.orderNumber} (ID: ${order.id}) ===`);
       
       let orderItems: any[] = [];
       
       if (order.order_items && Array.isArray(order.order_items) && order.order_items.length > 0) {
         orderItems = order.order_items;
-        console.log(`✅ ${order.orderNumber}: Найдено ${orderItems.length} товаров через populate order_items`);
         
-        orderItems.forEach((item, index) => {
-          console.log(`  Товар ${index + 1}: product=${!!item.product}, size=${!!item.size}, productName=${item.productName}, mainPhoto=${!!item.product?.mainPhoto}`);
-        });
       }
       
       if (orderItems.length === 0) {
-        console.log(`⚠️ ${order.orderNumber}: Нет populated order_items, ищем отдельно...`);
         
         const exactMatches = allOrderItems.filter((item: any) => 
           item.orderId === order.id.toString()
@@ -133,7 +122,6 @@ export async function GET(request: NextRequest) {
         
         if (exactMatches.length > 0) {
           orderItems = exactMatches;
-          console.log(`✅ ${order.orderNumber}: Найдено ${orderItems.length} товаров через точное совпадение orderId`);
         }
         else {
           const closeMatches = allOrderItems.filter((item: any) => {
@@ -156,7 +144,6 @@ export async function GET(request: NextRequest) {
               return diff === minDiff;
             });
             
-            console.log(`✅ ${order.orderNumber}: Найдено ${orderItems.length} товаров через близкое совпадение (разность: ${minDiff})`);
           }
         }
       }
@@ -165,17 +152,14 @@ export async function GET(request: NextRequest) {
       
       for (let i = 0; i < orderItems.length; i++) {
         const orderItemData = orderItems[i];
-        console.log(`\n🛍️ ${order.orderNumber}: Обрабатываем товар ${i + 1}/${orderItems.length} (ID: ${orderItemData.id})`);
         let productImage = '/api/placeholder/98/50';
         let imageSource = 'placeholder';
 
         if (orderItemData.product?.mainPhoto) {
           productImage = orderItemData.product.mainPhoto;
           imageSource = 'populated_product';
-          console.log(`✅ ${order.orderNumber}: Товар ${i + 1} - изображение из populated product: ${productImage.substring(0, 50)}...`);
         }
         else if (orderItemData.productId) {
-          console.log(`🔍 ${order.orderNumber}: Товар ${i + 1} - загружаем продукт ${orderItemData.productId} по API...`);
           
           try {
             const productResponse = await fetch(
@@ -191,10 +175,8 @@ export async function GET(request: NextRequest) {
                 productImage = mainPhoto;
                 imageSource = 'fetched_product';
               } else {
-                console.log(`⚠️ ${order.orderNumber}: Товар ${i + 1} - у продукта нет mainPhoto`);
               }
             } else {
-              console.log(`❌ ${order.orderNumber}: Товар ${i + 1} - продукт не найден (${productResponse.status})`);
             }
           } catch (error) {
             console.error(`❌ ${order.orderNumber}: Товар ${i + 1} - ошибка загрузки продукта:`, error);
@@ -233,7 +215,6 @@ export async function GET(request: NextRequest) {
       orders.push(orderResult);
     }
 
-    console.log('\n🎯 === ФИНАЛЬНАЯ СТАТИСТИКА ===');
     const totalItems = orders.reduce((sum, order) => sum + order.items.length, 0);
     const itemsWithImages = orders.reduce((sum, order) => 
       sum + order.items.filter((item: { productImage: string; }) => item.productImage !== '/api/placeholder/98/50').length, 0

@@ -63,7 +63,6 @@ const MobileHeader: React.FC = () => {
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log('🔍 Mobile поиск из хедера:', searchQuery.trim());
       const url = buildCatalogUrl(searchQuery);
       router.push(url);
       setIsSearchOpen(false);
@@ -93,25 +92,20 @@ const MobileHeader: React.FC = () => {
   }, [openSection, router]);
 
   const handleLinkClick = useCallback((href: string): void => {
-    console.log('🔗 Мобильный переход по ссылке:', href);
     
     if (href === '#' || !href) {
-      console.log('⚠️ Заглушка или пустая ссылка - переход заблокирован');
       return;
     }
     
     if (href.startsWith('/')) {
-      console.log('✅ Локальный переход через router.push');
       router.push(href);
     } else {
-      console.log('✅ Внешний переход через window.location');
       window.location.href = href;
     }
     
     setIsMobileMenuOpen(false);
   }, [router]);
 
-  // ✅ РАБОТАЕМ НАПРЯМУЮ С ЕДИНЫМИ ДАННЫМИ
   const handleCategoryClick = useCallback((category: string, item: string): void => {
     //@ts-ignore
     const section = menuData[item];
@@ -119,19 +113,16 @@ const MobileHeader: React.FC = () => {
     if (isMegaMenuSection(section)) {
       const megaSection = section as MegaMenuData;
       const link = megaSection.links?.[category];
-      console.log(`🎯 Клик по категории "${category}" в разделе "${item}":`, link);
       
       if (link) {
         handleLinkClick(link);
       } else {
-        console.log('⚠️ Ссылка для категории не найдена, переход на общий каталог');
         handleLinkClick('/catalog');
       }
     }
   }, [handleLinkClick]);
 
   const handleSubcategoryClick = useCallback((subcategory: string): void => {
-    console.log(`🏷️ Клик по подкатегории "${subcategory}"`);
     handleLinkClick('/catalog');
   }, [handleLinkClick]);
 

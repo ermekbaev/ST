@@ -58,7 +58,6 @@ export const createPayment = async (data: CreatePaymentData): Promise<PaymentRes
       };
     }
 
-    console.log('✅ Платеж создан:', result.paymentId);
     return result;
 
   } catch (error) {

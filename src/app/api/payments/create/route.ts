@@ -40,7 +40,6 @@ function normalizePhone(phone: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('💳 ЮKassa: Создание платежа');
     
     const body: CreatePaymentRequest = await request.json();
     const { amount, orderId, customerEmail, customerPhone, description, returnUrl, items } = body;

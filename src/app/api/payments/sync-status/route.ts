@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
 
     // Получаем raw текст сначала для debug
     const rawBody = await request.text();
-    console.log('📝 Raw request body:', rawBody);
 
     if (!rawBody.trim()) {
       return NextResponse.json({
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
 
     const { paymentId, orderNumber } = requestData;
 
-    console.log('🔄 Синхронизация статуса платежа:', { paymentId, orderNumber });
 
     if (!paymentId || !orderNumber) {
       return NextResponse.json({
@@ -58,13 +56,6 @@ export async function POST(request: NextRequest) {
 
     const payment = await checkout.getPayment(paymentId);
 
-    console.log('✅ Получен статус от ЮKassa:', {
-      id: payment.id,
-      status: payment.status,
-      paid: payment.paid,
-      amount: payment.amount?.value
-    });
-
     let updated = false;
 
     if (payment.status === 'succeeded' && payment.paid) {
@@ -73,7 +64,6 @@ export async function POST(request: NextRequest) {
       });
 
       if (updated) {
-        console.log('✅ Статус обновлен в Strapi на paid');
         
         await sendAdminNotification(`💳 Статус платежа синхронизирован для заказа ${orderNumber}`, {
           orderNumber,
@@ -151,7 +141,6 @@ async function updateOrderPaymentStatus(orderNumber: string, updateData: {
       
       if (findResult.data && findResult.data.length > 0) {
         const orderId = findResult.data[0].id;
-        console.log(`✅ Найден заказ с ID: ${orderId} (без токена)`);
 
         const updateResponse = await fetch(`${STRAPI_URL}/api/orders/${orderId}`, {
           method: 'PUT',
@@ -163,20 +152,16 @@ async function updateOrderPaymentStatus(orderNumber: string, updateData: {
           })
         });
 
-        console.log(`📡 Ответ Strapi (без токена): ${updateResponse.status}`);
 
         if (updateResponse.ok) {
           const result = await updateResponse.json();
-          console.log('✅ Заказ обновлен БЕЗ токена:', result.data?.id);
           return true;
         } else {
           const errorText = await updateResponse.text();
-          console.log('❌ Не удалось обновить без токена:', updateResponse.status, errorText);
         }
       }
     }
   } catch (error) {
-    console.log('❌ Ошибка обновления без токена:', error);
   }
 
   if (!STRAPI_API_TOKEN) {
@@ -210,9 +195,6 @@ async function updateOrderPaymentStatus(orderNumber: string, updateData: {
 
     const order = findResult.data[0];
     const documentId = order.documentId || order.id;
-    console.log(`✅ Найден заказ с documentId: ${documentId} (ID: ${order.id}) (с токеном)`);
-
-    console.log(`🔄 Обновляем заказ documentId ${documentId} с данными:`, updateData);
     
     const updateResponse = await fetch(`${STRAPI_URL}/api/orders/${documentId}`, {
       method: 'PUT', 
@@ -237,11 +219,6 @@ async function updateOrderPaymentStatus(orderNumber: string, updateData: {
 async function sendAdminNotification(message: string, details: Record<string, any>) {
   const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
-
-  if (!TELEGRAM_BOT_TOKEN || !ADMIN_TELEGRAM_CHAT_ID) {
-    console.log('ℹ️ Telegram не настроен для уведомлений');
-    return;
-  }
 
   try {
     const text = `${message}\n\n${Object.entries(details)

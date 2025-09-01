@@ -79,7 +79,6 @@ export async function POST(request: Request) {
     if (!updateResponse.ok) {
       console.error('⚠️ Ошибка обновления профиля:', updateResult);
     } else {
-      console.log('✅ Профиль успешно обновлен');
     }
 
     const checkResponse = await fetch(`${STRAPI_URL}/api/users/me`, {

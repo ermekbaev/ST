@@ -96,25 +96,12 @@ const DEFAULT_SETTINGS: DeliverySettingsData = {
   }
 };
 
-/**
- * Парсит настройки из CSV данных разных форматов:
- * 
- * Формат 1: Специальные строки с разделителем |
- * DELIVERY_SETTING|cdek_pickup|СДЭК - доставка до пункта выдачи|350|3-5 дней|Доставка до ближайшего пункта СДЭК
- * 
- * Формат 2: Отдельная вкладка с колонками
- * delivery_id, name, price, days, description
- * 
- * Формат 3: Встроенные строки в основной таблице
- */
 const parseSettingsFromCSV = (csvText: string): Partial<DeliverySettingsData> => {
   const lines = csvText.split('\n').filter(line => line.trim());
   
   const deliveryOptions: DeliveryOption[] = [];
   const paymentOptions: PaymentOption[] = [];
   const promoCodes: PromoCode[] = [];
-  
-  console.log('🔍 Парсим настройки доставки из CSV:', lines.length, 'строк');
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -133,7 +120,6 @@ const parseSettingsFromCSV = (csvText: string): Partial<DeliverySettingsData> =>
           description: parts[5] || ''
         };
         deliveryOptions.push(option);
-        console.log('✅ Найдена настройка доставки:', option.name, '=', option.price, '₽');
       }
       
       // Парсим настройки оплаты
@@ -157,7 +143,6 @@ const parseSettingsFromCSV = (csvText: string): Partial<DeliverySettingsData> =>
     
     // Формат 2: CSV с заголовками (если первая строка содержит delivery_id, name, price, etc.)
     else if (i === 0 && line.toLowerCase().includes('delivery_id') && line.toLowerCase().includes('price')) {
-      console.log('🎯 Обнаружен CSV формат с заголовками доставки');
       
       const headers = line.split(',').map(h => h.trim().toLowerCase());
       const idIndex = headers.findIndex(h => h.includes('delivery_id') || h.includes('id'));
@@ -184,7 +169,6 @@ const parseSettingsFromCSV = (csvText: string): Partial<DeliverySettingsData> =>
           
           if (option.id && option.name) {
             deliveryOptions.push(option);
-            console.log('✅ CSV доставка:', option.name, '=', option.price, '₽');
           }
         }
       }
@@ -196,26 +180,17 @@ const parseSettingsFromCSV = (csvText: string): Partial<DeliverySettingsData> =>
   
   if (deliveryOptions.length > 0) {
     result.deliveryOptions = deliveryOptions;
-    console.log('📦 Загружено опций доставки:', deliveryOptions.length);
   }
   if (paymentOptions.length > 0) {
     result.paymentOptions = paymentOptions;
-    console.log('💳 Загружено опций оплаты:', paymentOptions.length);
   }
   if (promoCodes.length > 0) {
     result.promoCodes = promoCodes;
-    console.log('🎫 Загружено промокодов:', promoCodes.length);
   }
   
   return result;
 };
 
-/**
- * Пытается загрузить настройки из разных источников:
- * 1. Основная вкладка (gid=0) - ищет специальные строки
- * 2. Вкладка "Доставка" (gid=1) - если есть
- * 3. Вкладка "Settings" (gid=2) - если есть
- */
 export const fetchDeliverySettings = async (): Promise<DeliverySettingsData> => {
   const attempts = [
     { name: 'Основная вкладка', gid: 0 },
@@ -228,7 +203,6 @@ export const fetchDeliverySettings = async (): Promise<DeliverySettingsData> => 
   
   for (const attempt of attempts) {
     try {
-      console.log(`🔍 Проверяем ${attempt.name} (gid=${attempt.gid})...`);
       
       const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${attempt.gid}`;
       
@@ -242,14 +216,12 @@ export const fetchDeliverySettings = async (): Promise<DeliverySettingsData> => 
       });
 
       if (!response.ok) {
-        console.log(`❌ ${attempt.name}: HTTP ${response.status}`);
         continue;
       }
 
       const csvText = await response.text();
       
       if (!csvText || csvText.trim().length < 10) {
-        console.log(`❌ ${attempt.name}: пустые данные`);
         continue;
       }
       
@@ -259,37 +231,26 @@ export const fetchDeliverySettings = async (): Promise<DeliverySettingsData> => 
       if (customSettings.deliveryOptions && customSettings.deliveryOptions.length > 0) {
         finalSettings.deliveryOptions = customSettings.deliveryOptions;
         foundAnySettings = true;
-        console.log(`✅ ${attempt.name}: найдены настройки доставки`);
       }
       
       if (customSettings.paymentOptions && customSettings.paymentOptions.length > 0) {
         finalSettings.paymentOptions = customSettings.paymentOptions;
         foundAnySettings = true;
-        console.log(`✅ ${attempt.name}: найдены настройки оплаты`);
       }
       
       if (customSettings.promoCodes && customSettings.promoCodes.length > 0) {
         finalSettings.promoCodes = customSettings.promoCodes;
         foundAnySettings = true;
-        console.log(`✅ ${attempt.name}: найдены промокоды`);
       }
       
     } catch (error) {
-      console.log(`❌ ${attempt.name}: ошибка -`, error);
       continue;
     }
-  }
-  
-  if (!foundAnySettings) {
-    console.log('⚠️ Настройки доставки не найдены в таблице, используем значения по умолчанию');
   }
   
   return finalSettings;
 };
 
-/**
- * Получает настройки доставки с кешированием
- */
 let cachedSettings: DeliverySettingsData | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 минут
@@ -299,12 +260,10 @@ export const getDeliverySettings = async (forceRefresh = false): Promise<Deliver
   
   // Возвращаем кешированные данные, если они актуальны
   if (!forceRefresh && cachedSettings && (now - cacheTimestamp) < CACHE_DURATION) {
-    console.log('📄 Используем кешированные настройки доставки');
     return cachedSettings;
   }
   
   // Загружаем новые данные
-  console.log('🔄 Загружаем свежие настройки доставки...');
   const settings = await fetchDeliverySettings();
   cachedSettings = settings;
   cacheTimestamp = now;

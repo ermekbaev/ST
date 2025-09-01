@@ -64,7 +64,6 @@ const DesktopHeader: React.FC = () => {
   const handleSearchSubmit = useCallback((e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log('🔍 Поиск из хедера:', searchQuery.trim());
       const url = buildCatalogUrl(searchQuery);
       router.push(url);
       setIsSearchOpen(false);
@@ -84,7 +83,6 @@ const DesktopHeader: React.FC = () => {
   }, [toggleCart]);
 
   const handleAuthIconClick = () => {
-    console.log('Клик по иконке профиля - показываем модальное окно');
     setShowAuthModal(true);
   };
 
@@ -104,7 +102,6 @@ const DesktopHeader: React.FC = () => {
     }
     
     e.preventDefault();
-    console.log(`Клик по навигации: ${item}`);
   }, []);
 
 const getMenuPosition = useCallback((): React.CSSProperties => {

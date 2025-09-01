@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
         break;
         
       default:
-        console.log(`ℹ️ Необработанное событие: ${event.event}`);
     }
 
     return NextResponse.json({ success: true });
@@ -118,8 +117,6 @@ async function handlePaymentCanceled(payment: YooKassaWebhookEvent['object']) {
   
   if (!orderId) return;
 
-  console.log(`❌ Платеж отменен для заказа ${orderId}`);
-
   try {
     await updateOrderPaymentStatus(orderId, {
       paymentStatus: 'cancelled',
@@ -154,7 +151,6 @@ async function handlePaymentWaitingForCapture(payment: YooKassaWebhookEvent['obj
 }
 
 async function handleRefundSucceeded(refund: any) {
-  console.log(`💸 Возврат успешно выполнен: ${refund.id}`);
 }
 
 async function updateOrderPaymentStatus(orderId: string, updateData: {
@@ -169,7 +165,6 @@ async function updateOrderPaymentStatus(orderId: string, updateData: {
   }
 
   try {
-    console.log(`🔄 Обновляем заказ ${orderId} в Strapi`);
 
     const response = await fetch(`${STRAPI_URL}/api/orders/${orderId}`, {
       method: 'PUT',
@@ -189,7 +184,6 @@ async function updateOrderPaymentStatus(orderId: string, updateData: {
     }
 
     const result = await response.json();
-    console.log('✅ Заказ обновлен в Strapi:', result.data?.id);
 
   } catch (error) {
     console.error('❌ Сетевая ошибка при обновлении заказа:', error);
@@ -199,11 +193,6 @@ async function updateOrderPaymentStatus(orderId: string, updateData: {
 async function sendAdminNotification(message: string, details: Record<string, any>) {
   const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
-
-  if (!TELEGRAM_BOT_TOKEN || !ADMIN_TELEGRAM_CHAT_ID) {
-    console.log('ℹ️ Telegram не настроен для уведомлений');
-    return;
-  }
 
   try {
     const text = `${message}\n\n${Object.entries(details)

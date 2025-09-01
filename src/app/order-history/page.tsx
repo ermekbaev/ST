@@ -39,8 +39,6 @@ const OrderHistoryPage: React.FC = () => {
         throw new Error(data.error || 'Ошибка получения данных');
       }
       const transformedOrders: ExtendedOrder[] = (data.orders || []).map((apiOrder: any) => {
-        console.log(`🔄 Обрабатываем заказ ${apiOrder.orderNumber}: ${apiOrder.items.length} товаров`);
-        
         return {
           id: apiOrder.orderNumber,
           orderNumber: apiOrder.orderNumber,
@@ -151,7 +149,6 @@ const OrderHistoryPage: React.FC = () => {
       const paymentReturn = urlParams.get('payment');
       
       if (paymentReturn === 'retry' || document.referrer.includes('yoomoney.ru') || document.referrer.includes('yookassa.ru')) {
-        console.log('↩️ Возврат с платежной системы - проверяем статус');
         checkPaymentStatus();
       }
     };
@@ -172,7 +169,6 @@ const OrderHistoryPage: React.FC = () => {
   }, []);
 
   const handleOrderUpdate = () => {
-    console.log('🔄 Запрошено обновление заказов');
     loadOrders();
   };
 
