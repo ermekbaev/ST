@@ -62,7 +62,6 @@ class DictionaryService {
       ...categoriesDictionary.clothing,
       ...categoriesDictionary.accessories,
       ...categoriesDictionary.collectibles,
-      ...categoriesDictionary.seasonal,
       ...categoriesDictionary.genderMapping,
       ...categoriesDictionary.reverseMappings
     };
