@@ -56,7 +56,7 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
     title: 'АКСЕССУАРЫ',
     categories: [
       'все',
-      'белье',
+      'бельё',
       'головные уборы',
       'рюкзаки и сумки',
       'кошельки'
