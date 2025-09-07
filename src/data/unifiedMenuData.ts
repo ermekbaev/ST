@@ -8,15 +8,11 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
       'все',
       'кеды и кроссовки',
       'ботинки и угги',
-      'слэды',
-      'детская обувь'
     ],
     links: {
       'все': '/catalog',
       'кеды и кроссовки': '/catalog?categories=Кроссовки+и+кеды',
       'ботинки и угги': '/catalog?categories=Ботинки+и+угги',
-      'слэды': '/catalog?categories=Слэды',
-      'детская обувь': '/catalog?categories=Детская+обувь'
     },
     subcategories: [
       'новые релизы',
@@ -88,17 +84,11 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
     title: 'КОЛЛЕКЦИИ',
     categories: [
       'все',
-      'другие аксессуары',
       'фигурки',
-      'предметы интерьера',
-      'другое всё'
     ],
     links: {
       'все': '/catalog?categories=Коллекция',
-      'другие аксессуары': '/catalog?categories=Аксессуары',
       'фигурки': '/catalog?categories=Фигурки',
-      'предметы интерьера': '/catalog?categories=Предметы+интерьера',
-      'другое всё': '/catalog?categories=Другое'
     },
     subcategories: [
       'новые релизы',
@@ -113,16 +103,12 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
     categories: [
       'все',
       'электроника',
-      'товары для дома',
       'спорт и отдых',
-      'красота и здоровье'
     ],
     links: {
       'все': '/catalog',
       'электроника': '/catalog?categories=Электроника',
-      'товары для дома': '/catalog?categories=Товары+для+дома',
       'спорт и отдых': '/catalog?categories=Спорт+и+отдых',
-      'красота и здоровье': '/catalog?categories=Красота+и+здоровье'
     },
     subcategories: [
       'новые релизы',

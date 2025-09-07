@@ -48,7 +48,6 @@ const DesktopFilters: React.FC<DesktopFiltersProps> = ({
     { name: 'Мужской' },
     { name: 'Женский' },
     { name: 'Унисекс' },
-    { name: 'Детский' }
   ];
 
   const handleFilterChange = (filterType: keyof FilterState, value: string | { min: string; max: string }) => {
