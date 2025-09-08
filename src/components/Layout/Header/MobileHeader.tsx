@@ -295,7 +295,6 @@ const MobileHeader: React.FC = () => {
                                         fontFamily: 'Random Grotesque, Arial, sans-serif',
                                         fontSize: '14px',
                                         fontWeight: 400,
-                                        textTransform: 'capitalize'
                                       }}
                                     >
                                       {category}

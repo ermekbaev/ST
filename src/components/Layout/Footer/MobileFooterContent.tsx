@@ -16,11 +16,11 @@ const MobileFooterContent = () => {
       key: 'sections',
       items: [
         { label: 'sale', href: '/catalog' },
-        { label: 'обувь', href: '#' },
-        { label: 'одежда', href: '#' },
-        { label: 'аксессуары', href: '#' },
-        { label: 'коллекции', href: '#' },
-        { label: 'другое', href: '#' }
+        { label: 'обувь', href: '/catalog?categories=Кроссовки+и+кеды,Шлёпанцы+и+сандалии,Ботинки+и+угги' },
+        { label: 'одежда', href: '/catalog?categories=Толстовки+и+свитшоты,Футболки+и+поло,Штаны+и+брюки,Шорты,Пуховики+и+куртки' },
+        { label: 'аксессуары', href: '/catalog?categories=Аксессуары,Головные+уборы,Кошельки,Сумки+и+рюкзаки,Бельё' },
+        { label: 'коллекции', href: '/catalog?categories=Коллекция,Фигурки' },
+        { label: 'другое', href: '/catalog?categories=Спорт+и+отдых,Электроника' }
       ]
     },
     {

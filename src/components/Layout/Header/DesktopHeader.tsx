@@ -210,7 +210,7 @@ const getMenuPosition = useCallback((): React.CSSProperties => {
                         href={typedMenuData.links?.[category] || '#'}
                         className="mega-menu-link"
                       >
-                        {category}
+                        {category.toLowerCase()}
                       </a>
                     ))}
                   </div>

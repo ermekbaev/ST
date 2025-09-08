@@ -15,27 +15,27 @@ const FooterContent = () => {
             </a>
           </li>
           <li>
-            <a href="/catalog?category=Кроссовки+и+кеды" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?categories=Кроссовки+и+кеды,Шлёпанцы+и+сандалии,Ботинки+и+угги" className="text-gray-300 hover:text-white transition-colors text-sm">
               обувь
             </a>
           </li>
           <li>
-            <a href="/catalog?category=Толстовки+и+свитшоты" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?categories=Толстовки+и+свитшоты,Футболки+и+поло,Штаны+и+брюки,Шорты,Пуховики+и+куртки" className="text-gray-300 hover:text-white transition-colors text-sm">
               одежда
             </a>
           </li>
           <li>
-            <a href="/catalog?category=Аксессуары" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?categories=Аксессуары,Головные+уборы,Кошельки,Сумки+и+рюкзаки,Бельё" className="text-gray-300 hover:text-white transition-colors text-sm">
               аксессуары
             </a>
           </li>
           <li>
-            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?categories=Коллекция,Фигурки" className="text-gray-300 hover:text-white transition-colors text-sm">
               коллекции
             </a>
           </li>
           <li>
-            <a href="/catalog" className="text-gray-300 hover:text-white transition-colors text-sm">
+            <a href="/catalog?categories=Спорт+и+отдых,Электроника" className="text-gray-300 hover:text-white transition-colors text-sm">
               другое
             </a>
           </li>
