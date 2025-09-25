@@ -1,7 +1,7 @@
 // src/app/api/slider/route.ts
 import { NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://147.45.161.18:1337';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || '';
 
 export interface SliderSlide {
   id: number;

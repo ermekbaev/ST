@@ -6,7 +6,7 @@ interface RegisterRequest {
   agreeToMarketing: boolean;
 }
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL;
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || '';
 const TEMP_PASSWORD = 'TigrShop2025!';
 
 export async function POST(request: Request) {
