@@ -7,6 +7,7 @@ export interface ProductSize {
   price: number;
   available: boolean;
   originalPrice?: number;
+  article?: string;
 }
 
 export interface ProductInfo {
@@ -43,6 +44,8 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
   onAddToCart,
   isAddingToCart
 }) => {
+  console.log(product);
+
   const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
 
   const formatPrice = (price: number) => {
@@ -77,17 +80,24 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
         {product.name}
       </h1>
 
-      {/* Цена */}
-      <div className="flex items-center gap-4">
-        <span className="product-price--large text-brand-gray">
-          {formatPrice(finalPrice)}
-        </span>
-        
-        {hasDiscount && actualSelectedSizeInfo?.originalPrice && (
-          <span className="product-price--medium text-gray-400 line-through">
-            {formatPrice(actualSelectedSizeInfo.originalPrice)}
+      {/* Цена и артикул */}
+      <div className="flex items-center gap-4 justify-between">
+        <div className="flex items-center gap-4">
+          <span className="product-price--large text-brand-gray">
+            {formatPrice(finalPrice)}
           </span>
-        )}
+          
+          {hasDiscount && actualSelectedSizeInfo?.originalPrice && (
+            <span className="product-price--medium text-gray-400 line-through">
+              {formatPrice(actualSelectedSizeInfo.originalPrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Артикул выбранного размера */}
+        <span className="product-price--large text-brand-gray ">
+          {actualSelectedSizeInfo?.article || 'Артикул'}
+        </span>
       </div>
 
       {/* Кнопка "Добавить в корзину" с выбранным размером */}
@@ -165,10 +175,14 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
                     selectedSize === size.size ? 'selected' : ''
                   }`}
                 >
-                  <span className="text-left text-[30px] leading-[41px]">
-                    {size.size} RU — {formatPrice(size.price)}
-                    {!size.available && ' (нет в наличии)'}
-                  </span>
+                  <div className="flex flex-col items-start w-full">
+                    {/* Основная строка с размером и ценой */}
+                    <span className="text-left text-[30px] leading-[41px]">
+                      {size.size} RU — {formatPrice(size.price)}
+                      {!size.available && ' (нет в наличии)'}
+                    </span>
+
+                  </div>
                 </button>
               ))}
             </div>

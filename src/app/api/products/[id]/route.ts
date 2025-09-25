@@ -84,7 +84,8 @@ export async function GET(
             available: availableQty > 0,
             stockQuantity: stockQty,
             reservedQuantity: reservedQty,
-            availableQuantity: availableQty
+            availableQuantity: availableQty,
+            article: sizeItem.article || ''
           };
         });
       

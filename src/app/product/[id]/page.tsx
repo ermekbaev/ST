@@ -63,7 +63,8 @@ export default function ProductPage({ params }: ProductPageProps) {
                 size: sizeData.size,
                 price: sizeData.price, 
                 available: sizeData.available,
-                originalPrice: sizeData.originalPrice
+                originalPrice: sizeData.originalPrice,
+                article: sizeData.article
               }));
               
               
@@ -79,12 +80,13 @@ export default function ProductPage({ params }: ProductPageProps) {
                   size: sizeData.size || sizeData.value,
                   price: sizeData.price || productData.price,
                   available: sizeData.available !== false,
-                  originalPrice: sizeData.originalPrice
+                  originalPrice: sizeData.originalPrice,
+                  article: sizeData.article
                 }));
               }
             } else {
               productSizes = [
-                { size: productData.size || '41', price: productData.price, available: true }
+                { size: productData.size || '41', price: productData.price, available: true, article: productData.article }
               ];
             }
             
@@ -98,7 +100,12 @@ export default function ProductPage({ params }: ProductPageProps) {
               description: `${productData.brand} ${productData.name} - ${productData.category}`,
               sizes: productSizes, // ← теперь с правильными ценами
               inStock: productData.availableStock > 0,
-              deliveryInfo: 'Доставка 7-14 дня по России'
+              deliveryInfo: 'Доставка 7-14 дня по России',
+
+              gender: productData.gender,
+              photo: productData.photo || productData.mainPhoto,
+              mainPhoto: productData.mainPhoto,
+              additionalPhotos: productData.additionalPhotos || []
             };
             
             setProduct(productInfo);

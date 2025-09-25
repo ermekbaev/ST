@@ -11,6 +11,7 @@ export interface ProductSize {
   price: number;
   available: boolean;
   originalPrice?: number; 
+  article?: string;
 }
 
 export interface ProductInfo {
@@ -27,6 +28,12 @@ export interface ProductInfo {
   isNew?: boolean;
   isExclusive?: boolean;
   deliveryInfo?: string;
+
+
+  gender?: string; 
+  photo?: string;  
+  mainPhoto?: string; 
+  additionalPhotos?: string[];
 }
 
 export interface CommonProductInfoProps {

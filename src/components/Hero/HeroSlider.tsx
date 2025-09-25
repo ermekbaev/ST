@@ -2,58 +2,125 @@
 
 import React, { useState, useEffect } from 'react';
 
+interface HeroSlide {
+  id: number;
+  title: string;
+  description: string;
+  imageDesktop: string;
+  imageMobile: string;
+  alt: string;
+  link: string;
+  isActive: boolean;
+  order: number;
+}
+
 const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const minSwipeDistance = 50;
 
-  const slides = [
+  // Дефолтные слайды
+  const defaultSlides: HeroSlide[] = [
     {
       id: 1,
       title: "ДОЛЯМИ",
-      imageDesktop: "/banners/Banner2-1.jpg", 
-      imageMobile: "/banners/Banner2-2.webp",  
-      link: "/catalog", 
-      alt: "До-Ля-Ми"
+      description: "До-Ля-Ми",
+      imageDesktop: "/banners/Banner2-1.jpg",
+      imageMobile: "/banners/Banner2-2.webp",
+      alt: "До-Ля-Ми",
+      link: "/catalog",
+      isActive: true,
+      order: 1
     },
     {
       id: 2,
       title: "100500",
-      imageDesktop: "/banners/Banner3-1.jpg", 
-      imageMobile: "/banners/Banner3-2.webp",  
-      link: "/catalog", 
-      alt: "Скидки"
+      description: "Скидки",
+      imageDesktop: "/banners/Banner3-1.jpg",
+      imageMobile: "/banners/Banner3-2.webp",
+      alt: "Скидки",
+      link: "/catalog",
+      isActive: true,
+      order: 2
     },
     {
       id: 3,
       title: "ИНДИВИДУАЛЬНЫЙ ЗАКАЗ",
-      imageDesktop: "/banners/Banner4-1.jpg", 
-      imageMobile: "/banners/Banner4-2.webp",  
-      link: "https://t.me/TIGRSHOPsupport", 
-      alt: "Индивидуальный заказ"
+      description: "Индивидуальный заказ",
+      imageDesktop: "/banners/Banner4-1.jpg",
+      imageMobile: "/banners/Banner4-2.webp",
+      alt: "Индивидуальный заказ",
+      link: "https://t.me/TIGRSHOPsupport",
+      isActive: true,
+      order: 3
     },
     {
       id: 4,
       title: "ШИРОКИЙ АССОРТИМЕНТ ОРИГИНАЛЬНЫХ БРЕНДОВ",
-      imageDesktop: "/banners/Banner1-1.jpg", 
-      imageMobile: "/banners/Banner1-2.webp",  
-      link: "/catalog", 
-      alt: "Каталог"
+      description: "Каталог",
+      imageDesktop: "/banners/Banner1-1.jpg",
+      imageMobile: "/banners/Banner1-2.webp",
+      alt: "Каталог",
+      link: "/catalog",
+      isActive: true,
+      order: 4
     },
     {
       id: 5,
       title: "ОПТОВЫЙ ЗАКАЗ",
-      imageDesktop: "/banners/Banner5-1.jpg", 
-      imageMobile: "/banners/Banner5-2.webp",  
-      link: "https://t.me/TIGRSHOPsupport", 
-      alt: "Индивидуальный заказ"
+      description: "Оптовый заказ",
+      imageDesktop: "/banners/Banner5-1.jpg",
+      imageMobile: "/banners/Banner5-2.webp",
+      alt: "Оптовый заказ",
+      link: "https://t.me/TIGRSHOPsupport",
+      isActive: true,
+      order: 5
     }
   ];
 
+  const [slides, setSlides] = useState<HeroSlide[]>(defaultSlides);
+
+  // Загружаем heroes из API
+  useEffect(() => {
+    const loadHeroes = async () => {
+      try {
+        setLoading(true);
+        console.log('🔄 Загружаем heroes...');
+        
+        const response = await fetch('/api/slider', {
+          method: 'GET',
+          cache: 'no-store'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📄 Ответ API:', data);
+          
+          if (data.success && data.slides?.length > 0) {
+            console.log(`✅ Загружено ${data.slides.length} heroes из ${data.source}`);
+            setSlides(data.slides);
+          } else {
+            console.log('⚠️ Нет heroes, используем дефолтные слайды');
+          }
+        } else {
+          console.error('❌ Ошибка HTTP:', response.status);
+        }
+      } catch (error) {
+        console.error('❌ Ошибка загрузки heroes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHeroes();
+  }, []);
+
+  // Touch события
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
@@ -77,6 +144,7 @@ const HeroSlider = () => {
     }
   };
 
+  // Навигация
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
@@ -89,18 +157,22 @@ const HeroSlider = () => {
     setCurrentSlide(index);
   };
 
+  // Автопрокрутка
   useEffect(() => {
-    if (!isPaused) {
+    if (!isPaused && slides.length > 1) {
       const timer = setInterval(() => {
         nextSlide();
-      }, 7000); 
+      }, 7000);
 
       return () => clearInterval(timer);
     }
-  }, [currentSlide, isPaused]);
+  }, [currentSlide, isPaused, slides.length]);
 
+  // Клавиатура
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (slides.length === 0) return;
+      
       if (event.key === 'ArrowRight') {
         nextSlide();
       } else if (event.key === 'ArrowLeft') {
@@ -110,10 +182,13 @@ const HeroSlider = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [slides.length]);
 
-  const handleBannerClick = (link: string) => {
-    window.location.href = link;
+  // Клик по слайду
+  const handleSlideClick = (link: string) => {
+    if (link) {
+      window.location.href = link;
+    }
   };
 
   return (
@@ -126,38 +201,52 @@ const HeroSlider = () => {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       style={{ 
-        touchAction: 'pan-y pinch-zoom' // Разрешаем только вертикальный скролл и zoom
+        touchAction: 'pan-y pinch-zoom'
       }}
     >
+      {/* Индикатор загрузки */}
+      {loading && (
+        <div className="absolute top-2 right-2 z-30 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+          Загрузка heroes...
+        </div>
+      )}
+
+      {/* Слайды */}
       <div 
         className="flex transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
-        {slides.map((slide, index) => (
+        {slides.map((slide) => (
           <div
             key={slide.id}
             className="w-full flex-shrink-0 relative cursor-pointer"
-            onClick={() => handleBannerClick(slide.link)}
+            onClick={() => handleSlideClick(slide.link)}
           >
             <div className="w-full relative">
+              {/* Десктопное изображение */}
               <img
                 src={slide.imageDesktop}
                 alt={slide.alt}
                 className="hidden md:block w-full h-auto object-cover object-center"
-                onLoad={() => slide.imageDesktop}
+                onLoad={() => {
+                  console.log('✅ Десктоп загружено:', slide.imageDesktop);
+                }}
                 onError={(e) => {
-                  console.error('Ошибка загрузки десктоп:', slide.imageDesktop);
+                  console.error('❌ Ошибка десктоп:', slide.imageDesktop);
                   e.currentTarget.style.backgroundColor = '#f3f4f6';
                 }}
               />
               
+              {/* Мобильное изображение */}
               <img
                 src={slide.imageMobile}
                 alt={slide.alt}
                 className="block md:hidden w-full h-auto object-contain object-center"
-                onLoad={() => slide.imageMobile}
+                onLoad={() => {
+                  console.log('✅ Мобильное загружено:', slide.imageMobile);
+                }}
                 onError={(e) => {
-                  console.error('Ошибка загрузки мобильное:', slide.imageMobile);
+                  console.error('❌ Ошибка мобильное:', slide.imageMobile);
                   e.currentTarget.style.backgroundColor = '#f3f4f6';
                 }}
               />
@@ -166,27 +255,60 @@ const HeroSlider = () => {
         ))}
       </div>
 
-      {/* Кнопки навигации слайдера */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 z-20">
-        {slides.map((_, index) => (
+      {/* Навигационные точки */}
+      {slides.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 z-20">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSlide(index);
+              }}
+              className={`transition-all duration-300 bg-white rounded-sm hover:opacity-80 ${
+                currentSlide === index 
+                  ? 'w-[100px] h-[10px]' 
+                  : 'w-[10px] h-[10px]'
+              }`}
+              style={{
+                opacity: currentSlide === index ? 1 : 0.6
+              }}
+              aria-label={`Слайд ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Стрелки навигации */}
+      {slides.length > 1 && (
+        <>
           <button
-            key={index}
             onClick={(e) => {
               e.stopPropagation();
-              goToSlide(index);
+              prevSlide();
             }}
-            className={`transition-all duration-300 bg-white rounded-sm hover:opacity-80 ${
-              currentSlide === index 
-                ? 'w-[100px] h-[10px]' // Активный слайд - полоска
-                : 'w-[10px] h-[10px]'  // Неактивные слайды - точки
-            }`}
-            style={{
-              opacity: currentSlide === index ? 1 : 0.6
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100 z-20"
+            aria-label="Предыдущий слайд"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              nextSlide();
             }}
-            aria-label={`Перейти к слайду ${index + 1}`}
-          />
-        ))}
-      </div>
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 hover:bg-opacity-90 rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100 z-20"
+            aria-label="Следующий слайд"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </>
+      )}
     </section>
   );
 };
