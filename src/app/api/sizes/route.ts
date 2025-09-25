@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || '';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 const deduplicateAndSortSizes = (sizes: string[]): string[] => {
   const uniqueSizes = [...new Set(sizes)];

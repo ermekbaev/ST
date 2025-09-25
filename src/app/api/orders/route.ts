@@ -1,7 +1,7 @@
 // src/app/api/orders/route.ts - ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕННОЙ ОТПРАВКОЙ (ТЕКСТ + ФОТО ОТДЕЛЬНО)
 import { NextRequest, NextResponse } from 'next/server';
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || '';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
