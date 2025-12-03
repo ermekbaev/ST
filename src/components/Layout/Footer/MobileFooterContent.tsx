@@ -1,49 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const MobileFooterContent = () => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   const toggleSection = (section: string) => {
-    setOpenSections(prev => ({
+    setOpenSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
   const sections = [
     {
-      title: 'РАЗДЕЛЫ',
-      key: 'sections',
+      title: "РАЗДЕЛЫ",
+      key: "sections",
       items: [
-        { label: 'sale', href: '/catalog' },
-        { label: 'обувь', href: '/catalog?categories=Кроссовки+и+кеды,Шлёпанцы+и+сандалии,Ботинки+и+угги' },
-        { label: 'одежда', href: '/catalog?categories=Толстовки+и+свитшоты,Футболки+и+поло,Штаны+и+брюки,Шорты,Пуховики+и+куртки' },
-        { label: 'аксессуары', href: '/catalog?categories=Аксессуары,Головные+уборы,Кошельки,Сумки+и+рюкзаки,Бельё' },
-        { label: 'коллекции', href: '/catalog?categories=Коллекция,Фигурки' },
-        { label: 'другое', href: '/catalog?categories=Спорт+и+отдых,Электроника' }
-      ]
+        {
+          label: "обувь",
+          href: "/catalog?categories=Кроссовки+и+кеды,Шлёпанцы+и+сандалии,Ботинки+и+угги",
+        },
+        {
+          label: "одежда",
+          href: "/catalog?categories=Толстовки+и+свитшоты,Футболки+и+поло,Штаны+и+брюки,Шорты,Пуховики+и+куртки",
+        },
+        {
+          label: "аксессуары",
+          href: "/catalog?categories=Аксессуары,Головные+уборы,Кошельки,Сумки+и+рюкзаки,Бельё",
+        },
+        { label: "коллекции", href: "/catalog?categories=Коллекция,Фигурки" },
+        {
+          label: "другое",
+          href: "/catalog?categories=Спорт+и+отдых,Электроника",
+        },
+      ],
     },
     {
-      title: 'ИНФОРМАЦИЯ',
-      key: 'info',
+      title: "ИНФОРМАЦИЯ",
+      key: "info",
       items: [
-        { label: 'контакты', href: '/contacts' },
-        { label: 'доставка', href: '/delivery' },
-        { label: 'оплата', href: '/payment' },
-        { label: 'возврат', href: '/returns' },
-        { label: 'FAQ', href: '/faq' },
-        { label: 'о нас', href: '/about' }
-      ]
+        { label: "контакты", href: "/contacts" },
+        { label: "доставка", href: "/delivery" },
+        { label: "оплата", href: "/payment" },
+        { label: "возврат", href: "/returns" },
+        { label: "FAQ", href: "/faq" },
+        { label: "о нас", href: "/about" },
+      ],
     },
     {
-      title: 'КОНТАКТЫ',
-      key: 'contacts',
+      title: "КОНТАКТЫ",
+      key: "contacts",
       items: [
-        { label: '+7 (995) 871-46-67', href: 'tel:+79958714667' },
-        { label: 'em: contact@tigrshop.ru', href: 'mailto:contact@tigrshop.ru' },
-        { label: 'tg: @TIGRSHOPsupport', href: 'https://t.me/TIGRSHOPsupport' },
-        { label: 'wa: +79958714667', href: 'https://wa.me/79958714667' }
-      ]
+        { label: "+7 (995) 871-46-67", href: "tel:+79958714667" },
+        {
+          label: "em: contact@tigrshop.ru",
+          href: "mailto:contact@tigrshop.ru",
+        },
+        { label: "tg: @TIGRSHOPsupport", href: "https://t.me/TIGRSHOPsupport" },
+        { label: "wa: +79958714667", href: "https://wa.me/79958714667" },
+      ],
     },
   ];
 
@@ -57,34 +71,45 @@ const MobileFooterContent = () => {
               onClick={() => toggleSection(section.key)}
               className="footer-accordion-btn"
             >
-              <span className="footer-accordion-title">
-                {section.title}
-              </span>
-              <div 
+              <span className="footer-accordion-title">{section.title}</span>
+              <div
                 className="footer-accordion-icon"
                 style={{
-                  transform: openSections[section.key] ? 'rotate(180deg)' : 'rotate(0deg)'
+                  transform: openSections[section.key]
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
                 }}
               >
-                <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1 1L8 8L15 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg
+                  width="16"
+                  height="10"
+                  viewBox="0 0 16 10"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1 1L8 8L15 1"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
             </button>
 
             {/* Контент секции */}
-            <div 
+            <div
               className={`footer-accordion-content ${
-                openSections[section.key] ? 'footer-accordion-content--open' : ''
+                openSections[section.key]
+                  ? "footer-accordion-content--open"
+                  : ""
               }`}
             >
               <ul className="footer-accordion-list">
                 {section.items.map((item, index) => (
                   <li key={index}>
-                    <a 
-                      href={item.href} 
-                      className="footer-accordion-link"
-                    >
+                    <a href={item.href} className="footer-accordion-link">
                       {item.label}
                     </a>
                   </li>
@@ -97,40 +122,28 @@ const MobileFooterContent = () => {
 
       {/* Социальные сети */}
       <div className="footer-social">
-        <a 
-          href="https://www.instagram.com/tigrshop.ru?" 
+        <a
+          href="https://www.instagram.com/tigrshop.ru?"
           className="footer-social-btn"
           aria-label="Instagram"
         >
-          <img 
-            src="/social/inst.svg" 
-            alt="Instagram" 
-            className="w-7 h-7"
-          />
+          <img src="/social/inst.svg" alt="Instagram" className="w-7 h-7" />
         </a>
 
-        <a 
-          href="https://t.me/TIGRSHOPsupport" 
+        <a
+          href="https://t.me/TIGRSHOPsupport"
           className="footer-social-btn"
           aria-label="Telegram"
         >
-          <img 
-            src="/social/tg.svg" 
-            alt="Telegram" 
-            className="w-7 h-7"
-          />
+          <img src="/social/tg.svg" alt="Telegram" className="w-7 h-7" />
         </a>
 
-        <a 
-          href="https://wa.me/79958714667" 
+        <a
+          href="https://wa.me/79958714667"
           className="footer-social-btn"
           aria-label="WhatsApp"
         >
-          <img 
-            src="/social/wa.svg" 
-            alt="WhatsApp" 
-            className="w-7 h-7"
-          />
+          <img src="/social/wa.svg" alt="WhatsApp" className="w-7 h-7" />
         </a>
       </div>
     </div>

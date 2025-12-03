@@ -39,6 +39,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     router.push(`/product/${productIdentifier}`);
   };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Средняя кнопка мыши (колесико) = button 1
+    if (e.button === 1) {
+      e.preventDefault(); // Предотвращаем стандартное поведение (автоскролл)
+      
+      let productIdentifier: string;
+      
+      if (product.slug && product.slug.trim()) {
+        productIdentifier = product.slug;
+      } else if (product.id) {
+        productIdentifier = product.id;
+      } else {
+        productIdentifier = product.article;
+      }
+      
+      // Открываем в новой вкладке
+      window.open(`/product/${productIdentifier}`, '_blank');
+    }
+  };
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     setImageError(true);
   };
@@ -64,6 +84,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div 
       className="bg-white group cursor-pointer w-full hover-lift"
       onClick={handleCardClick}
+      onMouseDown={handleMouseDown}
     >
       <div className="relative overflow-hidden w-full">
         {!showPlaceholder ? (

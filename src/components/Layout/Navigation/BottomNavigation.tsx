@@ -63,11 +63,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ onSupportClick }) =
 
   return (
     <>
-      {/* Основная нижняя навигация (МИНИМАЛЬНЫЕ ИЗМЕНЕНИЯ) */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 lg:hidden">
         <div className="flex items-center justify-around h-[70px] px-4">
 
-          {/* ИЗМЕНИЛИ: Кнопка профиля с простой логикой */}
           <button
             onClick={handleProfileClick}
             className="flex flex-col items-center justify-center p-2 hover:opacity-70 transition-opacity"
