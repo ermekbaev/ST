@@ -86,10 +86,9 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
   },
   другое: {
     title: "ДРУГОЕ",
-    categories: ["Все", "Электроника", "Спорт и отдых"],
+    categories: ["Все", "Спорт и отдых"],
     links: {
-      Все: "/catalog?categories=Электроника,Спорт+и+отдых",
-      Электроника: "/catalog?categories=Электроника",
+      Все: "/catalog?categories=Спорт+и+отдых",
       "Спорт и отдых": "/catalog?categories=Спорт+и+отдых",
     },
     subcategories: [
