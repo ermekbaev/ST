@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import HeroSlider from '../components/Hero/HeroSlider';
-import ProductCard from '../components/Product/ProductCard';
-import HowItWorksModal from '../components/UI/Modal/HowItWorksModal';
-import CustomOrderSection from '@/components/CustomOrder/CustomOrderSection';
+import React, { useState, useEffect } from "react";
+import HeroSlider from "../components/Hero/HeroSlider";
+import ProductCard from "../components/Product/ProductCard";
+import HowItWorksModal from "../components/UI/Modal/HowItWorksModal";
+import CustomOrderSection from "@/components/CustomOrder/CustomOrderSection";
+import { CatalogStateManager } from "@/utils/catalogStateManager";
 
 interface Product {
   id?: string;
@@ -28,36 +29,37 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
+    CatalogStateManager.clearState();
   }, []);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      setError(null); 
-      
-      const response = await fetch('/api/products');
-      
+      setError(null);
+
+      const response = await fetch("/api/products");
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (result.products && Array.isArray(result.products)) {
         setProducts(result.products);
       } else {
         if (result.success && Array.isArray(result.data)) {
           setProducts(result.data);
         } else {
-          console.warn('⚠️ Неожиданный формат ответа:', result);
+          console.warn("⚠️ Неожиданный формат ответа:", result);
           setProducts([]);
         }
       }
-      
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+      const errorMessage =
+        err instanceof Error ? err.message : "Неизвестная ошибка";
       setError(errorMessage);
-      console.error('❌ Ошибка загрузки товаров на главной:', err);
+      console.error("❌ Ошибка загрузки товаров на главной:", err);
     } finally {
       setLoading(false);
     }
@@ -69,31 +71,39 @@ export default function Home() {
     }
   }, [mounted, retryCount]);
 
-  const getLatestProductsFromCategory = (categoryFilter: string[], count: number = 4) => {
-    const filteredProducts = products.filter(product => 
-      categoryFilter.some(filter => 
+  const getLatestProductsFromCategory = (
+    categoryFilter: string[],
+    count: number = 4
+  ) => {
+    const filteredProducts = products.filter((product) =>
+      categoryFilter.some((filter) =>
         product.category.toLowerCase().includes(filter.toLowerCase())
       )
     );
-    
-    const uniqueProducts = filteredProducts.filter((product, index, self) => 
-      index === self.findIndex(p => p.name === product.name)
+
+    const uniqueProducts = filteredProducts.filter(
+      (product, index, self) =>
+        index === self.findIndex((p) => p.name === product.name)
     );
-    
+
     return uniqueProducts.slice(-count).reverse();
   };
 
-  const groupedProducts = Array.isArray(products) ? products.reduce((acc: Record<string, Product[]>, product) => {
-    const category = product.category || 'Прочее';
-    if (!acc[category]) acc[category] = [];
-    
-    const existingProduct = acc[category].find(p => p.name === product.name);
-    if (!existingProduct) {
-      acc[category].push(product);
-    }
-    
-    return acc;
-  }, {}) : {};
+  const groupedProducts = Array.isArray(products)
+    ? products.reduce((acc: Record<string, Product[]>, product) => {
+        const category = product.category || "Прочее";
+        if (!acc[category]) acc[category] = [];
+
+        const existingProduct = acc[category].find(
+          (p) => p.name === product.name
+        );
+        if (!existingProduct) {
+          acc[category].push(product);
+        }
+
+        return acc;
+      }, {})
+    : {};
 
   if (!mounted) {
     return (
@@ -107,13 +117,12 @@ export default function Home() {
 
   const LoadingSkeleton = () => (
     <>
-      {/* Скелетон для секции ОБУВЬ */}
       <section className="mb-16">
         <div className="flex justify-between items-center mb-6 lg:mb-8">
           <div className="h-8 lg:h-12 bg-gray-200 rounded w-32 lg:w-40 animate-pulse"></div>
           <div className="h-6 lg:h-8 bg-gray-200 rounded w-20 lg:w-24 animate-pulse"></div>
         </div>
-        
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           {Array.from({ length: 4 }, (_, index) => (
             <div key={index} className="bg-white w-full">
@@ -128,7 +137,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Центральный индикатор загрузки - минималистичный */}
       <div className="flex justify-center items-center py-8">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-300"></div>
       </div>
@@ -136,7 +144,7 @@ export default function Home() {
   );
 
   if (loading) {
-    return (  
+    return (
       <div className="min-h-screen bg-white">
         <HeroSlider />
         <div className="w-full px-5 py-12">
@@ -146,90 +154,95 @@ export default function Home() {
     );
   }
 
-const ProductSection = ({ 
-  title, 
-  categoryKey, 
-  categoryFilters, 
-  linkText = "все модели",
-  catalogFilters // массив фильтров для каталога
-}: { 
-  title: string; 
-  categoryKey?: string;
-  categoryFilters?: string[];
-  linkText?: string;
-  catalogFilters?: string[]; // массив категорий для фильтрации в каталоге
-}) => {
-  let displayProducts: Product[] = [];
+  const ProductSection = ({
+    title,
+    categoryKey,
+    categoryFilters,
+    linkText = "все модели",
+    catalogFilters,
+  }: {
+    title: string;
+    categoryKey?: string;
+    categoryFilters?: string[];
+    linkText?: string;
+    catalogFilters?: string[];
+  }) => {
+    let displayProducts: Product[] = [];
 
-  if (categoryFilters) {
-    displayProducts = getLatestProductsFromCategory(categoryFilters, 4);
-  } else if (categoryKey) {
-    const categoryProducts = groupedProducts[categoryKey] || [];
-    displayProducts = categoryProducts.slice(0, 4);
-  }
-
-  // Функция для создания URL каталога с множественными фильтрами
-  const getCatalogUrl = () => {
-    if (catalogFilters && catalogFilters.length > 0) {
-      const filterParam = catalogFilters.join(',');
-      return `/catalog?categories=${encodeURIComponent(filterParam)}`;
+    if (categoryFilters) {
+      displayProducts = getLatestProductsFromCategory(categoryFilters, 4);
+    } else if (categoryKey) {
+      const categoryProducts = groupedProducts[categoryKey] || [];
+      displayProducts = categoryProducts.slice(0, 4);
     }
-    return '/catalog';
+
+    const getCatalogUrl = () => {
+      if (catalogFilters && catalogFilters.length > 0) {
+        const filterParam = catalogFilters.join(",");
+        return `/catalog?categories=${encodeURIComponent(filterParam)}`;
+      }
+      return "/catalog";
+    };
+
+    const handleCatalogLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      CatalogStateManager.clearState();
+    };
+
+    return (
+      <section className="mb-16">
+        <div className="flex justify-between items-center mb-6 lg:mb-8">
+          <h2 className="section-title text-[22px] lg:text-[35px] text-black">
+            {title}
+          </h2>
+          <a
+            href={getCatalogUrl()}
+            onClick={handleCatalogLinkClick}
+            className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
+          >
+            <span className="hidden lg:inline">{linkText}</span>
+            <img
+              src="/utils/Vector3.svg"
+              alt=""
+              className="hidden lg:block w-3 h-3 lg:w-4 lg:h-4"
+            />
+            <img
+              src="/utils/arrow_right.svg"
+              alt=""
+              className="lg:hidden w-4 h-4"
+            />
+          </a>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {displayProducts.length > 0
+            ? displayProducts.map((product, index) => (
+                <ProductCard key={product.id || index} product={product} />
+              ))
+            : !error &&
+              Array.from({ length: 4 }, (_, index) => (
+                <div key={index} className="bg-white w-full">
+                  <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">
+                    <span className="text-gray-400 text-sm font-product">
+                      Скоро товары
+                    </span>
+                  </div>
+                  <div className="w-full h-px bg-brand-dark"></div>
+                  <div className="py-2">
+                    <div className="h-[22px] bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-[20px] bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+        </div>
+      </section>
+    );
   };
 
   return (
-    <section className="mb-16">
-      <div className="flex justify-between items-center mb-6 lg:mb-8">
-        <h2 className="section-title text-[22px] lg:text-[35px] text-black">
-          {title}
-        </h2>
-        <a 
-          href={getCatalogUrl()} 
-          className="text-black text-[16px] lg:text-[20px] hover:text-gray-600 transition-colors flex items-center gap-2 font-product"
-        >
-          {/* Десктопная версия */}
-          <span className="hidden lg:inline">
-            {linkText}
-          </span>
-          <img src="/utils/Vector3.svg" alt="" className="hidden lg:block w-3 h-3 lg:w-4 lg:h-4" />
-          {/* Мобильная версия - своя иконка стрелки */}
-          <img src="/utils/arrow_right.svg" alt="" className="lg:hidden w-4 h-4" />
-        </a>
-      </div>
-      
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        {displayProducts.length > 0 ? (
-          displayProducts.map((product, index) => (
-            <ProductCard key={product.id || index} product={product} />
-          ))
-        ) : (
-          // Показываем заглушки если нет товаров - но только если НЕ ошибка
-          !error && Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className="bg-white w-full">
-              <div className="w-full h-[150px] lg:h-[200px] bg-gray-50 flex items-center justify-center">
-                <span className="text-gray-400 text-sm font-product">Скоро товары</span>
-              </div>
-              <div className="w-full h-px bg-brand-dark"></div>
-              <div className="py-2">
-                <div className="h-[22px] bg-gray-200 rounded w-3/4 mb-1"></div>
-                <div className="h-[20px] bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </section>
-  );
-};
-
-  return (
     <div className="min-h-screen bg-white">
-      {/* Герой секция */}
       <HeroSlider />
-      
-      {/* Основной контент */}
+
       <div className="w-full px-5 py-12">
-        
         {error && products.length === 0 && (
           <div className="text-center p-8 mb-8 bg-red-50 rounded-lg border-2 border-red-200">
             <div className="max-w-md mx-auto">
@@ -237,16 +250,15 @@ const ProductSection = ({
                 Не удалось загрузить каталог
               </h3>
               <p className="text-red-600 mb-4 font-product text-sm">
-                Возможно, проблема с подключением к интернету или наш сервер временно недоступен.
+                Возможно, проблема с подключением к интернету или наш сервер
+                временно недоступен.
               </p>
-              <button 
-                onClick={() => {
-                  setRetryCount(prev => prev + 1);
-                }}
+              <button
+                onClick={() => setRetryCount((prev) => prev + 1)}
                 className="px-6 py-3 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-product text-sm"
                 disabled={loading}
               >
-                {loading ? 'Загружаем...' : 'Попробовать снова'}
+                {loading ? "Загружаем..." : "Попробовать снова"}
               </button>
               <p className="text-red-500 text-xs mt-2 font-product">
                 Попытка {retryCount + 1}
@@ -260,48 +272,88 @@ const ProductSection = ({
             <p className="text-yellow-800 font-product text-sm">
               ⚠️ Каталог может быть не полным. Показываем сохраненные данные.
             </p>
-            <button 
-              onClick={() => {
-                setRetryCount(prev => prev + 1);
-              }}
+            <button
+              onClick={() => setRetryCount((prev) => prev + 1)}
               className="text-yellow-600 hover:text-yellow-800 underline font-product text-sm ml-2"
               disabled={loading}
             >
-              {loading ? 'Обновляем...' : 'Обновить каталог'}
+              {loading ? "Обновляем..." : "Обновить каталог"}
             </button>
           </div>
         )}
 
-        <ProductSection 
-          title="ОБУВЬ" 
-          categoryFilters={["кроссовки", "кеды", "ботинки", "обувь", "угги", "слэды"]}
-          catalogFilters={["Кроссовки и кеды", "Ботинки и угги", "Слэды", "Шлёпанцы и сандали"]}
+        <ProductSection
+          title="ОБУВЬ"
+          categoryFilters={[
+            "кроссовки",
+            "кеды",
+            "ботинки",
+            "обувь",
+            "угги",
+            "слэды",
+          ]}
+          catalogFilters={[
+            "Кроссовки и кеды",
+            "Ботинки и угги",
+            "Слэды",
+            "Шлёпанцы и сандали",
+          ]}
         />
 
-        {/* Секция "ОДЕЖДА" - фильтрует по всем типам одежды */}
-        <ProductSection 
-          title="ОДЕЖДА" 
-          categoryFilters={["толстовки", "свитшоты", "футболки", "одежда", "куртки", "штаны", "шорты"]}
-          catalogFilters={["Толстовки и свитшоты", "Футболки и поло", "Пуховики и куртки", "Штаны и брюки", "Шорты"]}
+        <ProductSection
+          title="ОДЕЖДА"
+          categoryFilters={[
+            "толстовки",
+            "свитшоты",
+            "футболки",
+            "одежда",
+            "куртки",
+            "штаны",
+            "шорты",
+          ]}
+          catalogFilters={[
+            "Толстовки и свитшоты",
+            "Футболки и поло",
+            "Пуховики и куртки",
+            "Штаны и брюки",
+            "Шорты",
+          ]}
         />
 
-        {/* Секция "АКСЕССУАРЫ" - фильтрует по всем типам аксессуаров */}
-        <ProductSection 
-          title="АКСЕССУАРЫ" 
-          categoryFilters={["аксессуары", "сумки", "рюкзаки", "головные", "очки", "кошельки", "белье"]}
-          catalogFilters={["Аксессуары", "Сумки и рюкзаки", "Головные уборы", "Белье"]}
+        <ProductSection
+          title="АКСЕССУАРЫ"
+          categoryFilters={[
+            "аксессуары",
+            "сумки",
+            "рюкзаки",
+            "головные",
+            "очки",
+            "кошельки",
+            "белье",
+          ]}
+          catalogFilters={[
+            "Аксессуары",
+            "Сумки и рюкзаки",
+            "Головные уборы",
+            "Белье",
+          ]}
         />
 
-        {/* Секция "КОЛЛЕКЦИИ" */}
-        <ProductSection 
-          title="КОЛЛЕКЦИИ" 
-          categoryFilters={["коллекции", "коллекция", "фигурки", "интерьера", "предметы интерьера", "другое всё"]}
+        <ProductSection
+          title="КОЛЛЕКЦИИ"
+          categoryFilters={[
+            "коллекции",
+            "коллекция",
+            "фигурки",
+            "интерьера",
+            "предметы интерьера",
+            "другое всё",
+          ]}
           catalogFilters={["Коллекция", "Фигурки", "Предметы интерьера"]}
         />
       </div>
 
-      {/* Секция индивидуального заказа */}
-      <CustomOrderSection 
+      <CustomOrderSection
         onHowItWorksClick={() => {
           if (mounted) {
             setIsModalOpen(true);
@@ -310,9 +362,9 @@ const ProductSection = ({
       />
 
       {mounted && (
-        <HowItWorksModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+        <HowItWorksModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </div>

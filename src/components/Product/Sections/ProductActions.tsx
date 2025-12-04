@@ -1,6 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { CatalogStateManager } from "@/utils/catalogStateManager";
 
 interface ProductActionsProps {
   onContinueShopping?: () => void;
@@ -8,24 +10,32 @@ interface ProductActionsProps {
   className?: string;
 }
 
-const ProductActions: React.FC<ProductActionsProps> = ({ 
+const ProductActions: React.FC<ProductActionsProps> = ({
   onContinueShopping,
   onBackToStore,
-  className = '' 
+  className = "",
 }) => {
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const handleContinueShopping = () => {
-      window.location.href = '/catalog';
+    const savedState = CatalogStateManager.getState();
 
+    if (savedState && savedState.filters) {
+      router.push(`/catalog${savedState.filters}`);
+    } else {
+      router.push("/catalog");
+    }
   };
 
   const handleBackToStore = () => {
-      window.location.href = '/';
+    // При возврате на главную - очищаем состояние каталога
+    CatalogStateManager.clearState();
+    router.push("/");
   };
 
   if (!mounted) {
@@ -50,17 +60,17 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             onClick={handleContinueShopping}
             className="bg-[#0B0B0D] hover:bg-gray-800 text-white transition-colors flex items-center justify-center"
             style={{
-              width: '692px',
-              height: '80px',
-              maxWidth: '90vw'
+              width: "692px",
+              height: "80px",
+              maxWidth: "90vw",
             }}
           >
-            <span 
+            <span
               style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
+                fontFamily: "Random Grotesque, Arial, sans-serif",
                 fontWeight: 400,
-                fontSize: '30px',
-                lineHeight: '41px'
+                fontSize: "30px",
+                lineHeight: "41px",
               }}
             >
               ПРОДОЛЖИТЬ ПОКУПКИ
@@ -68,18 +78,19 @@ const ProductActions: React.FC<ProductActionsProps> = ({
           </button>
 
           {/* Описательный текст */}
-          <p 
+          <p
             className="text-black text-center"
             style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
+              fontFamily: "Random Grotesque, Arial, sans-serif",
               fontWeight: 400,
-              fontSize: '20px',
-              lineHeight: '27px',
-              width: '692px',
-              maxWidth: '90vw'
+              fontSize: "20px",
+              lineHeight: "27px",
+              width: "692px",
+              maxWidth: "90vw",
             }}
           >
-            Найдите то, что вы хотите, в один клик. Всего один клик, не стесняйтесь продолжить
+            Найдите то, что вы хотите, в один клик. Всего один клик, не
+            стесняйтесь продолжить
           </p>
 
           {/* Кнопка "Вернуться в магазин" */}
@@ -87,17 +98,17 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             onClick={handleBackToStore}
             className="bg-[#D9CDBF] hover:bg-[#BFB3A3] text-[#0B0B0D] transition-colors flex items-center justify-center"
             style={{
-              width: '692px',
-              height: '80px',
-              maxWidth: '90vw'
+              width: "692px",
+              height: "80px",
+              maxWidth: "90vw",
             }}
           >
-            <span 
+            <span
               style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
+                fontFamily: "Random Grotesque, Arial, sans-serif",
                 fontWeight: 400,
-                fontSize: '30px',
-                lineHeight: '41px'
+                fontSize: "30px",
+                lineHeight: "41px",
               }}
             >
               ВЕРНУТЬСЯ В МАГАЗИН
@@ -114,15 +125,15 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             onClick={handleContinueShopping}
             className="w-full max-w-sm bg-[#0B0B0D] hover:bg-gray-800 text-white transition-colors flex items-center justify-center"
             style={{
-              height: '50px'
+              height: "50px",
             }}
           >
-            <span 
+            <span
               style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
+                fontFamily: "Random Grotesque, Arial, sans-serif",
                 fontWeight: 400,
-                fontSize: '16px',
-                lineHeight: '22px'
+                fontSize: "16px",
+                lineHeight: "22px",
               }}
             >
               ПРОДОЛЖИТЬ ПОКУПКИ
@@ -130,16 +141,17 @@ const ProductActions: React.FC<ProductActionsProps> = ({
           </button>
 
           {/* Описательный текст */}
-          <p 
+          <p
             className="text-black text-center max-w-sm"
             style={{
-              fontFamily: 'Random Grotesque, Arial, sans-serif',
+              fontFamily: "Random Grotesque, Arial, sans-serif",
               fontWeight: 400,
-              fontSize: '14px',
-              lineHeight: '18px'
+              fontSize: "14px",
+              lineHeight: "18px",
             }}
           >
-            Найдите то, что вы хотите, в один клик. Всего один клик, не стесняйтесь продолжить
+            Найдите то, что вы хотите, в один клик. Всего один клик, не
+            стесняйтесь продолжить
           </p>
 
           {/* Кнопка "Вернуться в магазин" */}
@@ -147,15 +159,15 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             onClick={handleBackToStore}
             className="w-full max-w-sm bg-[#D9CDBF] hover:bg-[#BFB3A3] text-[#0B0B0D] transition-colors flex items-center justify-center"
             style={{
-              height: '50px'
+              height: "50px",
             }}
           >
-            <span 
+            <span
               style={{
-                fontFamily: 'Random Grotesque, Arial, sans-serif',
+                fontFamily: "Random Grotesque, Arial, sans-serif",
                 fontWeight: 400,
-                fontSize: '16px',
-                lineHeight: '22px'
+                fontSize: "16px",
+                lineHeight: "22px",
               }}
             >
               ВЕРНУТЬСЯ В МАГАЗИН

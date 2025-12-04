@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { CatalogStateManager } from "@/utils/catalogStateManager";
 
 interface Product {
   id?: string;
@@ -23,11 +24,11 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
-
-  const handleCardClick = () => {
+  const getProductUrl = () => {
     let productIdentifier: string;
-    
+
     if (product.slug && product.slug.trim()) {
       productIdentifier = product.slug;
     } else if (product.id) {
@@ -35,27 +36,36 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     } else {
       productIdentifier = product.article;
     }
-    
-    router.push(`/product/${productIdentifier}`);
+
+    return `/product/${productIdentifier}`;
+  };
+
+  const handleCardClick = () => {
+    if (pathname === "/catalog") {
+      const savedState = CatalogStateManager.getState();
+      const currentPage = savedState?.page || 1;
+      const currentFilters = window.location.search;
+
+      CatalogStateManager.saveState(currentPage, currentFilters);
+    }
+
+    router.push(getProductUrl());
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Средняя кнопка мыши (колесико) = button 1
     if (e.button === 1) {
       e.preventDefault(); // Предотвращаем стандартное поведение (автоскролл)
-      
-      let productIdentifier: string;
-      
-      if (product.slug && product.slug.trim()) {
-        productIdentifier = product.slug;
-      } else if (product.id) {
-        productIdentifier = product.id;
-      } else {
-        productIdentifier = product.article;
+
+      if (pathname === "/catalog") {
+        const savedState = CatalogStateManager.getState();
+        const currentPage = savedState?.page || 1;
+        const currentFilters = window.location.search;
+
+        CatalogStateManager.saveState(currentPage, currentFilters);
       }
-      
+
       // Открываем в новой вкладке
-      window.open(`/product/${productIdentifier}`, '_blank');
+      window.open(getProductUrl(), "_blank");
     }
   };
 
@@ -63,25 +73,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     setImageError(true);
   };
 
-
   // Улучшенная проверка валидности изображения
   const isValidImageUrl = (url: string): boolean => {
-    if (!url || url.trim() === '') return false;
+    if (!url || url.trim() === "") return false;
     const trimmedUrl = url.trim();
-    
+
     // Проверяем, что это валидный HTTP URL
-    const isHttp = trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://');
-    
+    const isHttp =
+      trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://");
+
     // Проверяем, что URL содержит домен
-    const hasDomain = trimmedUrl.includes('.') && trimmedUrl.length > 10;
-    
+    const hasDomain = trimmedUrl.includes(".") && trimmedUrl.length > 10;
+
     return isHttp && hasDomain;
   };
 
   const showPlaceholder = !isValidImageUrl(product.photo) || imageError;
 
   return (
-    <div 
+    <div
       className="bg-white group cursor-pointer w-full hover-lift"
       onClick={handleCardClick}
       onMouseDown={handleMouseDown}
@@ -101,13 +111,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div className="text-center text-gray-400">
               <div className="text-xs lg:text-sm mb-1">{product.brand}</div>
               <div className="text-xs">
-                {product.photo && product.photo.trim() !== '' 
-                  ? 'Ошибка загрузки' 
-                  : 'Фото скоро'
-                }
+                {product.photo && product.photo.trim() !== ""
+                  ? "Ошибка загрузки"
+                  : "Фото скоро"}
               </div>
               {/* Отладочная информация (только в development) */}
-              {process.env.NODE_ENV === 'development' && product.photo && (
+              {process.env.NODE_ENV === "development" && product.photo && (
                 <div className="text-xs text-red-400 mt-1 px-1">
                   URL: {product.photo.substring(0, 20)}...
                 </div>
@@ -116,15 +125,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
       </div>
-      
+
       <div className="w-full h-px bg-brand-dark"></div>
-      
+
       <div className="py-2">
         <h3 className="product-name text-brand-dark text-[18px] leading-[22px] mb-1">
           {product.name}
         </h3>
         <div className="product-price text-brand-dark text-[15px] leading-[20px]">
-          {product.price ? `${product.price.toLocaleString()} ₽` : 'Цена по запросу'}
+          {product.price
+            ? `${product.price.toLocaleString()} ₽`
+            : "Цена по запросу"}
         </div>
       </div>
     </div>

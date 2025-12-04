@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 export interface ProductSize {
   size: string;
@@ -19,8 +19,8 @@ export interface ProductInfo {
   category: string;
   article: string;
   description?: string;
-  sizes: ProductSize[]; 
-  allSizes?: ProductSize[]; 
+  sizes: ProductSize[];
+  allSizes?: ProductSize[];
   inStock: boolean;
   isNew?: boolean;
   isExclusive?: boolean;
@@ -42,43 +42,45 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
   selectedSizeInfo,
   onSizeSelect,
   onAddToCart,
-  isAddingToCart
+  isAddingToCart,
 }) => {
-  console.log(product);
-
   const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
 
   const formatPrice = (price: number) => {
-    return price.toLocaleString('ru-RU') + ' ₽';
+    return price.toLocaleString("ru-RU") + " ₽";
   };
 
-  const availableSizes = product.allSizes && product.allSizes.length > 0 ? product.allSizes : product.sizes;
+  const availableSizes =
+    product.allSizes && product.allSizes.length > 0
+      ? product.allSizes
+      : product.sizes;
 
-  const actualSelectedSizeInfo = selectedSize && availableSizes
-    ? availableSizes.find(s => s.size === selectedSize)
-    : selectedSizeInfo;
+  const actualSelectedSizeInfo =
+    selectedSize && availableSizes
+      ? availableSizes.find((s) => s.size === selectedSize)
+      : selectedSizeInfo;
 
   const finalPrice = actualSelectedSizeInfo?.price || product.price;
-  const hasDiscount = actualSelectedSizeInfo?.originalPrice && actualSelectedSizeInfo.originalPrice > finalPrice;
+  const hasDiscount =
+    actualSelectedSizeInfo?.originalPrice &&
+    actualSelectedSizeInfo.originalPrice > finalPrice;
 
   const sortedSizes = [...availableSizes].sort((a, b) => {
-    const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
-    const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
+    const aNum = parseFloat(a.size.replace(/[^\d.]/g, ""));
+    const bNum = parseFloat(b.size.replace(/[^\d.]/g, ""));
     return aNum - bNum;
   });
 
   const getButtonText = () => {
-    if (isAddingToCart) return 'ДОБАВЛЯЕМ...';
-    if (!selectedSize) return 'НЕ ВЫБРАНО';
-    return 'ДОБАВИТЬ В КОРЗИНУ';
+    if (isAddingToCart) return "ДОБАВЛЯЕМ...";
+    if (!selectedSize) return "НЕ ВЫБРАНО";
+    return "ДОБАВИТЬ В КОРЗИНУ";
   };
 
   return (
     <div className="space-y-6 w-full">
       {/* Название товара */}
-      <h1 className="product-name--large text-black">
-        {product.name}
-      </h1>
+      <h1 className="product-name--large text-black">{product.name}</h1>
 
       {/* Цена и артикул */}
       <div className="flex items-center gap-4 justify-between">
@@ -86,7 +88,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
           <span className="product-price--large text-brand-gray">
             {formatPrice(finalPrice)}
           </span>
-          
+
           {hasDiscount && actualSelectedSizeInfo?.originalPrice && (
             <span className="product-price--medium text-gray-400 line-through">
               {formatPrice(actualSelectedSizeInfo.originalPrice)}
@@ -96,7 +98,7 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
 
         {/* Артикул выбранного размера */}
         <span className="product-price--large text-brand-gray ">
-          {actualSelectedSizeInfo?.article || 'Артикул'}
+          {actualSelectedSizeInfo?.article || "Артикул"}
         </span>
       </div>
 
@@ -107,16 +109,16 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
           disabled={!selectedSize || isAddingToCart || !product.inStock}
           className={`btn-add-cart btn-add-cart--desktop ${
             !selectedSize || !product.inStock
-              ? 'bg-gray-400 cursor-not-allowed' 
+              ? "bg-gray-400 cursor-not-allowed"
               : isAddingToCart
-              ? 'bg-gray-600 cursor-wait'
-              : ''
+              ? "bg-gray-600 cursor-wait"
+              : ""
           }`}
         >
           {/* Левая часть - "Размер" или конкретный размер */}
           <div className="flex items-center justify-center w-32">
             <span className="text-white text-[24px] leading-[32px]">
-              {selectedSize || 'Размер'}
+              {selectedSize || "Размер"}
             </span>
           </div>
 
@@ -145,18 +147,19 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
             className="size-dropdown size-dropdown--desktop"
           >
             <span className="text-black text-[30px] leading-[41px]">
-              {selectedSize ? 
-                `${selectedSize} RU — ${formatPrice(actualSelectedSizeInfo?.price || product.price)}` 
-                : 'Выберите размер'
-              }
+              {selectedSize
+                ? `${selectedSize} RU — ${formatPrice(
+                    actualSelectedSizeInfo?.price || product.price
+                  )}`
+                : "Выберите размер"}
             </span>
-            
+
             {/* Стрелка */}
-            <div 
+            <div
               className={`w-3 h-3 border-r-2 border-b-2 border-black transform transition-transform ${
-                isSizeDropdownOpen ? '-rotate-45' : 'rotate-45'
+                isSizeDropdownOpen ? "-rotate-45" : "rotate-45"
               }`}
-              style={{ marginTop: isSizeDropdownOpen ? '4px' : '-4px' }}
+              style={{ marginTop: isSizeDropdownOpen ? "4px" : "-4px" }}
             ></div>
           </button>
 
@@ -172,16 +175,15 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
                   }}
                   disabled={!size.available}
                   className={`size-dropdown-item size-dropdown-item--desktop ${
-                    selectedSize === size.size ? 'selected' : ''
+                    selectedSize === size.size ? "selected" : ""
                   }`}
                 >
                   <div className="flex flex-col items-start w-full">
                     {/* Основная строка с размером и ценой */}
                     <span className="text-left text-[30px] leading-[41px]">
                       {size.size} RU — {formatPrice(size.price)}
-                      {!size.available && ' (нет в наличии)'}
+                      {!size.available && " (нет в наличии)"}
                     </span>
-
                   </div>
                 </button>
               ))}
@@ -198,10 +200,11 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
             <img src="../icons/delivery.svg" alt="" />
           </div>
         </div>
-        
+
         <div>
           <p className="text-body--large text-black">
-            {product.deliveryInfo || 'Среднее время стандартной доставки: 15-20 рабочих дней.'}
+            {product.deliveryInfo ||
+              "Среднее время стандартной доставки: 15-20 рабочих дней."}
           </p>
         </div>
       </div>

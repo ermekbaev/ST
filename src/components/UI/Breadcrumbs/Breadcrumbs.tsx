@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface BreadcrumbItem {
   label: string;
@@ -13,58 +13,57 @@ interface BreadcrumbsProps {
   className?: string;
 }
 
-const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
-  
-  const handleLinkClick = (href?: string) => {
+const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = "" }) => {
+  const handleLinkClick = (e: React.MouseEvent, href?: string) => {
     if (href) {
-      console.log(`Переход на: ${href}`);
+      window.location.href = href;
     }
   };
 
   return (
-    <nav 
+    <nav
       className={`w-full ${className}`}
       style={{
-        fontFamily: 'Random Grotesque, Arial, sans-serif'
+        fontFamily: "Random Grotesque, Arial, sans-serif",
       }}
     >
       <div className="hidden lg:block">
         <div className="flex items-center gap-8 mb-8">
           {/* Хлебные крошки */}
-          <div 
+          <div
             className="text-[#8C8072] text-[15px] leading-[35px] flex items-center"
             style={{
               fontWeight: 400,
-              height: '35px'
+              height: "35px",
             }}
           >
             {items.map((item, index) => (
               <React.Fragment key={index}>
                 {item.href && !item.isLast ? (
                   <button
-                    onClick={() => handleLinkClick(item.href)}
+                    onClick={(e) => handleLinkClick(e, item.href)}
                     className="hover:text-[#595047] transition-colors cursor-pointer bg-transparent border-none p-0 text-[15px] leading-[35px]"
                     style={{
-                      fontFamily: 'Random Grotesque, Arial, sans-serif',
+                      fontFamily: "Random Grotesque, Arial, sans-serif",
                       fontWeight: 400,
-                      color: '#8C8072'
+                      color: "#8C8072",
                     }}
                   >
                     {item.label}
                   </button>
                 ) : (
-                  <span className={item.isLast ? 'text-[#8C8072]' : ''}>
+                  <span className={item.isLast ? "text-[#8C8072]" : ""}>
                     {item.label}
                   </span>
                 )}
-                
+
                 {index < items.length - 1 && (
                   <span className="mx-2 text-[#8C8072]">/</span>
                 )}
               </React.Fragment>
             ))}
           </div>
-          
+
           {/* Разделительная линия - расширяется на всю оставшуюся ширину */}
           <div className="h-0.5 bg-black flex-1 mt-3"></div>
         </div>
@@ -74,38 +73,40 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
       <div className="block lg:hidden">
         <div className="mb-6">
           {/* Хлебные крошки */}
-          <div 
+          <div
             className="text-[#8C8072] text-[12px] leading-[20px] flex items-center h-[20px]"
             style={{
-              fontWeight: 400
+              fontWeight: 400,
             }}
           >
             {items.map((item, index) => (
               <React.Fragment key={index}>
                 {item.href && !item.isLast ? (
                   <button
-                    onClick={() => handleLinkClick(item.href)}
+                    onClick={(e) => handleLinkClick(e, item.href)}
                     className="hover:text-[#595047] transition-colors cursor-pointer bg-transparent border-none p-0 text-[12px] leading-[20px] whitespace-nowrap"
                     style={{
-                      fontFamily: 'Random Grotesque, Arial, sans-serif',
+                      fontFamily: "Random Grotesque, Arial, sans-serif",
                       fontWeight: 400,
-                      color: '#8C8072'
+                      color: "#8C8072",
                     }}
                   >
                     {item.label}
                   </button>
                 ) : (
-                  <span 
-                    className={`truncate inline-block ${item.isLast ? 'text-[#8C8072]' : ''}`}
+                  <span
+                    className={`truncate inline-block ${
+                      item.isLast ? "text-[#8C8072]" : ""
+                    }`}
                     style={{
-                      maxWidth: '120px' // Ограничиваем ширину последнего элемента
+                      maxWidth: "120px", // Ограничиваем ширину последнего элемента
                     }}
                     title={item.label} // Показываем полный текст при наведении
                   >
                     {item.label}
                   </span>
                 )}
-                
+
                 {index < items.length - 1 && (
                   <span className="mx-1 text-[#8C8072] text-[12px]">/</span>
                 )}

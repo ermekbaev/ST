@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
-import { DeliveryOption, PaymentOption, PromoCode } from '@/types/checkout';
-import { getDeliverySettings, DeliverySettingsData } from '@/services/deliverySettingsService';
+import { useState, useEffect } from "react";
+import { DeliveryOption, PaymentOption, PromoCode } from "@/types/checkout";
+import {
+  getDeliverySettings,
+  DeliverySettingsData,
+} from "@/services/deliverySettingsService";
 
 interface GeneralSettings {
   deliveryTimeGeneral: string;
@@ -23,9 +26,9 @@ export const useDeliverySettings = (): DeliverySettings => {
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
-    deliveryTimeGeneral: '16-21 дней',
+    deliveryTimeGeneral: "16-21 дней",
     minOrderFreeDelivery: 5000,
-    currency: '₽'
+    currency: "₽",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,22 +38,19 @@ export const useDeliverySettings = (): DeliverySettings => {
       setLoading(true);
       setError(null);
 
-      const settings: DeliverySettingsData = await getDeliverySettings(forceRefresh);
+      const settings: DeliverySettingsData = await getDeliverySettings(
+        forceRefresh
+      );
 
       setDeliveryOptions(settings.deliveryOptions);
       setPaymentOptions(settings.paymentOptions);
       setPromoCodes(settings.promoCodes);
       setGeneralSettings(settings.generalSettings);
-
-      settings.deliveryOptions.forEach(option => {
-        console.log(`  ${option.name}: ${option.price}₽`);
-      });
-
     } catch (err) {
-      console.error('❌ Ошибка загрузки настроек:', err);
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки настроек доставки');
-      
-
+      console.error("❌ Ошибка загрузки настроек:", err);
+      setError(
+        err instanceof Error ? err.message : "Ошибка загрузки настроек доставки"
+      );
     } finally {
       setLoading(false);
     }
@@ -71,6 +71,6 @@ export const useDeliverySettings = (): DeliverySettings => {
     generalSettings,
     loading,
     error,
-    refetch
+    refetch,
   };
 };

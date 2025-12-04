@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface HeroSlide {
   id: number;
@@ -18,7 +18,7 @@ const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -35,7 +35,7 @@ const HeroSlider = () => {
       alt: "До-Ля-Ми",
       link: "/catalog",
       isActive: true,
-      order: 1
+      order: 1,
     },
     {
       id: 2,
@@ -46,7 +46,7 @@ const HeroSlider = () => {
       alt: "Скидки",
       link: "/catalog",
       isActive: true,
-      order: 2
+      order: 2,
     },
     {
       id: 3,
@@ -57,7 +57,7 @@ const HeroSlider = () => {
       alt: "Индивидуальный заказ",
       link: "https://t.me/TIGRSHOPsupport",
       isActive: true,
-      order: 3
+      order: 3,
     },
     {
       id: 4,
@@ -68,7 +68,7 @@ const HeroSlider = () => {
       alt: "Каталог",
       link: "/catalog",
       isActive: true,
-      order: 4
+      order: 4,
     },
     {
       id: 5,
@@ -79,8 +79,8 @@ const HeroSlider = () => {
       alt: "Оптовый заказ",
       link: "https://t.me/TIGRSHOPsupport",
       isActive: true,
-      order: 5
-    }
+      order: 5,
+    },
   ];
 
   const [slides, setSlides] = useState<HeroSlide[]>(defaultSlides);
@@ -90,28 +90,13 @@ const HeroSlider = () => {
     const loadHeroes = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Загружаем heroes...');
-        
-        const response = await fetch('/api/slider', {
-          method: 'GET',
-          cache: 'no-store'
+
+        const response = await fetch("/api/slider", {
+          method: "GET",
+          cache: "no-store",
         });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('📄 Ответ API:', data);
-          
-          if (data.success && data.slides?.length > 0) {
-            console.log(`✅ Загружено ${data.slides.length} heroes из ${data.source}`);
-            setSlides(data.slides);
-          } else {
-            console.log('⚠️ Нет heroes, используем дефолтные слайды');
-          }
-        } else {
-          console.error('❌ Ошибка HTTP:', response.status);
-        }
       } catch (error) {
-        console.error('❌ Ошибка загрузки heroes:', error);
+        console.error("❌ Ошибка загрузки heroes:", error);
       } finally {
         setLoading(false);
       }
@@ -132,7 +117,7 @@ const HeroSlider = () => {
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -172,16 +157,16 @@ const HeroSlider = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (slides.length === 0) return;
-      
-      if (event.key === 'ArrowRight') {
+
+      if (event.key === "ArrowRight") {
         nextSlide();
-      } else if (event.key === 'ArrowLeft') {
+      } else if (event.key === "ArrowLeft") {
         prevSlide();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [slides.length]);
 
   // Клик по слайду
@@ -192,7 +177,7 @@ const HeroSlider = () => {
   };
 
   return (
-    <section 
+    <section
       id="hero-slider"
       className="relative w-full overflow-hidden group"
       onMouseEnter={() => setIsPaused(true)}
@@ -200,8 +185,8 @@ const HeroSlider = () => {
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      style={{ 
-        touchAction: 'pan-y pinch-zoom'
+      style={{
+        touchAction: "pan-y pinch-zoom",
       }}
     >
       {/* Индикатор загрузки */}
@@ -212,7 +197,7 @@ const HeroSlider = () => {
       )}
 
       {/* Слайды */}
-      <div 
+      <div
         className="flex transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
@@ -228,27 +213,13 @@ const HeroSlider = () => {
                 src={slide.imageDesktop}
                 alt={slide.alt}
                 className="hidden md:block w-full h-auto object-cover object-center"
-                onLoad={() => {
-                  console.log('✅ Десктоп загружено:', slide.imageDesktop);
-                }}
-                onError={(e) => {
-                  console.error('❌ Ошибка десктоп:', slide.imageDesktop);
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                }}
               />
-              
+
               {/* Мобильное изображение */}
               <img
                 src={slide.imageMobile}
                 alt={slide.alt}
                 className="block md:hidden w-full h-auto object-contain object-center"
-                onLoad={() => {
-                  console.log('✅ Мобильное загружено:', slide.imageMobile);
-                }}
-                onError={(e) => {
-                  console.error('❌ Ошибка мобильное:', slide.imageMobile);
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                }}
               />
             </div>
           </div>
@@ -266,12 +237,12 @@ const HeroSlider = () => {
                 goToSlide(index);
               }}
               className={`transition-all duration-300 bg-white rounded-sm hover:opacity-80 ${
-                currentSlide === index 
-                  ? 'w-[100px] h-[10px]' 
-                  : 'w-[10px] h-[10px]'
+                currentSlide === index
+                  ? "w-[100px] h-[10px]"
+                  : "w-[10px] h-[10px]"
               }`}
               style={{
-                opacity: currentSlide === index ? 1 : 0.6
+                opacity: currentSlide === index ? 1 : 0.6,
               }}
               aria-label={`Слайд ${index + 1}`}
             />
@@ -291,10 +262,16 @@ const HeroSlider = () => {
             aria-label="Предыдущий слайд"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M15 18L9 12L15 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -304,7 +281,13 @@ const HeroSlider = () => {
             aria-label="Следующий слайд"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M9 18L15 12L9 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </>

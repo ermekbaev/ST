@@ -3,8 +3,8 @@
 // src/utils/automaticSearch.ts
 // =============================================
 
-import brandsDictionary from '@/data/searchDictionaries/brands.json';
-import categoriesDictionary from '@/data/searchDictionaries/categories.json';
+import brandsDictionary from "@/data/searchDictionaries/brands.json";
+import categoriesDictionary from "@/data/searchDictionaries/categories.json";
 
 interface Product {
   id?: string;
@@ -30,7 +30,7 @@ interface SearchStats {
   totalProducts: number;
   foundProducts: number;
   executionTime: number;
-  topMatches: Array<{name: string, brand: string, score: number}>;
+  topMatches: Array<{ name: string; brand: string; score: number }>;
 }
 
 // =============================================
@@ -51,7 +51,7 @@ class DictionaryService {
       ...brandsDictionary.luxuryBrands,
       ...brandsDictionary.streetwearBrands,
       ...brandsDictionary.otherBrands,
-      ...brandsDictionary.reverseMappings
+      ...brandsDictionary.reverseMappings,
     };
 
     this.flatBrandsDictionary = allBrands;
@@ -63,11 +63,10 @@ class DictionaryService {
       ...categoriesDictionary.accessories,
       ...categoriesDictionary.collectibles,
       ...categoriesDictionary.genderMapping,
-      ...categoriesDictionary.reverseMappings
+      ...categoriesDictionary.reverseMappings,
     };
 
     this.flatCategoriesDictionary = allCategories;
-
   }
 
   getBrandTranslations(brand: string): string[] {
@@ -85,11 +84,11 @@ class DictionaryService {
 
     // Добавляем переводы брендов
     const brandTranslations = this.getBrandTranslations(normalized);
-    brandTranslations.forEach(t => variants.add(t));
+    brandTranslations.forEach((t) => variants.add(t));
 
     // Добавляем переводы категорий
     const categoryTranslations = this.getCategoryTranslations(normalized);
-    categoryTranslations.forEach(t => variants.add(t));
+    categoryTranslations.forEach((t) => variants.add(t));
 
     return Array.from(variants);
   }
@@ -98,9 +97,9 @@ class DictionaryService {
     return text
       .toLowerCase()
       .trim()
-      .replace(/ё/g, 'е')
-      .replace(/[^\wа-яё]/gi, ' ')
-      .replace(/\s+/g, ' ')
+      .replace(/ё/g, "е")
+      .replace(/[^\wа-яё]/gi, " ")
+      .replace(/\s+/g, " ")
       .trim();
   }
 }
@@ -130,30 +129,30 @@ class SearchService {
       totalProducts: products.length,
       foundProducts: results.length,
       executionTime: Math.round(executionTime),
-      topMatches: results.slice(0, 3).map(r => ({
+      topMatches: results.slice(0, 3).map((r) => ({
         name: r.product.name,
         brand: r.product.brand,
-        score: r.score
-      }))
+        score: r.score,
+      })),
     };
 
-    return results.map(r => r.product);
+    return results.map((r) => r.product);
   }
 
   private performSearch(products: Product[], query: string): SearchResult[] {
     const normalizedQuery = this.dictionary.normalizeText(query);
-    const queryWords = normalizedQuery.split(' ').filter(w => w.length > 1);
-    
+    const queryWords = normalizedQuery.split(" ").filter((w) => w.length > 1);
+
     const results: SearchResult[] = [];
 
-    products.forEach(product => {
+    products.forEach((product) => {
       const match = this.calculateProductScore(product, queryWords, query);
-      
+
       if (match.score > 0) {
         results.push({
           product,
           score: match.score,
-          matchType: match.reasons
+          matchType: match.reasons,
         });
       }
     });
@@ -161,7 +160,11 @@ class SearchService {
     return results.sort((a, b) => b.score - a.score);
   }
 
-  private calculateProductScore(product: Product, queryWords: string[], originalQuery: string) {
+  private calculateProductScore(
+    product: Product,
+    queryWords: string[],
+    originalQuery: string
+  ) {
     let totalScore = 0;
     const reasons: string[] = [];
 
@@ -169,7 +172,7 @@ class SearchService {
       name: this.dictionary.normalizeText(product.name),
       brand: this.dictionary.normalizeText(product.brand),
       category: this.dictionary.normalizeText(product.category),
-      gender: this.dictionary.normalizeText(product.gender)
+      gender: this.dictionary.normalizeText(product.gender),
     };
 
     // 1. ПОИСК ПО БРЕНДАМ (высокий приоритет)
@@ -226,16 +229,21 @@ class SearchService {
     return { score: totalScore, reasons };
   }
 
-  private getSpecialBonuses(query: string, product: Product, reasons: string[]): number {
+  private getSpecialBonuses(
+    query: string,
+    product: Product,
+    reasons: string[]
+  ): number {
     let bonus = 0;
     const normalizedQuery = this.dictionary.normalizeText(query);
     const normalizedBrand = this.dictionary.normalizeText(product.brand);
 
     // Зимняя обувь = UGG + Timberland автоматически
-    if (normalizedQuery.includes('зимняя обувь') || 
-        (normalizedQuery.includes('зимн') && normalizedQuery.includes('обув'))) {
-      
-      const winterBrands = ['ugg', 'timberland', 'sorel'];
+    if (
+      normalizedQuery.includes("зимняя обувь") ||
+      (normalizedQuery.includes("зимн") && normalizedQuery.includes("обув"))
+    ) {
+      const winterBrands = ["ugg", "timberland", "sorel"];
       for (const brand of winterBrands) {
         if (normalizedBrand.includes(brand)) {
           bonus += 40;
@@ -246,18 +254,19 @@ class SearchService {
     }
 
     // УГГи = UGG товары
-    if (normalizedQuery.includes('угги') || normalizedQuery.includes('угг')) {
-      if (normalizedBrand.includes('ugg')) {
+    if (normalizedQuery.includes("угги") || normalizedQuery.includes("угг")) {
+      if (normalizedBrand.includes("ugg")) {
         bonus += 40;
-        reasons.push('UGG товар');
+        reasons.push("UGG товар");
       }
     }
 
     // Спортивная обувь = известные спорт-бренды
-    if ((normalizedQuery.includes('спорт') && normalizedQuery.includes('обув')) ||
-        normalizedQuery.includes('кроссовки')) {
-      
-      const sportBrands = ['nike', 'adidas', 'puma', 'reebok'];
+    if (
+      (normalizedQuery.includes("спорт") && normalizedQuery.includes("обув")) ||
+      normalizedQuery.includes("кроссовки")
+    ) {
+      const sportBrands = ["nike", "adidas", "puma", "reebok"];
       for (const brand of sportBrands) {
         if (normalizedBrand.includes(brand)) {
           bonus += 30;
@@ -276,38 +285,44 @@ class SearchService {
 // =============================================
 const searchService = new SearchService();
 
-export const fullyAutomaticSearch = (products: Product[], searchQuery: string): Product[] => {
+export const fullyAutomaticSearch = (
+  products: Product[],
+  searchQuery: string
+): Product[] => {
   return searchService.search(products, searchQuery);
 };
 
 // Простая версия для быстрого поиска
-export const simpleSearch = (products: Product[], searchQuery: string): Product[] => {
+export const simpleSearch = (
+  products: Product[],
+  searchQuery: string
+): Product[] => {
   if (!searchQuery.trim()) return products;
-  
+
   const dictionary = new DictionaryService();
   const normalizedQuery = dictionary.normalizeText(searchQuery);
-  
-  return products.filter(product => {
+
+  return products.filter((product) => {
     const normalizedProduct = {
       name: dictionary.normalizeText(product.name),
       brand: dictionary.normalizeText(product.brand),
-      category: dictionary.normalizeText(product.category)
+      category: dictionary.normalizeText(product.category),
     };
 
     // Простой поиск с переводами
     const allVariants = dictionary.getAllVariants(normalizedQuery);
-    
-    return allVariants.some(variant => 
-      normalizedProduct.name.includes(variant) ||
-      normalizedProduct.brand.includes(variant) ||
-      normalizedProduct.category.includes(variant)
+
+    return allVariants.some(
+      (variant) =>
+        normalizedProduct.name.includes(variant) ||
+        normalizedProduct.brand.includes(variant) ||
+        normalizedProduct.category.includes(variant)
     );
   });
 };
 
 // Функция для добавления новых переводов (для админки в будущем)
 export const addBrandTranslation = (brand: string, translations: string[]) => {
-  console.log(`🔧 Добавление перевода для бренда: ${brand} → ${translations.join(', ')}`);
   // В будущем можно реализовать сохранение в JSON файл
 };
 
