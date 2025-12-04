@@ -1,6 +1,20 @@
 import { MenuKey, MegaMenuData, InfoMenuData } from "./menuTypes";
 
 export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
+  каталог: {
+    title: "КАТАЛОГ",
+    categories: ["Все товары"],
+    links: {
+      "Все товары": "/catalog",
+    },
+    subcategories: [
+      "Новые релизы",
+      "Эксклюзивы",
+      "Мастхэв",
+      "Хиты продаж",
+      "Коллаборации",
+    ],
+  },
   обувь: {
     title: "ОБУВЬ",
     categories: ["Все", "Кеды и кроссовки", "Ботинки и угги"],
@@ -133,6 +147,7 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
 };
 
 export const MENU_ITEMS: string[] = [
+  "каталог",
   // 'sale',
   "обувь",
   "одежда",

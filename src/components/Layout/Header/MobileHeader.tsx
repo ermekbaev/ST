@@ -89,7 +89,7 @@ const MobileHeader: React.FC = () => {
 
   const handleMenuItemClick = useCallback(
     (item: string): void => {
-      if (item === "sale") {
+      if (item === "каталог") {
         router.push("/catalog");
         setIsMobileMenuOpen(false);
         return;
@@ -269,7 +269,7 @@ const MobileHeader: React.FC = () => {
                       onClick={() => handleMenuItemClick(item)}
                     >
                       <span>{item}</span>
-                      {item !== "sale" && (
+                      {item !== "каталог" && (
                         <div
                           className={`w-4 h-4 transition-transform duration-300 ${
                             openSection === item ? "rotate-90" : ""
@@ -295,7 +295,7 @@ const MobileHeader: React.FC = () => {
                     </button>
                   </div>
 
-                  {item !== "sale" && openSection === item && (
+                  {item !== "каталог" && openSection === item && (
                     <div className="bg-gray-50 border-b border-gray-100 animate-in slide-in-from-top duration-300">
                       {(() => {
                         //@ts-ignore
