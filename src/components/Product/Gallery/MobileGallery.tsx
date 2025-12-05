@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { GalleryImage } from './ProductGallery';
+import React, { useState, useRef, useEffect } from "react";
+import { GalleryImage } from "./ProductGallery";
 
 interface MobileGalleryProps {
   images: GalleryImage[];
@@ -10,7 +10,7 @@ interface MobileGalleryProps {
   onPrevImage: () => void;
   onNextImage: () => void;
   onSelectImage: (index: number) => void;
-  onOpenLightbox: (index?: number) => void; 
+  onOpenLightbox: (index?: number) => void;
 }
 
 const MobileGallery: React.FC<MobileGalleryProps> = ({
@@ -22,9 +22,15 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
   onSelectImage,
   onOpenLightbox,
 }) => {
-  const [imageLoadError, setImageLoadError] = useState<Record<string, boolean>>({});
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const [imageLoadError, setImageLoadError] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(
+    null
+  );
   const [lastTap, setLastTap] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragDistance, setDragDistance] = useState<number>(0);
@@ -32,7 +38,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
   const minSwipeDistance = 50;
 
   const handleImageError = (imageId: string) => {
-    setImageLoadError(prev => ({ ...prev, [imageId]: true }));
+    setImageLoadError((prev) => ({ ...prev, [imageId]: true }));
   };
 
   const handleImageLoad = (imageId: string) => {
@@ -41,7 +47,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (images.length <= 1) return;
-    
+
     const touch = e.touches[0];
     setTouchStart({ x: touch.clientX, y: touch.clientY });
     setTouchEnd(null);
@@ -51,15 +57,15 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!touchStart || images.length <= 1) return;
-    
+
     const touch = e.touches[0];
     const deltaX = touch.clientX - touchStart.x;
     const deltaY = Math.abs(touch.clientY - touchStart.y);
-    
+
     if (deltaY > Math.abs(deltaX) * 1.5) return;
-    
+
     e.preventDefault();
-    
+
     setTouchEnd({ x: touch.clientX, y: touch.clientY });
     setIsDragging(true);
     setDragDistance(deltaX);
@@ -70,7 +76,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
 
     const deltaX = touchEnd.x - touchStart.x;
     const deltaY = Math.abs(touchEnd.y - touchStart.y);
-    
+
     if (deltaY > Math.abs(deltaX) * 1.5) {
       resetTouchState();
       return;
@@ -98,17 +104,16 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
 
   const handleTap = (e: React.TouchEvent | React.MouseEvent) => {
     if (isDragging || Math.abs(dragDistance) > 10) return;
-    
+
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
-    
-    if (lastTap && (now - lastTap) < DOUBLE_TAP_DELAY) {
+
+    if (lastTap && now - lastTap < DOUBLE_TAP_DELAY) {
       onOpenLightbox(currentImageIndex);
     } else {
-      if (images && images.length > 1) {
-        onNextImage();
-      }
+      onOpenLightbox(currentImageIndex);
     }
+
     setLastTap(now);
   };
 
@@ -119,7 +124,7 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
     <div className="w-full flex justify-center px-4">
       <div className="relative w-full max-w-md">
         {/* Главное изображение */}
-        <div 
+        <div
           ref={mainImageRef}
           className="relative cursor-pointer overflow-hidden select-none aspect-[16/9] rounded touch-pan-y"
           onTouchStart={handleTouchStart}
@@ -127,14 +132,22 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
           onTouchEnd={handleTouchEnd}
           onClick={handleTap}
         >
-          <div 
+          <div
             className="w-full h-full transition-transform duration-150 ease-out"
             style={{
-              transform: isDragging ? `translateX(${dragDistance * 0.3}px)` : 'translateX(0px)',
-              opacity: isDragging && Math.abs(dragDistance) > 20 ? Math.max(0.8, 1 - Math.abs(dragDistance) / 300) : 1,
+              transform: isDragging
+                ? `translateX(${dragDistance * 0.3}px)`
+                : "translateX(0px)",
+              opacity:
+                isDragging && Math.abs(dragDistance) > 20
+                  ? Math.max(0.8, 1 - Math.abs(dragDistance) / 300)
+                  : 1,
             }}
           >
-            {!hasError && currentImage && currentImage.url && currentImage.url.trim() !== '' ? (
+            {!hasError &&
+            currentImage &&
+            currentImage.url &&
+            currentImage.url.trim() !== "" ? (
               <img
                 src={currentImage.url || undefined}
                 alt={currentImage.alt || productName}
@@ -143,14 +156,15 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
                 onLoad={() => handleImageLoad(currentImage.id)}
                 draggable={false}
                 style={{
-                  backgroundColor: 'transparent'
+                  backgroundColor: "transparent",
                 }}
               />
             ) : (
-              <div 
+              <div
                 className="w-full h-full flex items-center justify-center"
                 style={{
-                  background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
+                  background:
+                    "linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)",
                 }}
               >
                 <div className="text-center text-gray-600">
@@ -174,11 +188,11 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
 
           {/* Индикатор количества изображений */}
           {images.length > 1 && (
-            <div 
+            <div
               className="absolute bottom-2 right-2 px-2 py-1 text-white text-xs rounded-full"
               style={{
-                background: 'rgba(0, 0, 0, 0.6)',
-                backdropFilter: 'blur(4px)'
+                background: "rgba(0, 0, 0, 0.6)",
+                backdropFilter: "blur(4px)",
               }}
             >
               {currentImageIndex + 1} / {images.length}
@@ -186,11 +200,11 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
           )}
 
           {/* Иконка увеличения */}
-          <div 
+          <div
             className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full"
             style={{
-              background: 'rgba(0, 0, 0, 0.4)',
-              backdropFilter: 'blur(4px)'
+              background: "rgba(0, 0, 0, 0.4)",
+              backdropFilter: "blur(4px)",
             }}
           >
             <div className="relative w-3 h-3">
@@ -206,13 +220,13 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
             {images.slice(0, 4).map((image, index) => {
               const isActive = index === currentImageIndex;
               const thumbHasError = imageLoadError[image.id];
-              
+
               return (
                 <button
                   key={image.id}
                   onClick={() => onSelectImage(index)}
                   className={`relative overflow-hidden transition-all duration-200 aspect-[16/10] rounded ${
-                    isActive ? 'ring-1 ring-black ring-offset-1' : ''
+                    isActive ? "ring-1 ring-black ring-offset-1" : ""
                   }`}
                   aria-label={`Показать изображение ${index + 1}`}
                 >
@@ -226,10 +240,11 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
                       draggable={false}
                     />
                   ) : (
-                    <div 
+                    <div
                       className="w-full h-full flex items-center justify-center"
                       style={{
-                        background: 'linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)'
+                        background:
+                          "linear-gradient(114.84deg, #E5DDD4 7.89%, #BFB3A3 92.11%)",
                       }}
                     >
                       <span className="text-gray-500 text-xs">{index + 1}</span>
@@ -244,16 +259,16 @@ const MobileGallery: React.FC<MobileGalleryProps> = ({
             })}
 
             {/* Заглушки для недостающих миниатюр */}
-            {images.length < 4 && [...Array(4 - images.length)].map((_, index) => {
-              const actualIndex = images.length + index;
-              return (
-                <div
-                  key={`placeholder-${index}`}
-                  className="bg-white flex items-center justify-center aspect-[16/10] rounded"
-                >
-                </div>
-              );
-            })}
+            {images.length < 4 &&
+              [...Array(4 - images.length)].map((_, index) => {
+                const actualIndex = images.length + index;
+                return (
+                  <div
+                    key={`placeholder-${index}`}
+                    className="bg-white flex items-center justify-center aspect-[16/10] rounded"
+                  ></div>
+                );
+              })}
           </div>
         )}
       </div>

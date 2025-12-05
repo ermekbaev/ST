@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useCart } from '../../../contexts/CartContext';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useCart } from "../../../contexts/CartContext";
 
 export interface ProductSize {
   size: string;
@@ -21,16 +21,16 @@ export interface ProductInfo {
   category: string;
   article: string;
   description?: string;
-  sizes: ProductSize[]; 
-  allSizes?: ProductSize[]; 
+  sizes: ProductSize[];
+  allSizes?: ProductSize[];
   inStock: boolean;
   isNew?: boolean;
   isExclusive?: boolean;
   deliveryInfo?: string;
 
-  gender?: string; 
-  photo?: string;  
-  mainPhoto?: string; 
+  gender?: string;
+  photo?: string;
+  mainPhoto?: string;
   additionalPhotos?: string[];
 }
 
@@ -49,7 +49,7 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
   selectedSizeInfo,
   onSizeSelect,
   onAddToCart,
-  isAddingToCart
+  isAddingToCart,
 }) => {
   const router = useRouter();
   const { addToCart } = useCart();
@@ -57,28 +57,44 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
   const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
 
   const formatPrice = (price: number) => {
-    return price.toLocaleString('ru-RU') + ' ₽';
+    return price.toLocaleString("ru-RU") + " ₽";
   };
 
-  const availableSizes = product.allSizes && product.allSizes.length > 0 ? product.allSizes : product.sizes;
+  const availableSizes =
+    product.allSizes && product.allSizes.length > 0
+      ? product.allSizes
+      : product.sizes;
 
-  const actualSelectedSizeInfo = selectedSize && availableSizes
-    ? availableSizes.find(s => s.size === selectedSize)
-    : selectedSizeInfo;
+  const actualSelectedSizeInfo =
+    selectedSize && availableSizes
+      ? availableSizes.find((s) => s.size === selectedSize)
+      : selectedSizeInfo;
 
   const finalPrice = actualSelectedSizeInfo?.price || product.price;
-  const hasDiscount = actualSelectedSizeInfo?.originalPrice && actualSelectedSizeInfo.originalPrice > finalPrice;
+  const hasDiscount =
+    actualSelectedSizeInfo?.originalPrice &&
+    actualSelectedSizeInfo.originalPrice > finalPrice;
 
   const sortedSizes = [...availableSizes].sort((a, b) => {
-    const aNum = parseFloat(a.size.replace(/[^\d.]/g, ''));
-    const bNum = parseFloat(b.size.replace(/[^\d.]/g, ''));
+    const aNum = parseFloat(a.size.replace(/[^\d.]/g, ""));
+    const bNum = parseFloat(b.size.replace(/[^\d.]/g, ""));
     return aNum - bNum;
   });
 
+  // Автоматический выбор самого маленького размера при загрузке
+  useEffect(() => {
+    if (!selectedSize && sortedSizes.length > 0) {
+      const firstAvailableSize = sortedSizes.find((size) => size.available);
+      if (firstAvailableSize) {
+        onSizeSelect(firstAvailableSize.size);
+      }
+    }
+  }, []);
+
   const getButtonText = () => {
-    if (isAddingToCart) return 'ДОБАВЛЯЕМ...';
-    if (!selectedSize) return 'НЕ ВЫБРАНО';
-    return 'ДОБАВИТЬ В КОРЗИНУ';
+    if (isAddingToCart) return "ДОБАВЛЯЕМ...";
+    if (!selectedSize) return "НЕ ВЫБРАНО";
+    return "ДОБАВИТЬ В КОРЗИНУ";
   };
 
   // Функция для кнопки "Оплатить"
@@ -98,22 +114,21 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
         name: product.name,
         size: selectedSize,
         category: product.category,
-        gender: product.gender, 
+        gender: product.gender,
         price: finalPrice,
-        photo: product.photo || product.mainPhoto
+        photo: product.photo || product.mainPhoto,
       };
 
       //@ts-ignore
       addToCart(cartItem);
 
       // Небольшая задержка для UX
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Перенаправляем на страницу оформления заказа
-      router.push('/checkout');
-
+      router.push("/checkout");
     } catch (error) {
-      console.error('Ошибка при переходе к оплате:', error);
+      console.error("Ошибка при переходе к оплате:", error);
     } finally {
       setIsProcessingPayment(false);
     }
@@ -123,9 +138,7 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
     <div className="w-full flex justify-center px-4">
       <div className="space-y-4 w-full max-w-md">
         {/* Название товара */}
-        <h1 className="product-name--small text-black ">
-          {product.name}
-        </h1>
+        <h1 className="product-name--small text-black ">{product.name}</h1>
 
         {/* Цена и артикул */}
         <div className="flex items-center gap-3 justify-between">
@@ -133,7 +146,7 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
             <span className="product-price--medium text-brand-light-beige">
               {formatPrice(finalPrice)}
             </span>
-            
+
             {hasDiscount && actualSelectedSizeInfo?.originalPrice && (
               <span className="text-gray-400 line-through text-lg">
                 {formatPrice(actualSelectedSizeInfo.originalPrice)}
@@ -143,7 +156,7 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
 
           {/* Артикул выбранного размера */}
           <span className="product-article product-article--small text-brand-gray product-price--small">
-            {actualSelectedSizeInfo?.article || 'Артикул'}
+            {actualSelectedSizeInfo?.article || "Артикул"}
           </span>
         </div>
 
@@ -154,16 +167,16 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
             disabled={!selectedSize || isAddingToCart || !product.inStock}
             className={`btn-add-cart btn-add-cart--mobile w-full ${
               !selectedSize || !product.inStock
-                ? 'bg-gray-400 cursor-not-allowed' 
+                ? "bg-gray-400 cursor-not-allowed"
                 : isAddingToCart
-                ? 'bg-gray-600 cursor-wait'
-                : ''
+                ? "bg-gray-600 cursor-wait"
+                : ""
             }`}
           >
             {/* Левая часть - "Размер" или конкретный размер */}
             <div className="flex items-center justify-center w-20">
               <span className="text-white text-center text-[14px] leading-[18px]">
-                {selectedSize || 'Размер'}
+                {selectedSize || "Размер"}
               </span>
             </div>
 
@@ -194,19 +207,20 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
               <div className="flex flex-col items-start w-full">
                 {/* Основная строка с размером и ценой */}
                 <span className="text-black text-left text-[15px] leading-[20px]">
-                  {selectedSize ? 
-                    `${selectedSize} RU — ${formatPrice(actualSelectedSizeInfo?.price || product.price)}` 
-                    : 'Выберите размер'
-                  }
+                  {selectedSize
+                    ? `${selectedSize} RU — ${formatPrice(
+                        actualSelectedSizeInfo?.price || product.price
+                      )}`
+                    : "Выберите размер"}
                 </span>
               </div>
-              
+
               {/* Стрелка */}
-              <div 
+              <div
                 className={`w-2 h-2 border-r-2 border-b-2 border-black transform transition-transform ${
-                  isSizeDropdownOpen ? '-rotate-45' : 'rotate-45'
+                  isSizeDropdownOpen ? "-rotate-45" : "rotate-45"
                 }`}
-                style={{ marginTop: isSizeDropdownOpen ? '2px' : '-2px' }}
+                style={{ marginTop: isSizeDropdownOpen ? "2px" : "-2px" }}
               ></div>
             </button>
 
@@ -222,14 +236,14 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
                     }}
                     disabled={!size.available}
                     className={`size-dropdown-item size-dropdown-item--mobile ${
-                      selectedSize === size.size ? 'selected' : ''
+                      selectedSize === size.size ? "selected" : ""
                     }`}
                   >
                     <div className="flex flex-col items-start w-full">
                       {/* Основная строка с размером и ценой */}
                       <span className="text-left text-[15px] leading-[20px]">
                         {size.size} RU — {formatPrice(size.price)}
-                        {!size.available && ' (нет в наличии)'}
+                        {!size.available && " (нет в наличии)"}
                       </span>
                     </div>
                   </button>
@@ -247,10 +261,11 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
               <img src="../icons/delivery.svg" alt="" />
             </div>
           </div>
-          
+
           <div className="flex-1">
             <p className="text-body--tiny text-black">
-              {product.deliveryInfo || 'Среднее время стандартной доставки: 15-20 рабочих дней.'}
+              {product.deliveryInfo ||
+                "Среднее время стандартной доставки: 15-20 рабочих дней."}
             </p>
           </div>
         </div>
@@ -264,18 +279,18 @@ const MobileProductInfo: React.FC<MobileProductInfoProps> = ({
 
         {/* Кнопка "Оплатить" */}
         <div className="pt-4 space-y-2">
-          <button 
+          <button
             onClick={handlePayment}
             disabled={!selectedSize || isProcessingPayment || !product.inStock}
             className={`w-full h-[50px] text-white text-[20px] leading-[27px] transition-colors product-price--medium ${
               !selectedSize || !product.inStock
-                ? 'bg-gray-400 cursor-not-allowed'
+                ? "bg-gray-400 cursor-not-allowed"
                 : isProcessingPayment
-                ? 'bg-gray-600 cursor-wait'
-                : 'bg-black hover:bg-gray-800'
+                ? "bg-gray-600 cursor-wait"
+                : "bg-black hover:bg-gray-800"
             }`}
           >
-            {isProcessingPayment ? 'Переходим к оплате...' : 'Оплатить'}
+            {isProcessingPayment ? "Переходим к оплате..." : "Оплатить"}
           </button>
         </div>
 

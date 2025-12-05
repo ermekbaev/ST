@@ -292,12 +292,7 @@ export default function Home() {
             "угги",
             "слэды",
           ]}
-          catalogFilters={[
-            "Кроссовки и кеды",
-            "Ботинки и угги",
-            "Слэды",
-            "Шлёпанцы и сандали",
-          ]}
+          catalogFilters={["Кроссовки и кеды", "Ботинки и угги"]}
         />
 
         <ProductSection

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export interface ProductSize {
   size: string;
@@ -70,6 +70,16 @@ const DesktopProductInfo: React.FC<DesktopProductInfoProps> = ({
     const bNum = parseFloat(b.size.replace(/[^\d.]/g, ""));
     return aNum - bNum;
   });
+
+  // Автоматический выбор самого маленького размера при загрузке
+  useEffect(() => {
+    if (!selectedSize && sortedSizes.length > 0) {
+      const firstAvailableSize = sortedSizes.find((size) => size.available);
+      if (firstAvailableSize) {
+        onSizeSelect(firstAvailableSize.size);
+      }
+    }
+  }, []);
 
   const getButtonText = () => {
     if (isAddingToCart) return "ДОБАВЛЯЕМ...";
