@@ -4,7 +4,7 @@ export interface MegaMenuData {
   categories: string[];
   subcategories: string[];
   additional?: string[];
-  links?: Record<string, string>; 
+  links?: Record<string, string>;
 }
 
 export interface InfoMenuData {
@@ -14,4 +14,10 @@ export interface InfoMenuData {
   }>;
 }
 
-export type MenuKey = 'обувь' | 'одежда' | 'аксессуары' | 'коллекции' | 'другое' | 'бренды' | 'информация';
+export type MenuKey =
+  | "обувь"
+  | "одежда"
+  | "аксессуары"
+  | "другое"
+  | "бренды"
+  | "информация";

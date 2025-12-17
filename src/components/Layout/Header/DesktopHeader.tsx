@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCart } from "../../../contexts/CartContext";
 import AuthModal from "../../Auth/AuthModal";
 import SmartProfileIcon from "@/components/Auth/SmartProfileicon";
-// ✅ ЕДИНЫЙ ИМПОРТ
+// ✅ ИМПОРТИРУЕМ ФУНКЦИИ ДЛЯ ПРЯМЫХ ССЫЛОК
 import {
   UNIFIED_MENU_DATA,
   MENU_ITEMS,
   isMegaMenuSection,
+  DIRECT_MENU_LINKS,
 } from "../../../data/unifiedMenuData";
 import { MenuKey, MegaMenuData } from "../../../data/menuTypes";
 
@@ -26,7 +27,6 @@ const DesktopHeader: React.FC = () => {
     setMounted(true);
   }, []);
 
-  // ✅ ИСПОЛЬЗУЕМ ЕДИНЫЕ ДАННЫЕ
   const megaMenuData = UNIFIED_MENU_DATA;
   const menuItems = MENU_ITEMS;
 
@@ -38,8 +38,17 @@ const DesktopHeader: React.FC = () => {
     return `/catalog${params.toString() ? `?${params.toString()}` : ""}`;
   };
 
+  // ✅ ПРОВЕРЯЕМ, ЯВЛЯЕТСЯ ЛИ ПУНКТ ПРЯМОЙ ССЫЛКОЙ
+  const isDirectLink = (item: string): boolean => {
+    return item in DIRECT_MENU_LINKS;
+  };
+
   const handleMenuEnter = useCallback(
     (item: string): void => {
+      // ✅ НЕ ОТКРЫВАЕМ МЕНЮ ДЛЯ ПРЯМЫХ ССЫЛОК
+      if (isDirectLink(item)) {
+        return;
+      }
       if (megaMenuData[item as MenuKey] && !isSearchOpen) {
         setActiveMenu(item);
       }
@@ -105,21 +114,24 @@ const DesktopHeader: React.FC = () => {
     setShowAuthModal(false);
   }, []);
 
+  // ✅ ОБРАБОТКА КЛИКОВ ПО НАВИГАЦИИ С ПРЯМЫМИ ССЫЛКАМИ
   const handleNavClick = useCallback(
     (item: string, e: React.MouseEvent<HTMLAnchorElement>) => {
-      if (item === "каталог") {
+      // Если это прямая ссылка, просто переходим
+      if (isDirectLink(item)) {
         e.preventDefault();
-        window.location.href = "/catalog";
+        router.push(DIRECT_MENU_LINKS[item]);
         return;
       }
 
+      // Информация открывается обычным способом
       if (item === "информация") {
         return;
       }
 
       e.preventDefault();
     },
-    []
+    [router]
   );
 
   const getMenuPosition = useCallback((): React.CSSProperties => {
@@ -131,10 +143,9 @@ const DesktopHeader: React.FC = () => {
 
     let centerOffset;
 
-    // Специальная обработка для "бренды" - они стали уже после удаления подкатегорий
     if (activeMenu === "бренды") {
       if (screenWidth >= 1400) {
-        centerOffset = (activeIndex - 3.5) * 120 + 50; // Используем логику для последнего элемента
+        centerOffset = (activeIndex - 3.5) * 120 + 50;
       } else if (screenWidth >= 1200) {
         centerOffset = (activeIndex - 3.5) * 100 + 30;
       } else if (screenWidth >= 1024) {
@@ -197,7 +208,6 @@ const DesktopHeader: React.FC = () => {
 
     const menuData = megaMenuData[activeMenu as MenuKey];
 
-    // ✅ Проверяем тип секции
     if (!isMegaMenuSection(menuData)) {
       return null;
     }
@@ -282,7 +292,7 @@ const DesktopHeader: React.FC = () => {
             {menuItems.map((item: string, index: number) => (
               <li key={index} onMouseEnter={() => handleMenuEnter(item)}>
                 <a
-                  href={item === "каталог" ? "/catalog" : "#"}
+                  href={isDirectLink(item) ? DIRECT_MENU_LINKS[item] : "#"}
                   className={`nav-link ${
                     activeMenu === item ? "text-brand-gray" : ""
                   }`}

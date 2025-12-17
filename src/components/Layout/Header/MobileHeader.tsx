@@ -7,6 +7,7 @@ import {
   MENU_ITEMS,
   isMegaMenuSection,
   isInfoSection,
+  DIRECT_MENU_LINKS, // ✅ ИМПОРТ
 } from "../../../data/unifiedMenuData";
 import { MegaMenuData, InfoMenuData } from "../../../data/menuTypes";
 
@@ -31,6 +32,11 @@ const MobileHeader: React.FC = () => {
 
   const mobileMenuItems = MENU_ITEMS;
   const menuData = UNIFIED_MENU_DATA;
+
+  // ✅ ПРОВЕРКА НА ПРЯМУЮ ССЫЛКУ
+  const isDirectLink = (item: string): boolean => {
+    return item in DIRECT_MENU_LINKS;
+  };
 
   const buildCatalogUrl = (searchTerm: string) => {
     const params = new URLSearchParams();
@@ -87,14 +93,17 @@ const MobileHeader: React.FC = () => {
     []
   );
 
+  // ✅ ОБРАБОТКА КЛИКОВ С ПРЯМЫМИ ССЫЛКАМИ
   const handleMenuItemClick = useCallback(
     (item: string): void => {
-      if (item === "каталог") {
-        router.push("/catalog");
+      // Если это прямая ссылка - сразу переходим
+      if (isDirectLink(item)) {
+        router.push(DIRECT_MENU_LINKS[item]);
         setIsMobileMenuOpen(false);
         return;
       }
 
+      // Открываем/закрываем секцию для обычных пунктов
       if (openSection === item) {
         setOpenSection(null);
       } else {
@@ -269,7 +278,8 @@ const MobileHeader: React.FC = () => {
                       onClick={() => handleMenuItemClick(item)}
                     >
                       <span>{item}</span>
-                      {item !== "каталог" && (
+                      {/* ✅ НЕ ПОКАЗЫВАЕМ СТРЕЛКУ ДЛЯ ПРЯМЫХ ССЫЛОК */}
+                      {!isDirectLink(item) && (
                         <div
                           className={`w-4 h-4 transition-transform duration-300 ${
                             openSection === item ? "rotate-90" : ""
@@ -295,7 +305,8 @@ const MobileHeader: React.FC = () => {
                     </button>
                   </div>
 
-                  {item !== "каталог" && openSection === item && (
+                  {/* ✅ НЕ ПОКАЗЫВАЕМ ВЫПАДАЮЩЕЕ МЕНЮ ДЛЯ ПРЯМЫХ ССЫЛОК */}
+                  {!isDirectLink(item) && openSection === item && (
                     <div className="bg-gray-50 border-b border-gray-100 animate-in slide-in-from-top duration-300">
                       {(() => {
                         //@ts-ignore

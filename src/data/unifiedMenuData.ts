@@ -69,21 +69,6 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
       "Коллаборации",
     ],
   },
-  коллекции: {
-    title: "КОЛЛЕКЦИИ",
-    categories: ["Все", "Фигурки"],
-    links: {
-      Все: "/catalog?categories=Коллекция,Фигурки",
-      Фигурки: "/catalog?categories=Фигурки",
-    },
-    subcategories: [
-      "Новые релизы",
-      "Эксклюзивы",
-      "Мастхэв",
-      "Хиты продаж",
-      "Коллаборации",
-    ],
-  },
   другое: {
     title: "ДРУГОЕ",
     categories: ["Все", "Спорт и отдых"],
@@ -132,6 +117,12 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
   },
 };
 
+// Прямые ссылки для пунктов меню без dropdown
+export const DIRECT_MENU_LINKS: Record<string, string> = {
+  каталог: "/catalog",
+  коллекции: "/catalog?categories=Коллекция",
+};
+
 export const MENU_ITEMS: string[] = [
   "каталог",
   // 'sale',
@@ -154,4 +145,14 @@ export const isMegaMenuSection = (
   section: MegaMenuData | InfoMenuData
 ): section is MegaMenuData => {
   return "categories" in section;
+};
+
+// Проверяет, является ли пункт меню прямой ссылкой
+export const isDirectLink = (menuItem: string): boolean => {
+  return menuItem in DIRECT_MENU_LINKS;
+};
+
+// Получает прямую ссылку для пункта меню
+export const getDirectLink = (menuItem: string): string | undefined => {
+  return DIRECT_MENU_LINKS[menuItem];
 };
