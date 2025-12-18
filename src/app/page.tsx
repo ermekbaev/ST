@@ -344,7 +344,7 @@ export default function Home() {
             "предметы интерьера",
             "другое всё",
           ]}
-          catalogFilters={["Коллекция", "Фигурки", "Предметы интерьера"]}
+          catalogFilters={["Коллекция"]}
         />
       </div>
 

@@ -45,7 +45,6 @@ const getCategoryUrl = (category: string): string => {
 
     // Коллекции
     Коллекция: "/catalog?categories=Коллекция",
-    Фигурки: "/catalog?categories=Фигурки",
 
     // Другое
     Электроника: "/catalog?categories=Электроника",

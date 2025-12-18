@@ -39,7 +39,7 @@ const FooterContent = () => {
           </li>
           <li>
             <a
-              href="/catalog?categories=Коллекция,Фигурки"
+              href="/catalog?categories=Коллекция"
               className="text-gray-300 hover:text-white transition-colors text-sm"
             >
               коллекции

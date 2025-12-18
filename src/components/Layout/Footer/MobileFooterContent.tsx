@@ -27,7 +27,7 @@ const MobileFooterContent = () => {
           label: "аксессуары",
           href: "/catalog?categories=Аксессуары,Головные+уборы,Кошельки,Сумки+и+рюкзаки,Бельё",
         },
-        { label: "коллекции", href: "/catalog?categories=Коллекция,Фигурки" },
+        { label: "коллекции", href: "/catalog?categories=Коллекция" },
         {
           label: "другое",
           href: "/catalog?categories=Спорт+и+отдых,Электроника",
