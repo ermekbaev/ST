@@ -155,10 +155,17 @@ export async function GET(request: NextRequest) {
         let productImage = '/api/placeholder/98/50';
         let imageSource = 'placeholder';
 
-        if (orderItemData.product?.mainPhoto) {
+        // ✅ ПРИОРИТЕТ 1: Проверяем сохранённое изображение из корзины
+        if (orderItemData.productImage && orderItemData.productImage.trim() !== '') {
+          productImage = orderItemData.productImage;
+          imageSource = 'saved_from_cart';
+        }
+        // ПРИОРИТЕТ 2: Проверяем populate product
+        else if (orderItemData.product?.mainPhoto) {
           productImage = orderItemData.product.mainPhoto;
           imageSource = 'populated_product';
         }
+        // ПРИОРИТЕТ 3: Запрашиваем из API
         else if (orderItemData.productId) {
           
           try {

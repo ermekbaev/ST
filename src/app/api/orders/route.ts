@@ -170,6 +170,7 @@ async function saveOrderToStrapi(
         productName: item.productName || `Товар ${item.productId}`,
         quantity: item.quantity,
         priceAtTime: item.priceAtTime,
+        productImage: item.productImage || '', // ✅ Сохраняем фото товара
 
         // Связь с product
         product: {
@@ -205,6 +206,7 @@ async function saveOrderToStrapi(
           productName: item.productName || `Товар ${item.productId}`,
           quantity: item.quantity,
           priceAtTime: item.priceAtTime,
+          productImage: item.productImage || '', // ✅ Сохраняем фото товара
         };
 
         const fallbackResponse = await fetch(`${STRAPI_URL}/api/order-items`, {

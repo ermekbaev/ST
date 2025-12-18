@@ -4,6 +4,7 @@ export interface OrderItem {
   size: string;
   quantity: number;
   priceAtTime: number;
+  productImage?: string; // ✅ Ссылка на фото товара
 }
 
 export interface CreateOrderData {
@@ -84,7 +85,8 @@ export const formatCheckoutDataForAPI = (
       productName: item.name || `${item.brand} ${item.name}`.trim() || 'Товар без названия',
       size: item.size || 'ONE SIZE',
       quantity: item.quantity || 1,
-      priceAtTime: item.price || 0
+      priceAtTime: item.price || 0,
+      productImage: item.photo || item.image || '' // ✅ Передаём фото из корзины
     })),
     totalAmount: totalAmount,
     deliveryMethod: formData.deliveryMethod || 'store_pickup',
