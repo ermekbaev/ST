@@ -59,7 +59,7 @@ function CatalogContent() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("popularity");
+  const [sortBy, setSortBy] = useState("random");
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isRestoringState, setIsRestoringState] = useState(true);
@@ -202,7 +202,7 @@ function CatalogContent() {
     const urlMinPrice = searchParams.get("minPrice") || "";
     const urlMaxPrice = searchParams.get("maxPrice") || "";
     const urlSearch = searchParams.get("search") || "";
-    const urlSort = searchParams.get("sort") || "popularity";
+    const urlSort = searchParams.get("sort") || "random";
 
     setFilters({
       brands: urlBrands.filter(Boolean),
@@ -273,7 +273,7 @@ function CatalogContent() {
     if (newFilters.priceRange.max)
       params.set("maxPrice", newFilters.priceRange.max);
     if (newSearchQuery.trim()) params.set("search", newSearchQuery.trim());
-    if (newSortBy !== "popularity") params.set("sort", newSortBy);
+    if (newSortBy !== "random") params.set("sort", newSortBy);
 
     const newURL = `/catalog${
       params.toString() ? "?" + params.toString() : ""
