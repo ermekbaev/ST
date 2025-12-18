@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import HeroSlider from "../components/Hero/HeroSlider";
 import ProductCard from "../components/Product/ProductCard";
@@ -31,6 +30,35 @@ export default function Home() {
     setMounted(true);
     CatalogStateManager.clearState();
   }, []);
+
+  // 🎲 Функция для получения СЛУЧАЙНЫХ товаров
+  const getRandomProducts = (
+    products: Product[],
+    count: number = 4
+  ): Product[] => {
+    const shuffled = [...products].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  };
+
+  // 🎲 Функция для получения СЛУЧАЙНЫХ товаров из категории
+  const getRandomProductsFromCategory = (
+    categoryFilter: string[],
+    count: number = 4
+  ) => {
+    const filteredProducts = products.filter((product) =>
+      categoryFilter.some((filter) =>
+        product.category.toLowerCase().includes(filter.toLowerCase())
+      )
+    );
+
+    const uniqueProducts = filteredProducts.filter(
+      (product, index, self) =>
+        index === self.findIndex((p) => p.name === product.name)
+    );
+
+    // Возвращаем случайные товары вместо последних
+    return getRandomProducts(uniqueProducts, count);
+  };
 
   const fetchProducts = async () => {
     try {
@@ -70,40 +98,6 @@ export default function Home() {
       fetchProducts();
     }
   }, [mounted, retryCount]);
-
-  const getLatestProductsFromCategory = (
-    categoryFilter: string[],
-    count: number = 4
-  ) => {
-    const filteredProducts = products.filter((product) =>
-      categoryFilter.some((filter) =>
-        product.category.toLowerCase().includes(filter.toLowerCase())
-      )
-    );
-
-    const uniqueProducts = filteredProducts.filter(
-      (product, index, self) =>
-        index === self.findIndex((p) => p.name === product.name)
-    );
-
-    return uniqueProducts.slice(-count).reverse();
-  };
-
-  const groupedProducts = Array.isArray(products)
-    ? products.reduce((acc: Record<string, Product[]>, product) => {
-        const category = product.category || "Прочее";
-        if (!acc[category]) acc[category] = [];
-
-        const existingProduct = acc[category].find(
-          (p) => p.name === product.name
-        );
-        if (!existingProduct) {
-          acc[category].push(product);
-        }
-
-        return acc;
-      }, {})
-    : {};
 
   if (!mounted) {
     return (
@@ -156,25 +150,17 @@ export default function Home() {
 
   const ProductSection = ({
     title,
-    categoryKey,
     categoryFilters,
     linkText = "все модели",
     catalogFilters,
   }: {
     title: string;
-    categoryKey?: string;
-    categoryFilters?: string[];
+    categoryFilters: string[];
     linkText?: string;
     catalogFilters?: string[];
   }) => {
-    let displayProducts: Product[] = [];
-
-    if (categoryFilters) {
-      displayProducts = getLatestProductsFromCategory(categoryFilters, 4);
-    } else if (categoryKey) {
-      const categoryProducts = groupedProducts[categoryKey] || [];
-      displayProducts = categoryProducts.slice(0, 4);
-    }
+    // 🎲 Получаем СЛУЧАЙНЫЕ товары при каждом рендере
+    const displayProducts = getRandomProductsFromCategory(categoryFilters, 4);
 
     const getCatalogUrl = () => {
       if (catalogFilters && catalogFilters.length > 0) {
@@ -216,7 +202,7 @@ export default function Home() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           {displayProducts.length > 0
             ? displayProducts.map((product, index) => (
-                <ProductCard key={product.id || index} product={product} />
+                <ProductCard key={`${product.id}-${index}`} product={product} />
               ))
             : !error &&
               Array.from({ length: 4 }, (_, index) => (
@@ -282,6 +268,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* 🎲 Все секции теперь показывают СЛУЧАЙНЫЕ товары */}
         <ProductSection
           title="ОБУВЬ"
           categoryFilters={[
