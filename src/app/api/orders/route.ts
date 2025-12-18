@@ -1,4 +1,4 @@
-// src/app/api/orders/route.ts - ПОЛНАЯ ВЕРСИЯ С ФОТО
+// src/app/api/orders/route.ts - ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕННОЙ ОТПРАВКОЙ (ТЕКСТ + ФОТО ОТДЕЛЬНО)
 import { NextRequest, NextResponse } from "next/server";
 
 const STRAPI_URL =
@@ -19,7 +19,7 @@ interface CreateOrderData {
     quantity: number;
     priceAtTime: number;
     productName?: string;
-    productImage?: string;
+    productImage?: string; // ✅ ДОБАВИЛИ ПОЛЕ ДЛЯ ИЗОБРАЖЕНИЯ ИЗ КОРЗИНЫ
   }>;
   totalAmount: number;
   deliveryMethod: string;
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
         if (userResponse.ok) {
           const userData = await userResponse.json();
           userId = userData.id.toString();
+        } else {
         }
       } catch (error) {
         console.error("❌ Ошибка проверки пользователя:", error);
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
       orderStatus: "pending",
       paymentStatus:
         body.paymentMethod === "cash_vladivostok" ? "pending" : "pending",
+      // Правильная связь с пользователем
       ...(userId && {
         user: {
           connect: [{ id: parseInt(userId) }],
@@ -100,7 +102,7 @@ export async function POST(request: NextRequest) {
     // Сохраняем заказ в Strapi
     const orderId = await saveOrderToStrapi(orderData, body.items);
 
-    // Отправка в Telegram
+    // ✅ ИСПРАВЛЕННАЯ ОТПРАВКА: ТЕКСТ + ФОТО ОТДЕЛЬНО
     await sendAdminNotificationWithPhotos(orderNumber, body, orderData);
 
     return NextResponse.json({
@@ -158,27 +160,14 @@ async function saveOrderToStrapi(
     const item = items[index];
 
     try {
-      console.log(
-        `\n📦 Товар ${index + 1}/${items.length}: ${item.productName}`
-      );
+      // Пытаемся найти размер
+      const sizeId = await findSizeId(item.productId, item.size);
 
-      // 🆕 Получаем фото товара
-      const productImages = await getProductImages([item]);
-      const productImage = productImages.find(
-        (img) => img.productId === item.productId
-      );
-      const imageUrl = productImage?.url || item.productImage || "";
-
-      console.log(`🖼️ Фото: ${imageUrl ? "✅" : "❌"}`);
-      console.log(`📏 Размер: ${item.size}`);
-
-      // 🆕 Добавляем productImage и size в данные
+      // Правильная структура для новых связей
       const itemData = {
         orderId: orderId.toString(),
         productId: item.productId,
         productName: item.productName || `Товар ${item.productId}`,
-        productImage: imageUrl, // 🆕 ФОТО
-        size: item.size, // 🆕 РАЗМЕР КАК ТЕКСТ
         quantity: item.quantity,
         priceAtTime: item.priceAtTime,
 
@@ -191,6 +180,13 @@ async function saveOrderToStrapi(
         order: {
           connect: [{ id: orderId }],
         },
+
+        // Размер только если найден
+        ...(sizeId && {
+          size: {
+            connect: [{ id: parseInt(sizeId) }],
+          },
+        }),
       };
 
       const itemResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
@@ -203,13 +199,10 @@ async function saveOrderToStrapi(
         const errorText = await itemResponse.text();
         console.error(`❌ Ошибка создания позиции ${index + 1}:`, errorText);
 
-        // 🆕 Fallback тоже с фото и размером
         const fallbackData = {
           orderId: orderId.toString(),
           productId: item.productId,
           productName: item.productName || `Товар ${item.productId}`,
-          productImage: imageUrl, // 🆕 ФОТО
-          size: item.size, // 🆕 РАЗМЕР
           quantity: item.quantity,
           priceAtTime: item.priceAtTime,
         };
@@ -224,11 +217,10 @@ async function saveOrderToStrapi(
           const fallbackResult = await fallbackResponse.json();
           createdOrderItems.push(fallbackResult.data.id.toString());
           successCount++;
-          console.log(`✅ Позиция ${index + 1} создана через fallback`);
         } else {
           const fallbackError = await fallbackResponse.text();
           console.error(
-            `❌ Fallback не сработал для позиции ${index + 1}:`,
+            `❌ Fallback также не сработал для позиции ${index + 1}:`,
             fallbackError
           );
         }
@@ -238,10 +230,9 @@ async function saveOrderToStrapi(
 
         createdOrderItems.push(orderItemId.toString());
         successCount++;
-        console.log(`✅ Позиция ${index + 1} создана (ID: ${orderItemId})`);
       }
 
-      // Пауза между созданием позиций
+      // Небольшая пауза между созданием позиций для стабильности
       if (index < items.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
@@ -257,11 +248,11 @@ async function saveOrderToStrapi(
     throw new Error("Не удалось создать ни одной позиции заказа");
   }
 
-  console.log(`\n✅ Создано ${successCount} из ${items.length} позиций`);
-
   // Обновляем заказ с новым полем связи
   if (createdOrderItems.length > 0) {
     await updateOrderWithItems(orderId, createdOrderItems);
+
+    // Проверяем результат связывания
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await verifyOrderLinks(orderId.toString());
   }
@@ -275,6 +266,7 @@ async function updateOrderWithItems(
   orderItemIds: string[]
 ): Promise<void> {
   try {
+    // Получаем documentId заказа
     let documentId = null;
 
     try {
@@ -299,6 +291,7 @@ async function updateOrderWithItems(
       documentId = orderId;
     }
 
+    // Проверим разные варианты названий полей
     const possibleFieldNames = ["order_items", "orderItems", "order_item"];
 
     for (const fieldName of possibleFieldNames) {
@@ -320,6 +313,7 @@ async function updateOrderWithItems(
       );
 
       if (updateResponse.ok) {
+        const result = await updateResponse.json();
         return;
       } else {
         const errorText = await updateResponse.text();
@@ -370,6 +364,7 @@ async function updateOrderWithItems(
 // Проверка связей с учетом нового поля
 async function verifyOrderLinks(orderId: string): Promise<void> {
   try {
+    // Проверяем разные варианты populate
     const populateOptions = ["order_items", "orderItems", "order_item"];
 
     for (const populateField of populateOptions) {
@@ -386,6 +381,7 @@ async function verifyOrderLinks(orderId: string): Promise<void> {
           const orderItems = orderData.data?.[populateField] || [];
 
           if (Array.isArray(orderItems) && orderItems.length > 0) {
+            orderItems.forEach((item: any, index: number) => {});
             return;
           }
         }
@@ -423,13 +419,15 @@ async function getProductImages(
           productName: item.productName || `Товар ${item.productId}`,
           productId: item.productId,
         });
+
         continue;
       }
 
       let productData = null;
+      let productResponse = null;
 
       try {
-        const productResponse = await fetch(
+        productResponse = await fetch(
           `${STRAPI_URL}/api/products?filters[id][$eq]=${item.productId}&populate=mainPhoto`,
           {
             method: "GET",
@@ -441,12 +439,13 @@ async function getProductImages(
 
         if (productResponse.ok) {
           productData = await productResponse.json();
+        } else {
         }
       } catch (error) {}
 
       if (!productData?.data?.length) {
         try {
-          const productResponse = await fetch(
+          productResponse = await fetch(
             `${STRAPI_URL}/api/products/${item.productId}?populate=mainPhoto`,
             {
               method: "GET",
@@ -461,13 +460,14 @@ async function getProductImages(
             if (directData.data) {
               productData = { data: [directData.data] };
             }
+          } else {
           }
         } catch (error) {}
       }
 
       if (!productData?.data?.length && isNaN(Number(item.productId))) {
         try {
-          const productResponse = await fetch(
+          productResponse = await fetch(
             `${STRAPI_URL}/api/products?filters[slug][$eq]=${item.productId}&populate=mainPhoto`,
             {
               method: "GET",
@@ -479,12 +479,18 @@ async function getProductImages(
 
           if (productResponse.ok) {
             productData = await productResponse.json();
+            if (productData?.data?.length > 0) {
+            }
+          } else {
           }
         } catch (error) {}
       }
 
+      // Обрабатываем результат из Strapi
       if (productData?.data?.length > 0) {
         const product = productData.data[0];
+
+        // Проверяем разные структуры изображения
         let imageUrl = null;
 
         if (product.mainPhoto?.url) {
@@ -513,7 +519,9 @@ async function getProductImages(
               `Товар ${item.productId}`,
             productId: item.productId,
           });
+        } else {
         }
+      } else {
       }
     } catch (error) {}
   }
@@ -538,7 +546,7 @@ function groupProductsByImage(
 }> {
   const groups: Map<string, any> = new Map();
 
-  items.forEach((item) => {
+  items.forEach((item, index) => {
     const correspondingImage = productImages.find(
       (img) => img.productId === item.productId
     );
@@ -578,9 +586,15 @@ async function sendAdminNotificationWithPhotos(
 ): Promise<void> {
   try {
     if (!TELEGRAM_BOT_TOKEN || !ADMIN_TELEGRAM_CHAT_ID) {
+      const message = formatAdminNotification(
+        orderNumber,
+        orderData,
+        savedData
+      );
       return;
     }
 
+    // Получаем изображения товаров
     const productImages = await getProductImages(orderData.items);
     const groupedProducts = groupProductsByImage(
       orderData.items,
@@ -615,6 +629,17 @@ async function sendAdminNotificationWithPhotos(
     await sendPhotosOnlyMediaGroup(groupedProducts);
   } catch (error) {
     console.error("❌ Ошибка отправки уведомления админу:", error);
+
+    try {
+      const message = formatAdminNotification(
+        orderNumber,
+        orderData,
+        savedData
+      );
+      await sendTelegramTextMessage(message);
+    } catch (fallbackError) {
+      console.error("❌ Ошибка финального fallback:", fallbackError);
+    }
   }
 }
 
@@ -622,6 +647,7 @@ async function sendPhotosOnlyMediaGroup(
   groupedProducts: any[]
 ): Promise<boolean> {
   try {
+    // Ограничиваем до 10 изображений (лимит Telegram)
     const imagesToSend = groupedProducts.slice(0, 10);
 
     const mediaArray = imagesToSend.map((group) => ({
@@ -644,6 +670,7 @@ async function sendPhotosOnlyMediaGroup(
     );
 
     if (response.ok) {
+      // Отправляем названия товаров отдельным сообщением
       const productNames = imagesToSend
         .map((group, index) => `${index + 1}. 📦 ${group.productName}`)
         .join("\n");
@@ -652,6 +679,7 @@ async function sendPhotosOnlyMediaGroup(
         `<b>Товары на фото:</b>\n\n${productNames}`
       );
 
+      // Если товаров больше 10, отправляем дополнительную информацию
       if (groupedProducts.length > 10) {
         const remainingProducts = groupedProducts.slice(10);
         const remainingInfo = remainingProducts
@@ -670,10 +698,14 @@ async function sendPhotosOnlyMediaGroup(
 
       return true;
     } else {
+      const errorText = await response.text();
+      console.error("❌ Ошибка отправки медиа-группы:", errorText);
+
       return await sendIndividualPhotos(groupedProducts);
     }
   } catch (error) {
     console.error("❌ Ошибка отправки медиа-группы:", error);
+
     return await sendIndividualPhotos(groupedProducts);
   }
 }
@@ -695,6 +727,7 @@ async function sendIndividualPhotos(groupedProducts: any[]): Promise<boolean> {
           successCount++;
         }
 
+        // Небольшая пауза между отправками (500ms)
         if (i < groupedProducts.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
@@ -755,6 +788,7 @@ function formatAdminNotificationWithGrouping(
   return message;
 }
 
+// Отправка фото с подписью в Telegram
 async function sendTelegramPhotoWithCaption(
   photoUrl: string,
   caption: string
@@ -776,7 +810,13 @@ async function sendTelegramPhotoWithCaption(
       }
     );
 
-    return response.ok;
+    if (response.ok) {
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.error("❌ Ошибка отправки фото в Telegram:", errorText);
+      return false;
+    }
   } catch (error) {
     console.error("❌ Ошибка Telegram API при отправке фото:", error);
     return false;
@@ -800,7 +840,16 @@ async function sendTelegramTextMessage(message: string): Promise<boolean> {
       }
     );
 
-    return response.ok;
+    if (response.ok) {
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.error(
+        "❌ Ошибка отправки текстового сообщения в Telegram:",
+        errorText
+      );
+      return false;
+    }
   } catch (error) {
     console.error("❌ Ошибка Telegram API:", error);
     return false;
@@ -865,6 +914,113 @@ function validateOrderData(data: CreateOrderData): {
   return { isValid: true };
 }
 
+// Поиск размеров
+async function findSizeId(
+  productId: string,
+  sizeValue: string
+): Promise<string | null> {
+  try {
+    // Метод 1: Получаем товар с размерами
+    const productResponse = await fetch(
+      `${STRAPI_URL}/api/products?filters[id][$eq]=${productId}&populate=sizes`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (productResponse.ok) {
+      const productData = await productResponse.json();
+
+      if (productData.data && productData.data.length > 0) {
+        const product = productData.data[0];
+
+        if (product.sizes && Array.isArray(product.sizes)) {
+          const targetSize = product.sizes.find(
+            (size: any) => size.value === sizeValue
+          );
+
+          if (targetSize) {
+            return targetSize.id.toString();
+          }
+        }
+      }
+    }
+
+    // Метод 2: Прямой поиск размера
+    const sizeResponse = await fetch(
+      `${STRAPI_URL}/api/sizes?filters[value][$eq]=${sizeValue}&populate=*`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (sizeResponse.ok) {
+      const sizeData = await sizeResponse.json();
+
+      if (sizeData.data && sizeData.data.length > 0) {
+        const firstSize = sizeData.data[0];
+        return firstSize.id.toString();
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("❌ Ошибка поиска размера:", error);
+    return null;
+  }
+}
+
+// Обновленное форматирование уведомления (для fallback)
+function formatAdminNotification(
+  orderNumber: string,
+  orderData: CreateOrderData,
+  savedData: any
+): string {
+  const { customerInfo, items, totalAmount, deliveryMethod, paymentMethod } =
+    orderData;
+
+  let message = `🛍️ <b>НОВЫЙ ЗАКАЗ!</b>\n\n`;
+  message += `📋 <b>Номер:</b> ${orderNumber}\n`;
+  message += `👤 <b>Клиент:</b> ${customerInfo.name}\n`;
+  message += `📞 <b>Телефон:</b> ${customerInfo.phone}\n`;
+
+  if (customerInfo.email) {
+    message += `📧 <b>Email:</b> ${customerInfo.email}\n`;
+  }
+
+  message += `\n📦 <b>Товары (${items.length} шт.):</b>\n`;
+  items.forEach((item, index) => {
+    message += `${index + 1}. ${item.productName || item.productId} (${
+      item.size
+    }) × ${item.quantity} = ${(item.priceAtTime * item.quantity).toLocaleString(
+      "ru-RU"
+    )}₽\n`;
+  });
+
+  message += `\n💰 <b>Итого:</b> ${totalAmount.toLocaleString("ru-RU")}₽\n`;
+  message += `🚚 <b>Доставка:</b> ${getDeliveryMethodName(deliveryMethod)}\n`;
+  message += `💳 <b>Оплата:</b> ${getPaymentMethodName(paymentMethod)}\n`;
+
+  if (savedData.deliveryAddress) {
+    message += `📍 <b>Адрес:</b> ${savedData.deliveryAddress}\n`;
+  }
+
+  if (savedData.notes) {
+    message += `📝 <b>Примечания:</b> ${savedData.notes}\n`;
+  }
+
+  message += `\n⏰ ${new Date().toLocaleString("ru-RU")}`;
+
+  return message;
+}
+
+// Вспомогательные функции для читаемых названий
 function getDeliveryMethodName(method: string): string {
   const methods = {
     store_pickup: "Самовывоз из магазина",
