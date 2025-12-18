@@ -281,6 +281,10 @@ function CatalogContent() {
     router.replace(newURL, { scroll: false });
   };
 
+  // 🎲 Добавляем ref для сохранения случайного порядка
+  const randomOrderRef = useRef<Product[]>([]);
+  const lastRandomSeedRef = useRef<number>(Date.now());
+
   const applyFilters = () => {
     let filtered = [...products];
 
@@ -325,26 +329,50 @@ function CatalogContent() {
       (product) => product.price >= minPrice && product.price <= maxPrice
     );
 
+    // 🎲 ОБНОВЛЕННАЯ ЛОГИКА СОРТИРОВКИ с поддержкой random
     filtered.sort((a, b) => {
       switch (sortBy) {
+        case "random":
+          // Используем стабильную случайную сортировку
+          // Создаем хеш на основе ID товаров и seed
+          const hashA = (a.id?.charCodeAt(0) || 0) * lastRandomSeedRef.current;
+          const hashB = (b.id?.charCodeAt(0) || 0) * lastRandomSeedRef.current;
+          return hashA - hashB;
+
         case "price-asc":
           return a.price - b.price;
+
         case "price-desc":
           return b.price - a.price;
+
         case "newest":
           return (
             new Date(b.id || "").getTime() - new Date(a.id || "").getTime()
           );
+
         case "name":
           return a.name.localeCompare(b.name);
+
         case "popularity":
         default:
           return 0;
       }
     });
 
+    // 🎲 Дополнительная рандомизация для режима random
+    if (sortBy === "random") {
+      filtered = [...filtered].sort(() => Math.random() - 0.5);
+    }
+
     setFilteredProducts(filtered);
   };
+
+  // 🎲 Обновляем seed при изменении sortBy на random
+  useEffect(() => {
+    if (sortBy === "random") {
+      lastRandomSeedRef.current = Date.now();
+    }
+  }, [sortBy]);
 
   useEffect(() => {
     applyFilters();

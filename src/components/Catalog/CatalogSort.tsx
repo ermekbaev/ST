@@ -1,27 +1,28 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface CatalogSortProps {
   sortBy: string;
-  onSortChange: (value: string) => void;  
-  totalResults: number;  
+  onSortChange: (value: string) => void;
+  totalResults: number;
   className?: string;
 }
 
 const sortOptions = [
-  { value: 'popularity', label: 'по популярности' },
-  { value: 'price-asc', label: 'по цене (возрастание)' },
-  { value: 'price-desc', label: 'по цене (убывание)' },
-  { value: 'name', label: 'по названию' },
-  { value: 'newest', label: 'сначала новые' },
+  { value: "popularity", label: "по популярности" },
+  { value: "random", label: "в случайном порядке" }, // 🎲 НОВАЯ ОПЦИЯ
+  { value: "price-asc", label: "по цене (возрастание)" },
+  { value: "price-desc", label: "по цене (убывание)" },
+  { value: "name", label: "по названию" },
+  { value: "newest", label: "сначала новые" },
 ];
 
 const CatalogSort: React.FC<CatalogSortProps> = ({
   sortBy,
-  onSortChange,  
-  totalResults,  
-  className = ''
+  onSortChange,
+  totalResults,
+  className = "",
 }) => {
   return (
     <div className={`flex justify-end mb-6 ${className}`}>
@@ -31,7 +32,7 @@ const CatalogSort: React.FC<CatalogSortProps> = ({
         </span>
         <select
           value={sortBy}
-          onChange={(e) => onSortChange(e.target.value)}  // ✅ ИСПРАВЛЕНО: используем onSortChange
+          onChange={(e) => onSortChange(e.target.value)}
           className="sort-select flex-1 bg-transparent text-[#8C8072] text-[14px] lg:text-[20px] leading-[18px] lg:leading-[27px] font-product focus:outline-none cursor-pointer"
         >
           {sortOptions.map((option) => (
