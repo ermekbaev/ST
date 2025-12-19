@@ -43,25 +43,52 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const userToken = authHeader?.replace("Bearer ", "") || null;
 
-    // Получаем данные пользователя если токен есть
-    let userId: string | null = null;
-    if (userToken) {
-      try {
-        const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
-          headers: {
-            Authorization: `Bearer ${userToken}`,
-            "Content-Type": "application/json",
-          },
-        });
+    // ОБЯЗАТЕЛЬНАЯ АВТОРИЗАЦИЯ - без регистрации заказ создать нельзя
+    if (!userToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Для оформления заказа необходимо войти в аккаунт",
+          code: "AUTH_REQUIRED",
+        },
+        { status: 401 }
+      );
+    }
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          userId = userData.id.toString();
-        } else {
-        }
-      } catch (error) {
-        console.error("❌ Ошибка проверки пользователя:", error);
+    // Получаем данные пользователя
+    let userId: string | null = null;
+    try {
+      const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        userId = userData.id.toString();
+      } else {
+        // Токен невалиден
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Сессия истекла. Пожалуйста, войдите в аккаунт заново",
+            code: "INVALID_TOKEN",
+          },
+          { status: 401 }
+        );
       }
+    } catch (error) {
+      console.error("❌ Ошибка проверки пользователя:", error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Ошибка проверки авторизации",
+          code: "AUTH_ERROR",
+        },
+        { status: 401 }
+      );
     }
 
     // Базовая валидация

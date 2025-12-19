@@ -39,6 +39,8 @@ interface NewCheckoutFormProps {
   isMobile?: boolean;
   isProcessing?: boolean;
   getPromoData?: () => any;
+  isAuthenticated?: boolean;
+  onAuthRequired?: () => void;
 }
 
 const DELIVERY_OPTIONS = [
@@ -54,16 +56,18 @@ const PAYMENT_OPTIONS = [
 ];
 
 
-const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({ 
-  cartItems, 
-  onSubmit, 
+const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
+  cartItems,
+  onSubmit,
   selectedDelivery,
   selectedPayment,
   onDeliveryChange,
   onPaymentChange,
   isMobile = false,
   isProcessing = false,
-  getPromoData, 
+  getPromoData,
+  isAuthenticated = false,
+  onAuthRequired,
 }) => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -282,17 +286,42 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         {renderPaymentOptions()}
       </div>
 
-      {/* ✅ КНОПКА ТОЛЬКО ДЛЯ МОБИЛЬНЫХ (теперь с промокодами!) */}
+      {/* КНОПКА ТОЛЬКО ДЛЯ МОБИЛЬНЫХ */}
       {isMobile && (
         <div className="space-y-4">
-          <button
-            type="submit"
-            disabled={isSubmitting || isProcessing}
-            className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
-          </button>
-          
+          {/* Предупреждение для неавторизованных пользователей */}
+          {!isAuthenticated && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="text-amber-800 font-medium text-sm">Для оформления заказа необходима регистрация</p>
+                  <p className="text-amber-700 text-xs mt-1">Зарегистрируйтесь, чтобы отслеживать заказы</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isAuthenticated ? (
+            <button
+              type="submit"
+              disabled={isSubmitting || isProcessing}
+              className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onAuthRequired}
+              className="w-full bg-amber-600 text-white py-4 text-lg font-medium hover:bg-amber-700 transition-colors"
+            >
+              ВОЙТИ ИЛИ ЗАРЕГИСТРИРОВАТЬСЯ
+            </button>
+          )}
+
           {/* Согласие с условиями */}
           <div className="checkout-terms-text--mobile">
             Оформляя заказ, Вы подтверждаете согласие с Пользовательским соглашением, Политикой конфиденциальности и Договором оферты.

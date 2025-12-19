@@ -3,18 +3,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/hooks/useAuth';
 import { createPayment, formatCartItemsForPayment } from '@/services/paymentService';
 import NewOrderSummary from '@/components/Checkout/newCheckoutSummary';
 import NewCheckoutForm from '@/components/Checkout/newChekoutForm';
+import AuthModal from '@/components/Auth/AuthModal';
 
 const CheckoutPage: React.FC = () => {
   const { items, clearCart } = useCart();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
-  
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   const [selectedDelivery, setSelectedDelivery] = useState('store_pickup');
   const [selectedPayment, setSelectedPayment] = useState('card');
 
@@ -166,9 +170,15 @@ const CheckoutPage: React.FC = () => {
 
   const handleOrderSubmit = async (orderData: any) => {
     if (isProcessing || isProcessingPayment) return;
-    
+
+    // Проверка авторизации - без регистрации заказ оформить нельзя
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
     setIsProcessing(true);
-    
+
     try {
       if (!orderData.firstName?.trim() || !orderData.phone?.trim()) {
         throw new Error('Заполните имя и телефон');
@@ -232,6 +242,12 @@ const CheckoutPage: React.FC = () => {
       const orderResponse = await response.json();
 
       if (!response.ok) {
+        // Если ошибка авторизации - показываем модальное окно входа
+        if (response.status === 401 || orderResponse.code === 'AUTH_REQUIRED' || orderResponse.code === 'INVALID_TOKEN') {
+          setIsProcessing(false);
+          setShowAuthModal(true);
+          return;
+        }
         throw new Error(orderResponse.error || 'Ошибка создания заказа');
       }
 
@@ -292,20 +308,22 @@ const CheckoutPage: React.FC = () => {
                 onPaymentChange={setSelectedPayment}
                 isMobile={false}
                 isProcessing={isProcessing || isProcessingPayment}
-                getPromoData={getPromoData} 
+                getPromoData={getPromoData}
               />
             </div>
-                     
+
             {/* Правая колонка - Сводка заказа */}
             <div className="bg-white pl-[20px] pr-[70px] py-8">
               <NewOrderSummary
-                ref={orderSummaryRef} 
+                ref={orderSummaryRef}
                 cartItems={cartItems}
                 onSubmit={handleOrderSubmit}
                 selectedDelivery={selectedDelivery}
                 selectedPayment={selectedPayment}
                 isMobile={false}
                 isProcessing={isProcessing || isProcessingPayment}
+                isAuthenticated={isAuthenticated}
+                onAuthRequired={() => setShowAuthModal(true)}
               />
             </div>
           </div>
@@ -316,16 +334,18 @@ const CheckoutPage: React.FC = () => {
           {/* Сводка заказа СВЕРХУ */}
           <div className="bg-white px-[10px] py-6">
             <NewOrderSummary
-              ref={orderSummaryRef} 
+              ref={orderSummaryRef}
               cartItems={cartItems}
               onSubmit={handleOrderSubmit}
               selectedDelivery={selectedDelivery}
               selectedPayment={selectedPayment}
               isMobile={true}
               isProcessing={isProcessing || isProcessingPayment}
+              isAuthenticated={isAuthenticated}
+              onAuthRequired={() => setShowAuthModal(true)}
             />
           </div>
-          
+
           {/* Форма СНИЗУ */}
           <div className="px-[10px] py-6 space-y-6">
             <NewCheckoutForm
@@ -337,7 +357,9 @@ const CheckoutPage: React.FC = () => {
               onPaymentChange={setSelectedPayment}
               isMobile={true}
               isProcessing={isProcessing || isProcessingPayment}
-              getPromoData={getPromoData} 
+              getPromoData={getPromoData}
+              isAuthenticated={isAuthenticated}
+              onAuthRequired={() => setShowAuthModal(true)}
             />
           </div>
         </div>
@@ -352,6 +374,11 @@ const CheckoutPage: React.FC = () => {
             <p className="text-gray-600">Сейчас перенаправим вас на страницу оплаты ЮKassa...</p>
           </div>
         </div>
+      )}
+
+      {/* Модальное окно авторизации */}
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} />
       )}
     </div>
   );

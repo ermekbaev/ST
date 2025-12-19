@@ -32,6 +32,8 @@ interface NewOrderSummaryProps {
   isMobile?: boolean;
   isProcessing?: boolean;
   getFormData?: () => any;
+  isAuthenticated?: boolean;
+  onAuthRequired?: () => void;
 }
 
 const DELIVERY_OPTIONS = [
@@ -44,14 +46,16 @@ const DELIVERY_OPTIONS = [
 const MIN_ORDER_FREE_DELIVERY = 5000;
 
 
-const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({ 
-  cartItems, 
-  onSubmit, 
+const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
+  cartItems,
+  onSubmit,
   selectedDelivery,
   selectedPayment,
   isMobile = false,
   isProcessing = false,
   getFormData,
+  isAuthenticated = false,
+  onAuthRequired,
 }, ref) => {
   
   const { updateQuantity, removeFromCart } = useCart();
@@ -516,16 +520,41 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
         </div>
       </div>
 
-      {/* ✅ ИСПРАВЛЕНО: КНОПКА ТОЛЬКО НА ДЕСКТОПЕ */}
+      {/* Предупреждение для неавторизованных пользователей */}
+      {!isAuthenticated && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="text-amber-800 font-medium text-sm">Для оформления заказа необходима регистрация</p>
+              <p className="text-amber-700 text-xs mt-1">Зарегистрируйтесь, чтобы отслеживать заказы и получать персональные скидки</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* КНОПКА ТОЛЬКО НА ДЕСКТОПЕ */}
       {!isMobile && (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting || isProcessing}
-          className="checkout-order-btn"
-        >
-          {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
-        </button>
+        isAuthenticated ? (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || isProcessing}
+            className="checkout-order-btn"
+          >
+            {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onAuthRequired}
+            className="checkout-order-btn bg-amber-600 hover:bg-amber-700"
+          >
+            ВОЙТИ ИЛИ ЗАРЕГИСТРИРОВАТЬСЯ
+          </button>
+        )
       )}
 
       {/* ✅ ИСПРАВЛЕНО: СОГЛАСИЕ ТОЛЬКО НА ДЕСКТОПЕ */}
