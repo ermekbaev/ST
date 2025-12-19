@@ -197,7 +197,7 @@ async function saveOrderToStrapi(
         productName: item.productName || `Товар ${item.productId}`,
         quantity: item.quantity,
         priceAtTime: item.priceAtTime,
-        productImage: item.productImage || '', // ✅ Сохраняем фото товара
+        productImage: item.productImage || "", // ✅ Сохраняем фото товара
 
         // Связь с product
         product: {
@@ -233,7 +233,7 @@ async function saveOrderToStrapi(
           productName: item.productName || `Товар ${item.productId}`,
           quantity: item.quantity,
           priceAtTime: item.priceAtTime,
-          productImage: item.productImage || '', // ✅ Сохраняем фото товара
+          productImage: item.productImage || "", // ✅ Сохраняем фото товара
         };
 
         const fallbackResponse = await fetch(`${STRAPI_URL}/api/order-items`, {
@@ -797,7 +797,7 @@ function formatAdminNotificationWithGrouping(
       .join(", ");
     message += `${index + 1}. ${
       group.productName
-    } (${sizesText}) = ${group.totalPrice.toLocaleString("ru-RU")}₽\n`;
+    } <b>(${sizesText})</b> = ${group.totalPrice.toLocaleString("ru-RU")}₽\n`;
   });
 
   message += `\n💰 <b>Итого:</b> ${totalAmount.toLocaleString("ru-RU")}₽\n`;
@@ -1025,9 +1025,9 @@ function formatAdminNotification(
 
   message += `\n📦 <b>Товары (${items.length} шт.):</b>\n`;
   items.forEach((item, index) => {
-    message += `${index + 1}. ${item.productName || item.productId} (${
+    message += `${index + 1}. ${item.productName || item.productId} <b>(${
       item.size
-    }) × ${item.quantity} = ${(item.priceAtTime * item.quantity).toLocaleString(
+    }) × ${item.quantity}</b> = ${(item.priceAtTime * item.quantity).toLocaleString(
       "ru-RU"
     )}₽\n`;
   });
