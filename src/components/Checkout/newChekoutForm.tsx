@@ -76,18 +76,44 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     defaultValues: {
       firstName: '',
       email: '',
-      phone: '',
+      phone: '+7',
       city: '',
       address: '',
       region: '',
       postalCode: '',
       recipientFirstName: '',
-      recipientPhone: '',
+      recipientPhone: '+7',
       deliveryMethod: 'store_pickup',
       paymentMethod: 'card'
     },
     mode: 'onChange'
   });
+
+  // Обработчик для полей телефона - не позволяет удалить +7
+  const handlePhoneChange = (fieldName: 'phone' | 'recipientPhone') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    // Если пытаются удалить +7, возвращаем +7
+    if (!value.startsWith('+7')) {
+      value = '+7';
+    }
+
+    // Разрешаем только цифры после +7
+    const phoneDigits = value.slice(2).replace(/\D/g, '');
+    setValue(fieldName, '+7' + phoneDigits, { shouldValidate: true });
+  };
+
+  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const input = e.target as HTMLInputElement;
+    const selectionStart = input.selectionStart || 0;
+
+    // Блокируем удаление +7
+    if ((e.key === 'Backspace' && selectionStart <= 2) ||
+        (e.key === 'Delete' && selectionStart < 2) ||
+        e.key === '+') {
+      e.preventDefault();
+    }
+  };
 
   const { register, watch, setValue, handleSubmit, formState: { errors } } = form;
 
@@ -146,8 +172,8 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
   }, [onSubmit, isSubmitting, isProcessing, getPromoData, isMobile]);
 
   const renderInput = (
-    name: keyof CheckoutFormData, 
-    placeholder: string, 
+    name: keyof CheckoutFormData,
+    placeholder: string,
     type: string = 'text'
   ) => (
     <div>
@@ -157,6 +183,29 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         })}
         type={type}
         placeholder={placeholder}
+        className={`checkout-input ${isMobile ? 'checkout-input--mobile' : ''}`}
+      />
+      {errors[name] && (
+        <p className={`checkout-error ${isMobile ? 'checkout-error--mobile' : ''}`}>
+          {errors[name]?.message}
+        </p>
+      )}
+    </div>
+  );
+
+  const renderPhoneInput = (
+    name: 'phone' | 'recipientPhone',
+    placeholder: string
+  ) => (
+    <div>
+      <input
+        {...register(name, {
+          required: `${placeholder} обязательно для заполнения`,
+        })}
+        type="tel"
+        placeholder={placeholder}
+        onChange={handlePhoneChange(name)}
+        onKeyDown={handlePhoneKeyDown}
         className={`checkout-input ${isMobile ? 'checkout-input--mobile' : ''}`}
       />
       {errors[name] && (
@@ -238,7 +287,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {renderInput('firstName', 'Имя, фамилия')}
-            {renderInput('phone', 'Телефон', 'tel')}
+            {renderPhoneInput('phone', 'Телефон')}
           </div>
           {renderInput('email', 'E-mail', 'email')}
           {renderInput('city', 'Город')}
@@ -274,7 +323,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {renderInput('recipientFirstName', 'Имя, фамилия')}
-          {renderInput('recipientPhone', 'Телефон', 'tel')}
+          {renderPhoneInput('recipientPhone', 'Телефон')}
         </div>
       </div>
 

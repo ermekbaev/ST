@@ -9,7 +9,7 @@ interface AuthModalProps {
 const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(false);
   const [formData, setFormData] = useState({
-    phone: '',
+    phone: '+7',
     email: '',
     agreeToMarketing: false
   });
@@ -18,11 +18,25 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    
+
+    // Для поля телефона - не позволяем удалить +7
+    if (name === 'phone') {
+      if (!value.startsWith('+7')) {
+        return; // Не обновляем, если пытаются удалить +7
+      }
+      // Разрешаем только цифры после +7
+      const phoneDigits = value.slice(2).replace(/\D/g, '');
+      setFormData(prev => ({
+        ...prev,
+        phone: '+7' + phoneDigits
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -178,7 +192,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   };
 
   const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === '+') {
+    const input = e.target as HTMLInputElement;
+    const selectionStart = input.selectionStart || 0;
+
+    // Блокируем удаление +7
+    if ((e.key === 'Backspace' && selectionStart <= 2) ||
+        (e.key === 'Delete' && selectionStart < 2) ||
+        e.key === '+') {
       e.preventDefault();
     }
   };
