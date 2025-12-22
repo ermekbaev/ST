@@ -89,18 +89,43 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
     mode: 'onChange'
   });
 
-  // Обработчик для полей телефона - не позволяет удалить +7
+  // Форматирование телефона в формат +7 XXX XXX-XX-XX
+  const formatPhoneNumber = (digits: string): string => {
+    let formatted = '+7';
+    if (digits.length > 0) {
+      formatted += ' ' + digits.slice(0, 3);
+    }
+    if (digits.length > 3) {
+      formatted += ' ' + digits.slice(3, 6);
+    }
+    if (digits.length > 6) {
+      formatted += '-' + digits.slice(6, 8);
+    }
+    if (digits.length > 8) {
+      formatted += '-' + digits.slice(8, 10);
+    }
+    return formatted;
+  };
+
+  // Обработчик для полей телефона - форматирует в +7 XXX XXX-XX-XX
   const handlePhoneChange = (fieldName: 'phone' | 'recipientPhone') => (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
 
-    // Если пытаются удалить +7, возвращаем +7
-    if (!value.startsWith('+7')) {
-      value = '+7';
+    // Извлекаем только цифры (убираем +7, пробелы, дефисы)
+    let digits = value.replace(/\D/g, '');
+
+    // Убираем лидирующую 7 или 8 если есть
+    if (digits.startsWith('7')) {
+      digits = digits.slice(1);
+    } else if (digits.startsWith('8')) {
+      digits = digits.slice(1);
     }
 
-    // Разрешаем только цифры после +7
-    const phoneDigits = value.slice(2).replace(/\D/g, '');
-    setValue(fieldName, '+7' + phoneDigits, { shouldValidate: true });
+    // Ограничиваем 10 цифрами (без кода страны)
+    digits = digits.slice(0, 10);
+
+    const formatted = formatPhoneNumber(digits);
+    setValue(fieldName, formatted, { shouldValidate: true });
   };
 
   const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
