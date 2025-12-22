@@ -31,6 +31,8 @@ const Header: React.FC = () => {
       {/* Mobile версия - показывается на экранах < 1024px */}
       <div className="block lg:hidden">
         <MobileHeader />
+        {/* Отступ для контента, т.к. шапка fixed */}
+        <div className="h-[80px]" />
       </div>
     </>
   );

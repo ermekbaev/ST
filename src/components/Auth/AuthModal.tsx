@@ -8,6 +8,7 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [formData, setFormData] = useState({
     phone: '+7',
     email: '',
@@ -16,19 +17,42 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Форматирование телефона: +7 XXX XXX-XX-XX
+  const formatPhoneNumber = (digits: string): string => {
+    let formatted = '+7';
+    if (digits.length > 0) {
+      formatted += ' ' + digits.slice(0, 3);
+    }
+    if (digits.length > 3) {
+      formatted += ' ' + digits.slice(3, 6);
+    }
+    if (digits.length > 6) {
+      formatted += '-' + digits.slice(6, 8);
+    }
+    if (digits.length > 8) {
+      formatted += '-' + digits.slice(8, 10);
+    }
+    return formatted;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
 
-    // Для поля телефона - не позволяем удалить +7
+    // Для поля телефона - форматируем как +7 XXX XXX-XX-XX
     if (name === 'phone') {
-      if (!value.startsWith('+7')) {
-        return; // Не обновляем, если пытаются удалить +7
+      // Извлекаем только цифры после +7
+      const allDigits = value.replace(/\D/g, '');
+      // Убираем первую 7 или 8, если она есть (код страны)
+      let phoneDigits = allDigits;
+      if (allDigits.startsWith('7') || allDigits.startsWith('8')) {
+        phoneDigits = allDigits.slice(1);
       }
-      // Разрешаем только цифры после +7
-      const phoneDigits = value.slice(2).replace(/\D/g, '');
+      // Ограничиваем 10 цифрами (без кода страны)
+      phoneDigits = phoneDigits.slice(0, 10);
+
       setFormData(prev => ({
         ...prev,
-        phone: '+7' + phoneDigits
+        phone: formatPhoneNumber(phoneDigits)
       }));
     } else {
       setFormData(prev => ({
@@ -64,7 +88,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     }
 
     setLoading(true);
-    
+
+    // Очищаем номер телефона от форматирования для отправки на сервер
+    const cleanPhone = formData.phone.replace(/[^\d+]/g, '');
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -72,7 +99,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          phone: formData.phone,
+          phone: cleanPhone,
           email: formData.email,
           agreeToMarketing: formData.agreeToMarketing
         })
@@ -85,7 +112,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
           const userToSave = {
             id: data.user.id,
             name: data.user.email.split('@')[0],
-            phone: formData.phone, // Берем из формы!
+            phone: cleanPhone, // Чистый номер без форматирования
             email: data.user.email,
             agreeToMarketing: formData.agreeToMarketing // Берем из формы!
           };
@@ -119,11 +146,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     }
   };
 
+  const validatePhone = (phone: string) => {
+    const cleanPhone = phone.replace(/[^\d+]/g, '');
+    return cleanPhone.length >= 11 && cleanPhone.length <= 12;
+  };
+
   const handleLogin = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (!validateEmail(formData.email)) {
-      newErrors.email = 'Введите корректный email';
+    if (loginMethod === 'email') {
+      if (!validateEmail(formData.email)) {
+        newErrors.email = 'Введите корректный email';
+      }
+    } else {
+      if (!validatePhone(formData.phone)) {
+        newErrors.phone = 'Введите корректный номер телефона';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -132,16 +170,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     }
 
     setLoading(true);
-    
+
     try {
+      // Очищаем номер телефона от форматирования для отправки на сервер
+      const cleanPhone = formData.phone.replace(/[^\d+]/g, '');
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: formData.email
-        })
+        body: JSON.stringify(
+          loginMethod === 'email'
+            ? { email: formData.email }
+            : { phone: cleanPhone }
+        )
       });
 
       const data = await response.json();
@@ -195,7 +238,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     const input = e.target as HTMLInputElement;
     const selectionStart = input.selectionStart || 0;
 
-    // Блокируем удаление +7
+    // Блокируем удаление +7 (первые 2 символа)
     if ((e.key === 'Backspace' && selectionStart <= 2) ||
         (e.key === 'Delete' && selectionStart < 2) ||
         e.key === '+') {
@@ -318,25 +361,70 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
               <h2 className="font-product text-[22px] leading-[28px] font-normal text-black mb-3">
                 Вход в личный кабинет
               </h2>
-              
-              <p className="font-product text-[14px] leading-[18px] text-gray-600 mb-8">
-                Введите свой email для входа в систему
+
+              <p className="font-product text-[14px] leading-[18px] text-gray-600 mb-4">
+                Введите свой {loginMethod === 'email' ? 'email' : 'номер телефона'} для входа в систему
               </p>
 
+              {/* Переключатель email/телефон */}
+              <div className="flex mb-6 bg-[#E5DDD4] rounded-sm p-1">
+                <button
+                  type="button"
+                  onClick={() => { setLoginMethod('email'); setErrors({}); }}
+                  className={`flex-1 py-2 px-4 font-product text-[14px] rounded-sm transition-colors duration-200
+                             ${loginMethod === 'email'
+                               ? 'bg-black text-white'
+                               : 'bg-transparent text-gray-600 hover:text-black'}`}
+                >
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setLoginMethod('phone'); setErrors({}); }}
+                  className={`flex-1 py-2 px-4 font-product text-[14px] rounded-sm transition-colors duration-200
+                             ${loginMethod === 'phone'
+                               ? 'bg-black text-white'
+                               : 'bg-transparent text-gray-600 hover:text-black'}`}
+                >
+                  Телефон
+                </button>
+              </div>
+
               <div className="space-y-4 mb-8">
-                
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="e-mail"
-                  className={`text-black w-full h-12 px-4 font-product text-[14px] rounded-sm
-                             bg-[#E5DDD4] border-none outline-none placeholder-gray-600
-                             ${errors.email ? 'ring-2 ring-red-500' : ''}`}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-xs font-product">{errors.email}</p>
+
+                {loginMethod === 'email' ? (
+                  <>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="e-mail"
+                      className={`text-black w-full h-12 px-4 font-product text-[14px] rounded-sm
+                                 bg-[#E5DDD4] border-none outline-none placeholder-gray-600
+                                 ${errors.email ? 'ring-2 ring-red-500' : ''}`}
+                    />
+                    {errors.email && (
+                      <p className="text-red-500 text-xs font-product">{errors.email}</p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      onKeyDown={handlePhoneKeyDown}
+                      placeholder="номер телефона"
+                      className={`text-black w-full h-12 px-4 font-product text-[14px] rounded-sm
+                                 bg-[#E5DDD4] border-none outline-none placeholder-gray-600
+                                 ${errors.phone ? 'ring-2 ring-red-500' : ''}`}
+                    />
+                    {errors.phone && (
+                      <p className="text-red-500 text-xs font-product">{errors.phone}</p>
+                    )}
+                  </>
                 )}
 
               </div>

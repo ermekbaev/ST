@@ -59,8 +59,8 @@ export async function POST(request: Request) {
     }
 
     const updatePayload = {
-      phone: body.phone,
-      agreeToMarketing: Boolean(body.agreeToMarketing), // Явное преобразование в Boolean
+      number: body.phone, // В Strapi поле называется "number"
+      agreeToMarketing: Boolean(body.agreeToMarketing),
       registrationDate: new Date().toISOString(),
       lastLogin: new Date().toISOString()
     };

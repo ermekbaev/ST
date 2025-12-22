@@ -11,7 +11,7 @@ const MobileSupportWidget: React.FC<MobileSupportWidgetProps> = ({ isVisible, on
   const handleContactClick = (type: 'telegram' | 'whatsapp' | 'email') => {
     const links = {
       telegram: 'https://t.me/TIGRSHOPsupport',
-      whatsapp: 'https://wa.me/79962814667',
+      whatsapp: 'https://wa.me/79958714667',
       email: 'mailto:support@tigrshop.ru'
     };
     

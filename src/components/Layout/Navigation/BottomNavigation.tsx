@@ -65,28 +65,30 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 lg:hidden">
-        <div className="flex items-center justify-around h-[70px] px-4">
+        <div className="flex items-center h-[70px]">
+          {/* Кнопка профиля */}
           <button
             onClick={handleProfileClick}
-            className="flex flex-col items-center justify-center p-2 hover:opacity-70 transition-opacity"
+            className="flex-1 flex flex-col items-center justify-center py-2 hover:opacity-70 transition-opacity"
           >
             <img
               src="/icons/profile.svg"
               alt="Профиль"
-              className="w-6 h-6 mb-1"
+              className="w-6 h-6"
             />
+            <span className="text-[10px] text-black mt-1 font-product">Кабинет</span>
           </button>
 
           {/* Кнопка корзины */}
           <button
             onClick={handleCartClick}
-            className="flex flex-col items-center justify-center p-2 hover:opacity-70 transition-opacity relative"
+            className="flex-1 flex flex-col items-center justify-center py-2 hover:opacity-70 transition-opacity"
           >
             <div className="relative">
               <img
                 src="/icons/cart.svg"
                 alt="Корзина"
-                className="w-6 h-6 mb-1"
+                className="w-6 h-6"
               />
               {totalItems > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
@@ -94,18 +96,20 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 </span>
               )}
             </div>
+            <span className="text-[10px] text-black mt-1 font-product">Корзина</span>
           </button>
 
           {/* Кнопка поддержки */}
           <button
             onClick={handleSupportClick}
-            className="flex flex-col items-center justify-center p-2 hover:opacity-70 transition-opacity"
+            className="flex-1 flex flex-col items-center justify-center py-2 hover:opacity-70 transition-opacity"
           >
             <img
               src="/supportIcons/Support2.svg"
               alt="Поддержка"
-              className="w-6 h-6 mb-1"
+              className="w-6 h-6"
             />
+            <span className="text-[10px] text-black mt-1 font-product">Поддержка</span>
           </button>
         </div>
       </div>

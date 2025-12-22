@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 interface LoginRequest {
-  email: string;
+  email?: string;
+  phone?: string;
 }
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
@@ -11,10 +12,60 @@ export async function POST(request: Request) {
   try {
     const body: LoginRequest = await request.json();
 
-    if (!validateEmail(body.email)) {
+    let emailToLogin: string;
+    let loginField: 'email' | 'phone';
+
+    // Определяем метод входа
+    if (body.phone) {
+      // Вход по телефону - сначала находим пользователя
+      loginField = 'phone';
+
+      if (!validatePhone(body.phone)) {
+        return NextResponse.json({
+          success: false,
+          error: 'Некорректный номер телефона',
+          field: 'phone'
+        }, { status: 400 });
+      }
+
+      // Ищем пользователя по телефону через Strapi API (поле "number" в Strapi)
+      const usersResponse = await fetch(
+        `${STRAPI_URL}/api/users?filters[number][$eq]=${encodeURIComponent(body.phone)}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const users = await usersResponse.json();
+
+      if (!usersResponse.ok || !users || users.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'Пользователь с таким номером телефона не найден. Зарегистрируйтесь сначала.',
+          field: 'phone'
+        }, { status: 404 });
+      }
+
+      emailToLogin = users[0].email;
+    } else if (body.email) {
+      // Вход по email
+      loginField = 'email';
+
+      if (!validateEmail(body.email)) {
+        return NextResponse.json({
+          success: false,
+          error: 'Некорректный email адрес',
+          field: 'email'
+        }, { status: 400 });
+      }
+
+      emailToLogin = body.email;
+    } else {
       return NextResponse.json({
         success: false,
-        error: 'Некорректный email адрес',
+        error: 'Необходимо указать email или телефон',
         field: 'email'
       }, { status: 400 });
     }
@@ -25,7 +76,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        identifier: body.email,
+        identifier: emailToLogin,
         password: TEMP_PASSWORD,
       }),
     });
@@ -33,21 +84,22 @@ export async function POST(request: Request) {
     const userData = await loginResponse.json();
 
     if (!loginResponse.ok) {
-      
-      let errorMessage = 'Пользователь с таким email не найден. Зарегистрируйтесь сначала.';
-      
-      if (userData.error) {
-        if (userData.error.message?.includes('Invalid identifier or password')) {
-          errorMessage = 'Пользователь с таким email не найден. Зарегистрируйтесь сначала.';
-        } else if (userData.error.message?.includes('blocked')) {
-          errorMessage = 'Аккаунт заблокирован. Обратитесь к администратору.';
-        }
+      const errorMessage = loginField === 'phone'
+        ? 'Пользователь с таким номером телефона не найден. Зарегистрируйтесь сначала.'
+        : 'Пользователь с таким email не найден. Зарегистрируйтесь сначала.';
+
+      if (userData.error?.message?.includes('blocked')) {
+        return NextResponse.json({
+          success: false,
+          error: 'Аккаунт заблокирован. Обратитесь к администратору.',
+          field: loginField
+        }, { status: 403 });
       }
 
       return NextResponse.json({
         success: false,
         error: errorMessage,
-        field: 'email'
+        field: loginField
       }, { status: 404 });
     }
 
@@ -79,7 +131,7 @@ export async function POST(request: Request) {
       user: {
         id: fullUserData.id,
         email: fullUserData.email,
-        phone: fullUserData.phone || '',
+        phone: fullUserData.number || '', // В Strapi поле называется "number"
         agreeToMarketing: Boolean(fullUserData.agreeToMarketing)
       },
       jwt: userData.jwt
@@ -114,4 +166,9 @@ async function updateUserLastLogin(userId: string, jwt: string): Promise<void> {
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+}
+
+function validatePhone(phone: string): boolean {
+  const cleanPhone = phone.replace(/[^\d+]/g, '');
+  return cleanPhone.length >= 11 && cleanPhone.length <= 12;
 }

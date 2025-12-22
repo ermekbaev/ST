@@ -17,6 +17,39 @@ const MobileHeader: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
+  const [lastScrollY, setLastScrollY] = useState<number>(0);
+
+  // Скрытие/показ шапки при прокрутке
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Не скрываем шапку если открыто меню или поиск
+      if (isMobileMenuOpen || isSearchOpen) {
+        setIsHeaderVisible(true);
+        return;
+      }
+
+      // Если в самом верху страницы - всегда показываем
+      if (currentScrollY < 10) {
+        setIsHeaderVisible(true);
+      }
+      // Листаем вниз - скрываем
+      else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        setIsHeaderVisible(false);
+      }
+      // Листаем вверх - показываем
+      else if (currentScrollY < lastScrollY) {
+        setIsHeaderVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY, isMobileMenuOpen, isSearchOpen]);
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -158,7 +191,12 @@ const MobileHeader: React.FC = () => {
 
   return (
     <>
-      <header className="w-full bg-white border-b border-gray-200 relative z-40">
+      <header
+        className="w-full bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 transition-transform duration-300"
+        style={{
+          transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
+        }}
+      >
         <div className="flex w-full h-[80px] items-center justify-between px-4 relative">
           {/* Логотип */}
           <div className="flex-shrink-0 z-50">
