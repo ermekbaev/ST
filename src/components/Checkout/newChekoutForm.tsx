@@ -54,7 +54,7 @@ const PAYMENT_OPTIONS = [
   { id: 'card', name: 'Банковская карта (МИР, VISA, MasterCard)' },
   { id: 'sbp', name: 'СБП (Система быстрых платежей)' },
   { id: 'tinkoff_bank', name: 'T-Pay (Тинькофф)' },
-  { id: 'installments', name: 'Оплата частями (Сплит)' },
+  { id: 'installments', name: 'Оплата частями (Сбер)' },
   { id: 'cash_vladivostok', name: 'Наличными во Владивостоке' }
 ];
 

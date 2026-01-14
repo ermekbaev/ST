@@ -27,7 +27,7 @@ function getYooKassaPaymentMethod(method?: string): string {
     'card': 'bank_card',
     'sbp': 'sbp',
     'tinkoff_bank': 'tinkoff_bank',
-    'installments': 'installments'
+    'installments': 'sber_loan'  // Сбер - оплата частями
   };
   return methodMap[method || 'card'] || 'bank_card';
 }
