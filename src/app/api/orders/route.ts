@@ -1062,10 +1062,12 @@ function getDeliveryMethodName(method: string): string {
 }
 
 function getPaymentMethodName(method: string): string {
-  const methods = {
-    card: "Онлайн картой",
+  const methods: Record<string, string> = {
+    card: "Банковская карта",
+    sbp: "СБП",
+    tinkoff_bank: "T-Pay (Тинькофф)",
+    installments: "Оплата частями (Сплит)",
     cash_vladivostok: "Наличными во Владивостоке",
   };
-  //@ts-ignore
   return methods[method] || method;
 }
