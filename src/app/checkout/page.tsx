@@ -124,8 +124,13 @@ const CheckoutPage: React.FC = () => {
     return subtotal + deliveryPrice;
   };
 
+  // Онлайн методы оплаты (через YooKassa)
+  const ONLINE_PAYMENT_METHODS = ['card', 'sbp', 'tinkoff_bank', 'installments'];
+
   const processPayment = async (orderData: any, orderResponse: any) => {
-    if (orderData.paymentMethod === 'card' && orderResponse.orderId) {
+    const isOnlinePayment = ONLINE_PAYMENT_METHODS.includes(orderData.paymentMethod);
+
+    if (isOnlinePayment && orderResponse.orderId) {
       
       setIsProcessingPayment(true);
       
@@ -137,6 +142,7 @@ const CheckoutPage: React.FC = () => {
           customerPhone: orderData.customerInfo.phone,
           description: `Оплата заказа #${orderResponse.orderNumber || orderResponse.orderId} в Tigr Shop`,
           returnUrl: `${window.location.origin}/order-success?orderNumber=${orderResponse.orderNumber}`,
+          paymentMethodType: orderData.paymentMethod, // Передаём выбранный метод оплаты
           items: formatCartItemsForPayment(items)
         };
 

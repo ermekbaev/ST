@@ -5,6 +5,7 @@ export interface CreatePaymentData {
   customerPhone: string;
   description?: string;
   returnUrl?: string;
+  paymentMethodType?: 'card' | 'sbp' | 'tinkoff_bank' | 'installments';
   items?: Array<{
     name: string;
     quantity: number;

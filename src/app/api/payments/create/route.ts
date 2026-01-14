@@ -13,11 +13,23 @@ interface CreatePaymentRequest {
   customerPhone: string;
   description?: string;
   returnUrl?: string;
+  paymentMethodType?: 'card' | 'sbp' | 'tinkoff_bank' | 'installments';
   items?: Array<{
     name: string;
     quantity: number;
     price: number;
   }>;
+}
+
+// Маппинг методов оплаты на типы YooKassa
+function getYooKassaPaymentMethod(method?: string): string {
+  const methodMap: Record<string, string> = {
+    'card': 'bank_card',
+    'sbp': 'sbp',
+    'tinkoff_bank': 'tinkoff_bank',
+    'installments': 'installments'
+  };
+  return methodMap[method || 'card'] || 'bank_card';
 }
 
 function normalizePhone(phone: string): string {
@@ -42,7 +54,7 @@ export async function POST(request: NextRequest) {
   try {
     
     const body: CreatePaymentRequest = await request.json();
-    const { amount, orderId, customerEmail, customerPhone, description, returnUrl, items } = body;
+    const { amount, orderId, customerEmail, customerPhone, description, returnUrl, paymentMethodType, items } = body;
 
     if (!amount || amount <= 0) {
       return NextResponse.json({
@@ -89,13 +101,15 @@ export async function POST(request: NextRequest) {
       payment_subject: 'commodity' as const
     }];
 
+    const yooKassaMethod = getYooKassaPaymentMethod(paymentMethodType);
+
     const createPayload: ICreatePayment = {
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB'
       },
       payment_method_data: {
-        type: 'bank_card'
+        type: yooKassaMethod as any
       },
       confirmation: {
         type: 'redirect',

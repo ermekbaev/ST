@@ -51,8 +51,11 @@ const DELIVERY_OPTIONS = [
 ];
 
 const PAYMENT_OPTIONS = [
-  { id: 'card', name: 'Оплата картой (МИР, VISA, MasterCard)' },
-  { id: 'cash_vladivostok', name: 'Оплата наличными в городе Владивосток' }
+  { id: 'card', name: 'Банковская карта (МИР, VISA, MasterCard)' },
+  { id: 'sbp', name: 'СБП (Система быстрых платежей)' },
+  { id: 'tinkoff_bank', name: 'T-Pay (Тинькофф)' },
+  { id: 'installments', name: 'Оплата частями (Сплит)' },
+  { id: 'cash_vladivostok', name: 'Наличными во Владивостоке' }
 ];
 
 

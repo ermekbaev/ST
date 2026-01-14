@@ -33,8 +33,11 @@ export type DeliveryMethod =
   | 'post_russia'      // Почта России
   | 'boxberry';        // BoxBerry
 
-export type PaymentMethod = 
-  | 'card'             // Оплата картой (МИР, VIZA, MasterCard)
+export type PaymentMethod =
+  | 'card'             // Оплата картой (МИР, VISA, MasterCard)
+  | 'sbp'              // Система быстрых платежей
+  | 'tinkoff_bank'     // T-Pay (Tinkoff Pay)
+  | 'installments'     // Оплата частями (Сплит)
   | 'cash_vladivostok';// Оплата наличными в городе Владивосток
 
 export interface DeliveryOption {
