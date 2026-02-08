@@ -42,9 +42,10 @@ export async function POST(request: NextRequest) {
     // Получаем токен пользователя
     const authHeader = request.headers.get("authorization");
     const userToken = authHeader?.replace("Bearer ", "") || null;
+    const isOrderForm = body.paymentMethod === "order_form";
 
-    // ОБЯЗАТЕЛЬНАЯ АВТОРИЗАЦИЯ - без регистрации заказ создать нельзя
-    if (!userToken) {
+    // Авторизация обязательна для всех способов, кроме заявки (order_form)
+    if (!userToken && !isOrderForm) {
       return NextResponse.json(
         {
           success: false,
@@ -55,40 +56,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Получаем данные пользователя
+    // Получаем данные пользователя (если токен есть)
     let userId: string | null = null;
-    try {
-      const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        userId = userData.id.toString();
-      } else {
-        // Токен невалиден
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Сессия истекла. Пожалуйста, войдите в аккаунт заново",
-            code: "INVALID_TOKEN",
+    if (userToken) {
+      try {
+        const userResponse = await fetch(`${STRAPI_URL}/api/users/me`, {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+            "Content-Type": "application/json",
           },
-          { status: 401 }
-        );
+        });
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          userId = userData.id.toString();
+        } else if (!isOrderForm) {
+          // Токен невалиден и это не заявка — блокируем
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Сессия истекла. Пожалуйста, войдите в аккаунт заново",
+              code: "INVALID_TOKEN",
+            },
+            { status: 401 }
+          );
+        }
+      } catch (error) {
+        console.error("❌ Ошибка проверки пользователя:", error);
+        if (!isOrderForm) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Ошибка проверки авторизации",
+              code: "AUTH_ERROR",
+            },
+            { status: 401 }
+          );
+        }
       }
-    } catch (error) {
-      console.error("❌ Ошибка проверки пользователя:", error);
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Ошибка проверки авторизации",
-          code: "AUTH_ERROR",
-        },
-        { status: 401 }
-      );
     }
 
     // Базовая валидация
@@ -116,8 +121,7 @@ export async function POST(request: NextRequest) {
       deliveryAddress: body.deliveryAddress || "",
       notes: body.notes || "",
       orderStatus: "pending",
-      paymentStatus:
-        body.paymentMethod === "cash_vladivostok" ? "pending" : "pending",
+      paymentStatus: isOrderForm ? "not_required" : "pending",
       // Правильная связь с пользователем
       ...(userId && {
         user: {
@@ -1068,6 +1072,7 @@ function getPaymentMethodName(method: string): string {
     tinkoff_bank: "T-Pay (Тинькофф)",
     installments: "Оплата частями (Сплит)",
     cash_vladivostok: "Наличными во Владивостоке",
+    order_form: "Заявка (без оплаты)",
   };
   return methods[method] || method;
 }

@@ -2,30 +2,6 @@
 import React from "react";
 
 const ReturnsPage = () => {
-  // Функция для скачивания файлов
-  const handleDownload = (fileType: "shoes" | "clothes") => {
-    const fileUrls = {
-      shoes: "/downloads/return-form-shoes.doc", // Путь к файлу заявления на обувь
-      clothes: "/downloads/return-form-clothes.doc", // Путь к файлу заявления на одежду
-    };
-
-    const fileNames = {
-      shoes: "Заявление_на_возврат_обуви.doc",
-      clothes: "Заявление_на_возврат_одежды.doc",
-    };
-
-    // Создаем ссылку для скачивания
-    const link = document.createElement("a");
-    link.href = fileUrls[fileType];
-    link.download = fileNames[fileType];
-    link.style.display = "none";
-
-    // Добавляем в DOM, кликаем и удаляем
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <div className="min-h-screen bg-white pb-16">
       {/* Page Title with Line */}
@@ -82,29 +58,6 @@ const ReturnsPage = () => {
                   <strong>1.</strong> Распечатать и заполнить бланк возврата
                   (Обязательно заполните все пункты)
                 </p>
-                <p className="mb-2 lg:mb-3">
-                  Бланк возврата можно скачать тут:
-                </p>
-                <div className="ml-4 space-y-1 lg:space-y-2">
-                  <p>
-                    -{" "}
-                    <button
-                      onClick={() => handleDownload("shoes")}
-                      className="underline hover:text-gray-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-inherit font-inherit"
-                    >
-                      Заявление на обувь
-                    </button>
-                  </p>
-                  <p>
-                    -{" "}
-                    <button
-                      onClick={() => handleDownload("clothes")}
-                      className="underline hover:text-gray-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-inherit font-inherit"
-                    >
-                      Заявление на одежду
-                    </button>
-                  </p>
-                </div>
               </div>
 
               {/* Step 2 */}
@@ -136,7 +89,6 @@ const ReturnsPage = () => {
                 <div className="ml-4 space-y-1 lg:space-y-2">
                   <p>г.Владивосток, ул. 1-я пригородная д. 15</p>
                   <p>тел.: +7 950 298 46 67</p>
-                  <p>Получатель: ИП "Айвазян Тигран"</p>
                 </div>
               </div>
 
@@ -169,14 +121,6 @@ const ReturnsPage = () => {
               <p className="mb-3 lg:mb-4">
                 Для возврата в магазине необходимо заполнить бланк возврата и
                 передать комплект сотруднику магазина.
-              </p>
-              <p className="mb-4 lg:mb-6">
-                <button
-                  onClick={() => handleDownload("shoes")}
-                  className="underline hover:text-gray-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-inherit font-inherit"
-                >
-                  Бланк возврата можно скачать тут
-                </button>
               </p>
               <p>Спасибо за доверие! Будем рады видеть вас снова</p>
             </div>

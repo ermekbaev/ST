@@ -520,8 +520,8 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
         </div>
       </div>
 
-      {/* Предупреждение для неавторизованных пользователей */}
-      {!isAuthenticated && (
+      {/* Предупреждение для неавторизованных пользователей (не показываем для заявки) */}
+      {!isAuthenticated && selectedPayment !== 'order_form' && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
           <div className="flex items-start gap-3">
             <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -537,14 +537,14 @@ const NewOrderSummary = forwardRef<any, NewOrderSummaryProps>(({
 
       {/* КНОПКА ТОЛЬКО НА ДЕСКТОПЕ */}
       {!isMobile && (
-        isAuthenticated ? (
+        isAuthenticated || selectedPayment === 'order_form' ? (
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || isProcessing}
             className="checkout-order-btn"
           >
-            {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+            {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : selectedPayment === 'order_form' ? 'ОСТАВИТЬ ЗАЯВКУ' : 'ОФОРМИТЬ ЗАКАЗ'}
           </button>
         ) : (
           <button

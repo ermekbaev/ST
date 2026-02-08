@@ -177,8 +177,10 @@ const CheckoutPage: React.FC = () => {
   const handleOrderSubmit = async (orderData: any) => {
     if (isProcessing || isProcessingPayment) return;
 
-    // Проверка авторизации - без регистрации заказ оформить нельзя
-    if (!isAuthenticated) {
+    const isOrderForm = (orderData.paymentMethod || selectedPayment) === 'order_form';
+
+    // Проверка авторизации — не требуется для заявки без оплаты
+    if (!isAuthenticated && !isOrderForm) {
       setShowAuthModal(true);
       return;
     }
@@ -257,13 +259,21 @@ const CheckoutPage: React.FC = () => {
         throw new Error(orderResponse.error || 'Ошибка создания заказа');
       }
 
+      // Для заявки — сразу на страницу успеха, без оплаты
+      if (isOrderForm) {
+        clearCart();
+        setOrderCompleted(true);
+        router.push(`/order-success?orderNumber=${orderResponse.orderNumber}`);
+        return;
+      }
+
       const paymentOrderData = {
         ...orderPayload,
-        total: finalTotal, 
+        total: finalTotal,
         customerInfo: orderPayload.customerInfo,
         paymentMethod: orderPayload.paymentMethod
       };
-      
+
       await processPayment(paymentOrderData, orderResponse);
 
     } catch (error: any) {

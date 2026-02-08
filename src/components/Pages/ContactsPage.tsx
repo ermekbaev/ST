@@ -40,7 +40,7 @@ const ContactsPage: React.FC = () => {
           {/* Глобальный grid: левая зона (текст) + правая зона (карта) */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_570px] gap-16 mt-[69px]">
             {/* ЛЕВАЯ ЗОНА - весь текстовый контент */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 grid-rows-2 gap-16">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
               {/* Первая строка, первая колонка - Способы связи */}
               <div className="lg:col-span-1">
                 <h2 className="font-product font-black italic text-[30px] leading-[35px] text-black mb-8">
@@ -113,45 +113,6 @@ const ContactsPage: React.FC = () => {
                   г. Владивосток, 1-я
                   <br />
                   пригородная 15
-                </div>
-              </div>
-
-              {/* Вторая строка - Секция "Подробнее" на все 3 колонки */}
-              <div className="lg:col-span-3 mt-16">
-                <h2 className="font-product font-black italic text-[30px] leading-[35px] text-black mb-8">
-                  Подробнее
-                </h2>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-                  {/* Наименование */}
-                  <div>
-                    <h3 className="font-product font-black italic text-[20px] leading-[35px] text-black">
-                      Наименование
-                    </h3>
-                    <span className="font-product text-black">
-                      ИП Айвазян Тигран Эдуардович 
-                    </span>
-                  </div>
-
-                  {/* ОГРНИП */}
-                  <div>
-                    <h3 className="font-product font-black italic text-[20px] leading-[35px] text-black">
-                      ОГРНИП
-                    </h3>
-                    <span className="font-product text-black">
-                      325253600049875
-                    </span>
-                  </div>
-
-                  {/* ИНН */}
-                  <div>
-                    <h3 className="font-product font-black italic text-[20px] leading-[35px] text-black">
-                      ИНН
-                    </h3>
-                    <span className="font-product text-black">
-                      253812345040
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -327,45 +288,6 @@ const ContactsPage: React.FC = () => {
                     style={{ position: "relative", border: "none" }}
                     title="Карта расположения магазина"
                   />
-                </div>
-              </div>
-            </div>
-
-            {/* Секция "Подробнее" */}
-            <div>
-              <h2 className="font-product font-black italic text-[20px] leading-[25px] text-black mb-6">
-                Подробнее
-              </h2>
-
-              <div className="space-y-6">
-                {/* Наименование */}
-                <div>
-                  <h3 className="font-product font-black italic text-[16px] leading-[20px] text-black mb-2">
-                    Наименование
-                  </h3>
-                  <span className="font-product text-black text-[14px] leading-[18px]">
-                    ИП Айвазян Тигран Эдуардович 
-                  </span>
-                </div>
-
-                {/* ОГРНИП */}
-                <div>
-                  <h3 className="font-product font-black italic text-[16px] leading-[20px] text-black mb-2">
-                    ОГРНИП
-                  </h3>
-                  <span className="font-product text-black text-[14px] leading-[18px]">
-                    325253600049875
-                  </span>
-                </div>
-
-                {/* ИНН */}
-                <div>
-                  <h3 className="font-product font-black italic text-[16px] leading-[20px] text-black mb-2">
-                    ИНН
-                  </h3>
-                  <span className="font-product text-black text-[14px] leading-[18px]">
-                    253812345040
-                  </span>
                 </div>
               </div>
             </div>

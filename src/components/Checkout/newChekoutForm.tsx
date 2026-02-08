@@ -55,7 +55,8 @@ const PAYMENT_OPTIONS = [
   { id: 'sbp', name: 'СБП (Система быстрых платежей)' },
   { id: 'tinkoff_bank', name: 'T-Pay (Тинькофф)' },
   { id: 'installments', name: 'Оплата частями (Сбер)' },
-  { id: 'cash_vladivostok', name: 'Наличными во Владивостоке' }
+  { id: 'cash_vladivostok', name: 'Наличными во Владивостоке' },
+  { id: 'order_form', name: 'Оставить заявку (без оплаты)' }
 ];
 
 
@@ -366,8 +367,8 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
       {/* КНОПКА ТОЛЬКО ДЛЯ МОБИЛЬНЫХ */}
       {isMobile && (
         <div className="space-y-4">
-          {/* Предупреждение для неавторизованных пользователей */}
-          {!isAuthenticated && (
+          {/* Предупреждение для неавторизованных пользователей (не показываем для заявки) */}
+          {!isAuthenticated && selectedPayment !== 'order_form' && (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,13 +382,13 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
             </div>
           )}
 
-          {isAuthenticated ? (
+          {isAuthenticated || selectedPayment === 'order_form' ? (
             <button
               type="submit"
               disabled={isSubmitting || isProcessing}
               className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : 'ОФОРМИТЬ ЗАКАЗ'}
+              {isSubmitting || isProcessing ? 'ОФОРМЛЯЕМ ЗАКАЗ...' : selectedPayment === 'order_form' ? 'ОСТАВИТЬ ЗАЯВКУ' : 'ОФОРМИТЬ ЗАКАЗ'}
             </button>
           ) : (
             <button
