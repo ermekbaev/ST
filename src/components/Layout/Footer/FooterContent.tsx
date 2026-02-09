@@ -79,12 +79,12 @@ const FooterContent = () => {
             </a>
           </li>
           <li>
-            <a
+            {/* <a
               href="/payment"
               className="text-gray-300 hover:text-white transition-colors text-sm"
             >
               оплата
-            </a>
+            </a> */}
           </li>
           <li>
             <a

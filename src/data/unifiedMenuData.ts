@@ -104,12 +104,12 @@ export const UNIFIED_MENU_DATA: Record<MenuKey, MegaMenuData | InfoMenuData> = {
   },
   информация: {
     title: "ИНФОРМАЦИЯ",
-    categories: ["Контакты", "Доставка", "Возврат", "Оплата", "FAQ", "О нас"],
+    categories: ["Контакты", "Доставка", "Возврат", "FAQ", "О нас"],
     links: {
       Контакты: "/contacts",
       Доставка: "/delivery",
       Возврат: "/returns",
-      Оплата: "/payment",
+      // Оплата: "/payment",
       FAQ: "/faq",
       "О нас": "/about",
     },
@@ -136,13 +136,13 @@ export const MENU_ITEMS: string[] = [
 ];
 
 export const isInfoSection = (
-  section: MegaMenuData | InfoMenuData
+  section: MegaMenuData | InfoMenuData,
 ): section is InfoMenuData => {
   return "links" in section && Array.isArray((section as InfoMenuData).links);
 };
 
 export const isMegaMenuSection = (
-  section: MegaMenuData | InfoMenuData
+  section: MegaMenuData | InfoMenuData,
 ): section is MegaMenuData => {
   return "categories" in section;
 };
