@@ -110,6 +110,9 @@ export async function POST(request: NextRequest) {
     const orderNumber = generateOrderNumber();
 
     // Подготавливаем данные для Strapi с правильной связью пользователя
+    // Маппинг paymentMethod: если "order_form", заменяем на "cash_vladivostok"
+    const validPaymentMethod = isOrderForm ? "cash_vladivostok" : body.paymentMethod;
+
     const orderData = {
       orderNumber,
       customerName: body.customerInfo.name,
@@ -117,11 +120,11 @@ export async function POST(request: NextRequest) {
       customerEmail: body.customerInfo.email || "",
       totalAmount: body.totalAmount,
       deliveryMethod: body.deliveryMethod,
-      paymentMethod: body.paymentMethod,
+      paymentMethod: validPaymentMethod,
       deliveryAddress: body.deliveryAddress || "",
       notes: body.notes || "",
       orderStatus: "pending",
-      paymentStatus: isOrderForm ? "not_required" : "pending",
+      paymentStatus: isOrderForm ? "pending" : "pending", // Всегда "pending" вместо "not_required"
       // Правильная связь с пользователем
       ...(userId && {
         user: {
@@ -208,10 +211,8 @@ async function saveOrderToStrapi(
           connect: [{ id: parseInt(item.productId) }],
         },
 
-        // Связь с заказом
-        order: {
-          connect: [{ id: orderId }],
-        },
+        // ❌ УДАЛИЛИ неверную связь "order" - она вызывает ошибку "Invalid key order"
+        // Связь с заказом устанавливается позже через updateOrderWithItems()
 
         // Размер только если найден
         ...(sizeId && {

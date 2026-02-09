@@ -20,7 +20,7 @@ const CheckoutPage: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [selectedDelivery, setSelectedDelivery] = useState('store_pickup');
-  const [selectedPayment, setSelectedPayment] = useState('card');
+  const [selectedPayment, setSelectedPayment] = useState('order_form'); // ⚠️ Изменено на 'order_form' - только заявки пока
 
   const orderSummaryRef = useRef<any>(null);
 

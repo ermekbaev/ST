@@ -51,11 +51,12 @@ const DELIVERY_OPTIONS = [
 ];
 
 const PAYMENT_OPTIONS = [
-  { id: 'card', name: 'Банковская карта (МИР, VISA, MasterCard)' },
-  { id: 'sbp', name: 'СБП (Система быстрых платежей)' },
-  { id: 'tinkoff_bank', name: 'T-Pay (Тинькофф)' },
-  { id: 'installments', name: 'Оплата частями (Сбер)' },
-  { id: 'cash_vladivostok', name: 'Наличными во Владивостоке' },
+  // ⚠️ ВРЕМЕННО СКРЫТЫ ВСЕ МЕТОДЫ ОПЛАТЫ КРОМЕ ЗАЯВКИ (проблема с YooKassa)
+  // { id: 'card', name: 'Банковская карта (МИР, VISA, MasterCard)' },
+  // { id: 'sbp', name: 'СБП (Система быстрых платежей)' },
+  // { id: 'tinkoff_bank', name: 'T-Pay (Тинькофф)' },
+  // { id: 'installments', name: 'Оплата частями (Сбер)' },
+  // { id: 'cash_vladivostok', name: 'Наличными во Владивостоке' },
   { id: 'order_form', name: 'Оставить заявку (без оплаты)' }
 ];
 
@@ -88,7 +89,7 @@ const NewCheckoutForm: React.FC<NewCheckoutFormProps> = ({
       recipientFirstName: '',
       recipientPhone: '+7',
       deliveryMethod: 'store_pickup',
-      paymentMethod: 'card'
+      paymentMethod: 'order_form' // ⚠️ Изменено с 'card' на 'order_form' по умолчанию
     },
     mode: 'onChange'
   });
